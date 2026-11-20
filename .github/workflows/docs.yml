@@ -1,0 +1,258 @@
+name: docs
+
+# ドキュメントサイト(DOCS-1)のCI。
+# 目的は「コードとドキュメントのズレ(ドリフト)を機械検出する」こと:
+#   build        — Starlightがstrictに通る(リンク切れ・スキーマ違反をここで落とす)
+#   check-api    — 公開API(_SYMBOL_MODULES)と生成済みAPIリファレンスの一致
+#   tutorials    — examples/*.py が実際に動き、生成md が最新であること
+#   i18n         — 日本語(真実源)と英語(en/)のページ追従(マーカーhash照合)
+#   assets       — 図の解像度/DPI・空図・参照切れ・ギャラリーのサムネイル(DOCS-5)
+#   mermaid      — 本文の Mermaid 図が mermaid.parse を通ること(DOCS-7)
+#   interrogate  — docstring網羅率のratchet(下限は pyproject の [tool.interrogate])
+#   guard        — 公開範囲外(社内docs / references/ / paper/)へのリンクを混ぜない
+#   deploy       — main へのpushかつ public リポのとき GitHub Pages へ配備
+on:
+  push:
+    branches: [main, 'feature/**', 'fix/**', 'docs/**', 'chore/**']
+    paths:
+      - 'docs-site/**'
+      - 'scripts/gen_api_docs.py'
+      - 'scripts/build_tutorials.py'
+      - 'scripts/check_i18n.py'
+      - 'scripts/check_docs_assets.py'
+      - 'scripts/check_docs_mermaid.py'
+      - 'griffith_logic/**'
+      - 'examples/**'
+      - 'notebooks/**'
+      - 'pyproject.toml'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    paths:
+      - 'docs-site/**'
+      - 'scripts/gen_api_docs.py'
+      - 'scripts/build_tutorials.py'
+      - 'scripts/check_i18n.py'
+      - 'scripts/check_docs_assets.py'
+      - 'scripts/check_docs_mermaid.py'
+      - 'griffith_logic/**'
+      - 'examples/**'
+      - 'notebooks/**'
+      - 'pyproject.toml'
+      - '.github/workflows/docs.yml'
+
+# 既定の GITHUB_TOKEN 権限を最小化する。
+# 書き込みが必要なジョブだけ job レベルで permissions を上書きする。
+permissions:
+  contents: read
+
+jobs:
+  # Starlightのビルド(prebuildでAPIリファレンスを生成してから astro build)。
+  # 生成はgriffeの静的解析のみでtorch不要なので、隔離環境(--no-project --with griffe)で走る。
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+      # gen:api が `uv run --no-project --with griffe` を使うためuvが要る(ci.yml と同じ流儀)
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - run: npm ci
+        working-directory: docs-site
+      # 配信先はリポジトリ変数で切り替える(未設定なら astro.config.mjs の既定値)。
+      #   DOCS_SITE_URL  例) https://<org>.github.io          / https://docs.example.jp
+      #   DOCS_BASE_PATH 例) /Griffith(プロジェクトページ) / 未設定(カスタムドメイン)
+      - run: npm run build
+        working-directory: docs-site
+        env:
+          DOCS_SITE_URL: ${{ vars.DOCS_SITE_URL }}
+          DOCS_BASE_PATH: ${{ vars.DOCS_BASE_PATH }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: docs-site-dist
+          path: docs-site/dist
+          retention-days: 7
+      # GitHub Pages へ配備するときだけ、Pages 用の tar アーティファクトも作る
+      # (通常のPR/ブランチCIでは作らない。上の upload-artifact は検証用として常に残す)
+      - name: Pages用アーティファクト
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.IS_PUBLIC_REPO == 'true'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: docs-site/dist
+
+  # 公開APIリファレンスの網羅チェック(_SYMBOL_MODULES に追加したのに
+  # 生成し直していない/削除したのにページが残っている、を検出)
+  check-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - run: npm ci
+        working-directory: docs-site
+      - run: npm run check:api
+        working-directory: docs-site
+
+  # チュートリアルの再生成 = examples/*.py の実行検証を兼ねる。
+  # 生成物に差分が出たら「examplesを変えたのにページを再生成していない」ドリフト。
+  tutorials:
+    runs-on: ubuntu-latest
+    # 実測(Apple M 系・CPU): 27 本の合計 18 分・最長 1 本 118.8s。
+    # GitHub Actions の 2 vCPU ランナーは数倍遅いので 30 分では足りない(実際に途中で切れていた)。
+    timeout-minutes: 90
+    env:
+      # 1セルあたりのハング検出上限。実行時間の予算ではないので、遅いランナーでは広く取る
+      GRIFFITH_TUTORIAL_CELL_TIMEOUT: '1800'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      # figures extra = matplotlib。チュートリアルの回路図(analysis/circuit_viz)に必要。
+      - run: uv sync --extra dev --extra cpu --extra figures --group docs
+      # --no-sync 必須: torchはコア依存なので、素の `uv run` は既定extra(=cpu無し)へ
+      # 環境を同期し直し、PyPI版(CUDA)torchでcpu index版を上書きしてtorchvisionとABIが割れる。
+      - run: uv run --no-sync python scripts/build_tutorials.py
+      # 生の `git diff` は使わない: 学習出力(損失・精度)と図はCPUアーキ(Apple Silicon/x86)で
+      # 変わるため、Macで生成したコミット済みmdとは常に食い違い、一度も通らなかった。
+      # 出力ブロックの中身とPNGのバイト列を除いた「ソース由来の内容」だけを比較する
+      # (地の文・コード・出力ブロック数・図の参照数順・図ファイル集合・index.mdx)。
+      - name: 生成mdのドリフト検出(出力・図を除く正規化比較)
+        run: uv run --no-sync python scripts/check_tutorial_drift.py
+      # notebooks/*.ipynb は実行を伴わないので出力が決定的。同じ再生成で差分ゼロのはず。
+      - name: notebooksのドリフト検出
+        run: |
+          if ! git diff --exit-code -- notebooks; then
+            echo "::error::examples/*.py と notebooks/*.ipynb にズレがあります。" \
+                 "ローカルで 'uv run --group docs python scripts/build_tutorials.py --no-execute' を実行し、差分をコミットしてください。"
+            exit 1
+          fi
+      # ドリフト検出時、CIで再生成した結果を調査用に残す
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        if: failure()
+        with:
+          name: regenerated-tutorials
+          path: docs-site/src/content/docs/tutorials
+
+  # 日英ドキュメントの追従チェック(DOCS-4)。
+  # 日本語(docs/直下)が真実源、英語(docs/en/)は末尾のi18nマーカーに翻訳元のmd5を持つ。
+  # 全81ページの英訳が揃った(DOCS-4完了)ため --allow-missing を外して厳格モードで走らせる:
+  # 未翻訳(MISSING)・日本語を更新したのに英訳が追従していない(STALE)・
+  # 日本語側が消えた英訳(ORPHAN)のいずれでもCIを落とす。
+  # 日本語ページを追加/更新したら同じPRで docs/en/ 側も更新すること。
+  i18n:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      # 日本語のAPIリファレンスは生成物(docs-site/.gitignore で除外)なので、
+      # 照合前に生成しないと en/reference/api/* が全部ORPHAN扱いになる。
+      - name: APIリファレンス(日本語)を生成
+        run: uv run --no-project --with griffe python scripts/gen_api_docs.py
+      - name: 日英ページの同期(マーカーhash照合)
+        run: uv run --no-project python scripts/check_i18n.py
+
+  # 図(アセット)の健全性(DOCS-5)。解像度・DPI・空図・参照切れ・ギャラリーのサムネイル。
+  # 図の再生成は不要(コミット済みの png を読むだけ)なので torch もnodeも要らず数秒で終わる。
+  assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      - name: チュートリアル図の解像度・空図・参照切れ
+        run: uv run --no-project --with pillow python scripts/check_docs_assets.py
+
+  # Mermaid図の構文(DOCS-7)。Mermaidはクライアント側描画なので、構文が壊れていても
+  # astro build は緑のまま通り、読者にだけ「Syntax error in text」の赤箱が出る。
+  # docs-site/node_modules の mermaid を Node から直接呼び、サイトと同じパーサで検証する
+  # (npm ci が要るぶんだけ assets ジョブより重いが、それでも1分未満)。
+  mermaid:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      - run: npm ci
+        working-directory: docs-site
+      - name: 本文のMermaid図がパースできること
+        run: uv run --no-project python scripts/check_docs_mermaid.py
+
+  # docstring網羅率のratchet。下限は pyproject.toml の [tool.interrogate] fail-under。
+  # 下げるのは禁止(上げるのは歓迎)。torch不要なので隔離環境で高速に走らせる。
+  interrogate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      # ruff同様、ローカルとCIで版を固定する(新版の判定変更による環境差を避ける)
+      - run: uv run --no-project --with "interrogate==1.7.0" interrogate griffith_logic
+
+  # 誤公開ガード: 公開ツリーに含まれないもの(社内docs / references/ / paper/)への
+  # リンクを公開サイトに置かない。公開スナップショットには docs/・references/・paper/ が
+  # 含まれないため、これらへのリンクは公開後に必ずリンク切れ(= 嘘)になる。
+  # tools/ は公開範囲に入ったため対象外(リンクしてよい)。
+  # 文中での言及(バッククォート)は許容し、リンク形だけを落とす。
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - name: 公開範囲外へのリンクが無いこと
+        run: |
+          if grep -rnE '(\]\(|href=")[^)"]*(docs/(report|plan|audit|handoff|survey|papers)|references/|paper/)' \
+              docs-site/src/content/docs; then
+            echo "::error::公開サイトから公開範囲外(社内docs / references/ / paper/)へリンクしています。" \
+                 "内容を公開ページ側へ書き写すか、リンクを外してください。"
+            exit 1
+          fi
+          echo "OK: 公開範囲外へのリンクはありません"
+
+  # --- GitHub Pages 配備 ----------------------------------------------------
+  # 動く条件は3つ全部: main への push / public リポ(vars.IS_PUBLIC_REPO == 'true') /
+  # Settings → Pages → Source = "GitHub Actions"。private リポでは変数を立てないことで
+  # ジョブ自体がスキップされる(Pages は private だと Team/Enterprise が要るため)。
+  #
+  # 人間側の設定手順は docs-site/README.md「GitHub Pages への配備」を参照。
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.IS_PUBLIC_REPO == 'true'
+    needs: [build, check-api, tutorials, i18n, assets, mermaid, interrogate, guard]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # 配備ジョブにだけ Pages への書き込み権限を与える(他ジョブは読み取りのみ)
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    # 同時配備を直列化する。走行中のものは打ち切らない(配備の取りこぼしを避ける)
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

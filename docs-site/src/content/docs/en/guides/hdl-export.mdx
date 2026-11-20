@@ -1,0 +1,127 @@
+---
+title: 'HDL Export and Equivalence Verification'
+description: 'How to lower a trained model to Verilog/VHDL through the IR and confirm with iverilog / ghdl that it is exactly the same circuit as the original model.'
+---
+
+This page walks through lowering a trained model to **Verilog / VHDL** and confirming that it is
+**bit-for-bit identical** to the original model. For the background (why we go through the IR), see
+[Architecture overview](/en/explanation/architecture/).
+
+## Three-way equivalence — what is guaranteed
+
+"The generated HDL is probably right" is not worth burning to silicon. This library runs the same circuit
+through **three independent paths** and verifies that they agree on every vector.
+
+```
+PyTorch hard eval  ⇔  ir/simulate.py (numpy golden)  ⇔  HDL simulation
+```
+
+| Path | Implementation | Role |
+|---|---|---|
+| PyTorch hard eval | the torch model after `model.eval()` | truth on the training side |
+| simulate | `ir/simulate.py` (bit-exact in numpy) | **golden model** (the reference for comparison) |
+| HDL simulation | iverilog (Verilog) / ghdl (VHDL) | truth about the generated artifact |
+
+Only when all three agree can you say "the HDL is equivalent to the original model".
+
+## Start by running it — the two examples
+
+Rather than theory first, the fastest route is to run the self-verifying, executable samples. Both finish
+in under a minute, and the assert at the end checks the expected result for you.
+
+```bash
+# Fully connected DLGN: train → IR → Verilog → iverilog cross-check
+uv run python examples/04_export_hdl.py
+
+# Logic-gate convolutional CNN: IR unroll (lowering) → Verilog/VHDL → cross-check
+uv run python examples/05_cnn_export_hdl.py
+```
+
+| Sample | Contents | Expected result |
+|---|---|---|
+| `examples/04_export_hdl.py` | trained model → IR → Verilog + iverilog cross-check | IR predictions = labels, cross-check ALLPASS |
+| `examples/05_cnn_export_hdl.py` | CNN → IR unroll → Verilog/VHDL + cross-check | 100% match with simulate predictions, cross-check ALLPASS |
+
+As `05` shows, a model containing convolutions must go through **lowering (expanding `conv2d` / `or_pool2d`
+into a series of `lut_layer`s)** before HDL generation. The HDL generator explicitly rejects an IR that
+contains native conv nodes.
+
+## Installing the simulators
+
+### iverilog (Verilog / fine to install locally)
+
+```bash
+brew install icarus-verilog   # macOS
+sudo apt-get install -y iverilog   # Debian/Ubuntu
+```
+
+Verification runs as long as both `iverilog` and `vvp` are on the PATH. On machines without them,
+tests marked `hdl` are **skipped automatically**, so nothing breaks locally.
+
+### ghdl (VHDL / local installation not recommended)
+
+:::caution
+**The official practice is to verify ghdl in CI / a cloud (Modal) container rather than locally.**
+The Homebrew Cask build of ghdl on macOS has been confirmed in practice to be broken and unbuildable.
+Do not attempt a local installation; use the container path.
+:::
+
+On machines without ghdl, tests marked `hdl_vhdl` are skipped automatically.
+
+## How to run it
+
+### As part of the test suite
+
+These are defined in `tests/hdl/` under two markers. The default `addopts` excludes them, so they run
+**only when you ask for them explicitly**.
+
+| Marker | Target | Required simulator |
+|---|---|---|
+| `hdl` | Verilog equivalence | iverilog |
+| `hdl_vhdl` | VHDL equivalence | ghdl |
+
+```bash
+make hdl                       # = pytest -m "hdl or hdl_vhdl"
+uv run pytest -m hdl -q        # Verilog only (skipped if iverilog is missing)
+uv run pytest -m hdl_vhdl -q   # VHDL only (skipped if ghdl is missing)
+```
+
+### Generating and cross-checking with a script
+
+```bash
+# Generate Verilog from a checkpoint/IR and cross-check against the golden (simulate)
+uv run python scripts/export_hdl.py model.json -o out/ --verify
+
+# Generate VHDL at the same time and cross-check (the VHDL side runs only where ghdl is installed)
+uv run python scripts/export_hdl.py model.json -o out/ --format both --verify
+```
+
+`--verify` runs all the way through equivalence verification (stage 7). If the corresponding simulator is
+not installed, only that language's cross-check is skipped and a message says so on stdout (it is not an error).
+
+### Conversion only, via the unified CLI
+
+```bash
+uv run griffith export-hdl model.json --lang verilog -o out/model.v
+uv run griffith export-hdl model.json --lang vhdl   -o out/model.vhdl
+```
+
+`griffith export-hdl` performs **IR → HDL conversion only** and does no simulator cross-checking.
+If you need the cross-check too, use `scripts/export_hdl.py --verify`.
+
+## Common pitfalls
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| HDL generation rejects the IR | Native nodes such as `conv2d` / `or_pool2d` remain | Run lowering (stage 5) first. `examples/05` shows how |
+| `validate` emits warnings | Constructs that cannot be expressed in HDL (nodes returning real values, etc.) are mixed in | Move the layer in question to the logic side, or cut before it and export |
+| No VHDL tests run at all locally | ghdl is not installed | Expected (automatic skip). Verify via the container path |
+| Accuracy does not match torch | You are comparing against soft (training-time) output | Always compare against **hard eval** with `model.eval()` ([soft/hard in DLGN](/en/explanation/dlgn/)) |
+
+## Read next
+
+- [Architecture overview](/en/explanation/architecture/) — where this sits in the 8-stage data flow
+- [Burning to a real FPGA](/en/guides/fpga/) — running the generated HDL on an actual board
+- [Exporting to HDL (tutorial)](/en/tutorials/hdl-export/) — a hands-on introduction
+
+{/* i18n:source=guides/hdl-export.mdx hash=db206baa57ab */}

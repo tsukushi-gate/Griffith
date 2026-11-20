@@ -1,0 +1,44 @@
+# 較正アンカー: conv-DLGN(cdlgn 型、重み共有の論理ゲート木 conv + OR プール + 全結合頭部)。
+# 内部調査リポジトリ先行実験の S 級(cifar10_s = cdlgn k=32)、腕 random8 / OR プール / 頭部 rot2 /
+# GroupSum stride 割当 / IWP(independent × sin × Ω 空間 RI)。原値(先行実験 st1b_B_random8_rot2_s0、
+# lab 先行実験 A0 アンカー): hard acc 58.91%。
+#
+# 先行実験との既知の差分:
+#   - 先行実験は flip + RandomCrop(32, pad=2) のデータ拡張を GPU 上で行った。本ランナーには拡張が無い
+#   - 先行実験の学習時 forward は mode='ste'(値 hard / 勾配 soft)。ここは soft(先行実験と同じ)
+#   - 木の対(ペアリング)は半割を隣接に写しただけ(同型)。頭部 rot2 の (r, s_b) は
+#     [(1, 8), (2, 203), (2, 1713)](先行実験 rot2_schedule と同一)
+# 頭部は cdlgn 頭部則 [4096, 40960, 20480, 10240](flat = 1024·2·2)。
+#
+# 実行(GPU): uv run modal run --detach scripts/modal_app.py --script train.py \
+#            --args "configs/recipes/conv_dlgn_cifar10_s.yaml" --background
+data:
+  name: cifar-10-3-thresholds        # 閾値 major 9ch × 32 × 32 = 9,216 bit(先行実験と同じ並び)
+  batch_size: 128
+model:
+  kind: conv_dlgn
+  n_inputs: 2
+  parameterization: independent      # 論文 IWP(エントリ独立)
+  estimator: sin                     # ρ = 0.5 + 0.5·sin
+  residual_init: true                # Ω ~ N(±1.2, 0.25)
+  selection: soft
+  tau: 20.0
+  group_assign: stride               # ニューロン i → クラス i mod 10
+  conv:
+    in_shape: [9, 32, 32]
+    channels: [32, 128, 512, 1024]   # cdlgn k=32: k, 4k, 16k, 32k
+    sampler: random8                 # 3×3 窓 × 2ch から 8 葉を乱択(cdlgn 忠実)
+    input_channels_per_tree: 2
+    downsample: orpool
+    head_wiring: rot2
+optim:
+  name: adam
+  lr: 0.02
+run:
+  epochs: 100
+  eval_interval: 500
+  wandb: true
+  wandb_group: conv-dlgn
+  wandb_job_type: train
+  wandb_tags: [conv-dlgn-calibration, calibration, 先行実験-S, cifar10, conv-dlgn]
+  run_name: conv_dlgn_cifar10_s

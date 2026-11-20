@@ -1,0 +1,34 @@
+# 完全ラベルフリー変換: 正解ラベルを一切使わないKD-to-native。
+# - hard項の錨 = teacherロジットのargmax(疑似ラベル、pseudo_labels: true)
+# - α=0純KDの後半劣化(best 0.405→final 0.284)への対処: α=0.25の安定性を
+#   ラベルフリーのまま得る狙い
+# - 「ラベルが無ければscratchは学習不能」な状況で変換だけが成立することのデモ
+#   (LLM変換の実態=未ラベルコーパス+teacherと同型)。真の精度は評価系(正解ラベル)で測定
+# 実行: uv run griffith launch configs/recipes/dlgn_cifar10_kd_labelfree.yaml --grid "run.seed=[42]" --local
+data:
+  name: cifar-10-3-thresholds
+  batch_size: 128
+model:
+  kind: dlgn
+  k: 16000
+  layers: 4
+  n_inputs: 2
+  parameterization: softmax
+  tau: 100.0
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 50
+  seed: 42
+  eval_interval: 500
+  wandb: false  # 有効化するには wandb: true と WANDB_API_KEY を設定
+  run_name: d6_kd_cifar10_labelfree
+distill:
+  teacher: 'hf:edadaltocg/resnet18_cifar10'
+  standardize: true
+  teacher_transform: cifar10-resnet18-hf
+  cache: true
+  alpha: 0.25
+  temperature: 4.0
+  pseudo_labels: true

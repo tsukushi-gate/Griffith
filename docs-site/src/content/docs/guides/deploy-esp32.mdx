@@ -1,0 +1,358 @@
+---
+title: 'ESP32 に載せる'
+description: '学習済み DLGN を ESP32(ESP-IDF)で動かす手順と実機実測。gen_model.py でモデルを生成し、idf.py でビルド・書き込み、UART のログで整数一致とレイテンシを確かめる。行動認識は載り、顔検出は載らない。'
+---
+
+デプロイキットが生成する C は、**依存ゼロ・ヒープ確保ゼロ・浮動小数点ゼロ** の C99 である。
+そのため ESP32 のような小さなマイコンでも、ESP-IDF のプロジェクトに `model.c` と `mdl_kernels.c` を足すだけで推論が動く。
+このページは、その **実機手順と実測結果** をまとめる。
+
+:::note[実機で実測済み]
+ESP32-D0WDQ6(Xtensa LX6、240 MHz、4MB flash、PSRAM なし)の実機で、**行動認識 3 モデルと MNIST が動き、
+全 50 件の出力スコアがホストの `ir/simulate.py` と整数で一致** した。既定の回路圧縮を効かせた行動認識 k6000 は
+**1 推論 12.7 ms**(圧縮なしは 26.60 ms)。一方、**顔検出(畳み込みモデル)は
+静的 DRAM に載らずビルドできない**。数値は [実測表](#実測表) にある。
+検証状況の一覧は [対応プラットフォーム](/reference/platform-support/) で確認できる。
+:::
+
+## 前提
+
+- **ESP-IDF v5.x** を導入済みで、シェルで環境を有効にできること
+- ESP32 開発ボードと USB ケーブル(UART ブリッジ経由で書き込み・ログ取得をする)
+- 本リポジトリを clone し、`uv sync --extra dev --extra cpu` を済ませていること(モデル生成に使う)
+- 実機のログ取得に `scripts/esp32_capture.py` を使う場合は `uv sync --extra fpga`(pyserial が入る)
+
+ESP-IDF の環境は、シェルを開くたびに次で有効にする。
+
+```bash
+. ~/esp/esp-idf/export.sh
+```
+
+## プロジェクトの構成
+
+ESP-IDF のプロジェクトは `examples/30_deploy_esp32/` にある。
+
+| ファイル | 役割 |
+|---|---|
+| `gen_model.py` | バンドルから `main/model/`(生成 C + ランタイム + サンプル入力)を作る |
+| `main/main.c` | 同梱サンプルで推論し、精度とレイテンシを UART へ出すドライバ |
+| `CMakeLists.txt` / `main/CMakeLists.txt` | `model.c` と `mdl_kernels.c` をビルドに組み込む |
+| `sdkconfig.defaults` | 既定の設定(CPU 周波数・最適化・フラッシュサイズなど) |
+
+`main/model/` は生成物なのでコミットされない。モデルを差し替えるときは、`gen_model.py` を 1 回走らせて
+`idf.py build` し直すだけでよい。
+
+## 手順
+
+### 1. モデルを生成する
+
+```bash
+uv run python examples/30_deploy_esp32/gen_model.py
+```
+
+引数なしだと XOR(内蔵の 4 パターン)で生成する。デモモデルを載せるときは、バンドルとサンプルを渡す。
+バンドルとサンプルの用意は [デモモデルを用意する](/guides/deploy-models/) を参照。
+
+```bash
+uv run python examples/30_deploy_esp32/gen_model.py \
+    --bundle out_examples/demo_models/har_dlgn_k600.bundle.json \
+    --samples out_examples/demo_models/samples/har_dlgn_k600.json --name har_dlgn_k600
+```
+
+`gen_model.py` は内部で `griffith deploy codegen-c` を呼び、`main/model/` に `model.c` / `model.h` /
+`mdl_kernels.c` / `mdl_kernels.h` / `mdl_simd.h` と、サンプル入力のヘッダ(`samples.h`)を書く。
+サンプルが多く flash を食うときは `--max-samples N` で絞る。
+
+`gen_model.py` は `--dense-flat {auto,on,off}`(既定 `auto`)を持ち、そのまま `codegen-c` の同名オプションに渡される。
+`auto` は、dense の 2 入力 `lut_layer` 列を `lut_flat`(信号表を介した平坦ネットリスト)にしたときの
+**実効ゲート削減率が 25% 以上** なら採用する(未満なら従来の層実行)。`on` は常に平坦化、`off` は平坦化しない。
+平坦化は信号表のぶん作業 RAM(`MDL_CTX_BYTES`)が増える(実測は [ゲート削減の効果](#ゲート削減の効果))ので、
+RAM を優先したいときは `--dense-flat off` を使う。標準出力と `model_info.json` に、判定結果と最終的な実行ゲート数が出る。
+
+サンプルの JSON は `{"input_width": N, "samples": [{"bits": "<hex>", "label": int|null, "expected_scores": [...]|null}]}`
+の形で、`bits` は **バイト列の hex**(入力 `i` はバイト `i/8` のビット `i%8`、LSB-first)である。
+`expected_scores` があれば、実機上で **全サンプルの出力スコアを整数で照合** する。
+画像入力のモデル(顔検出)は `bits` の代わりに `image`(u8 の NCHW)を持ち、`gen_model.py` が自動で認識して
+`samples.h` に `SAMPLE_INPUT_IS_IMAGE 1` を立てる。`main.c` はこのとき 0/1 に展開せず、
+`mdl_infer_image_ctx` に u8 画像をそのまま渡す。
+
+### 2. ビルドと書き込み
+
+```bash
+cd examples/30_deploy_esp32
+idf.py set-target esp32
+idf.py build
+idf.py -p <port> flash
+```
+
+`<port>` は環境によって違う(macOS は `/dev/cu.usbserial-*`、Linux は `/dev/ttyUSB0` など)。
+`set-target` は **初回とターゲットを変えたときだけ** でよい。初回のビルドは Apple Silicon の Mac で 43〜44 秒かかった(行動認識の実測)。
+
+#### 複数のモデルを別々にビルドする
+
+`main/model/` を書き換えずに、モデルごとに生成先とビルドディレクトリを分けて **並べてビルド** できる。
+`gen_model.py` に `--out`、`idf.py` に `-B` と `-DMODEL_DIR` を渡す。
+
+```bash
+uv run python examples/30_deploy_esp32/gen_model.py \
+    --bundle out_examples/demo_models/har_dlgn_k6000.bundle.json \
+    --samples out_examples/demo_models/samples/har_dlgn_k6000.json \
+    --name har_dlgn_k6000 --out /tmp/m_har
+cd examples/30_deploy_esp32
+idf.py -B /tmp/b_har -DSDKCONFIG=/tmp/b_har.sdkconfig -DMODEL_DIR=/tmp/m_har set-target esp32
+idf.py -B /tmp/b_har -DSDKCONFIG=/tmp/b_har.sdkconfig -DMODEL_DIR=/tmp/m_har build
+idf.py -B /tmp/b_har -DSDKCONFIG=/tmp/b_har.sdkconfig -DMODEL_DIR=/tmp/m_har -p <port> flash
+```
+
+### 3. ログを取る
+
+書き込みが終わったら、UART の出力を取得する。`scripts/esp32_capture.py` は DTR/RTS でリセットをかけて
+起動ログから拾い、非対話で終了まで読む。
+
+```bash
+uv run python scripts/esp32_capture.py --port <port> \
+    --baud 115200 --seconds 30 --until DONE --out results/deploy/devices/esp32_xor.log
+```
+
+`idf.py -p <port> monitor` は対話端末が要る。非対話で回収するなら `esp32_capture.py` を使う
+(`RESULT` 行を JSON にして `.json` も書く)。出力は次の 2 種類で、最後に `DONE` を出して止まる。
+
+| 出力 | 内容 |
+|---|---|
+| `SAMPLE i pred=.. exp=.. ns=.. h=XXXXXXXX` | サンプルごとの予測・期待ラベル・1 推論あたりの時間(ns)・出力スコアのハッシュ |
+| `RESULT {...}` | 機械可読な要約(1 行の JSON)。正解率・レイテンシの統計など |
+
+`h=` のハッシュは出力スコア全体の FNV-1a で、**ホスト実行の出力と一致するか** を照合する用途にも使える。
+同じ `main.c` はホストでもビルドでき、`ir/simulate.py` と整数一致した生成 C を、そのまま実機の結果の基準にできる。
+`SAMPLE` 行のうち `ns=` と `reps=` 以外(`pred` / `exp` / `h` / `scores`)と、`RESULT` の `score_hash` が
+実機とホストで **完全一致** すれば合格である。
+
+```bash
+cc -std=c99 -O2 -DHOST_BUILD -DMDL_NO_DEFAULT_CTX -Imain -Imain/model \
+    main/main.c main/model/model.c main/model/mdl_kernels.c -o host_demo
+```
+
+## メモリ設計
+
+マイコンで動かすときの勘所は、**何が RAM に載り、何がフラッシュに載るか** を意識することである。
+
+| 領域 | 載るもの | 備考 |
+|---|---|---|
+| フラッシュ(`.rodata`) | 重み・命令列・真理値表(すべて `static const`) | モデルが大きくても RAM を食わない。全コンテキストで共有される |
+| RAM(`.bss`) | 作業領域 `static uint32_t work[MDL_CTX_BYTES / 4]` | 推論中に書き換わる領域。サイズは `model.h` の `MDL_CTX_BYTES` |
+
+作業領域を **自分で static に置く** のがこのプロジェクトの方針で、そのために 2 つの工夫をしている。
+
+- **`MDL_CTX_BYTES` を static に置く**: `mdl_ctx_init(&ctx, work, sizeof(work))` で渡す。メモリは呼び出し側が用意するので、
+  ヒープ確保は一切起きない(`work` は 4 バイト整列が必要)
+- **`-DMDL_NO_DEFAULT_CTX`**: 既定コンテキスト(生成物が内部に持つ static)を消す。
+  これを付けないと、同じ大きさの領域が **二重に** `.bss` に載ってしまう。CMake では
+  `target_compile_definitions(${COMPONENT_LIB} PRIVATE MDL_NO_DEFAULT_CTX)` で指定している
+
+```cmake
+idf_component_register(
+    SRCS main.c model/model.c model/mdl_kernels.c
+    INCLUDE_DIRS . model
+    REQUIRES esp_timer esp_system freertos)
+
+target_compile_definitions(${COMPONENT_LIB} PRIVATE MDL_NO_DEFAULT_CTX)
+```
+
+### `idf.py size` の読み方
+
+ビルド後に `idf.py size` を実行すると、イメージの内訳が出る。見るべきは次の 3 か所である。
+
+| 項目 | 見方 |
+|---|---|
+| DRAM(`.data` + `.bss`) | 静的に確保される RAM。`MDL_CTX_BYTES` ぶんは `.bss` に入る |
+| Flash Code(`.text`) | 実行コード。大半は ESP-IDF 自身で、モデルによる増分は小さい(実測: XOR 79,048 B → 36,000 ゲート 79,284 B) |
+| Flash Data(`.rodata`) | モデルの重み・命令列。**モデルの大きさはここに現れる** |
+
+`idf.py size-components` を使うと、コンポーネントごと(`main` に載せたモデルとその他)の内訳も見られる。
+
+## 実測表
+
+ボードは ESP32-D0WDQ6 rev v1.0(Xtensa LX6 デュアル 240 MHz、4MB flash、**PSRAM なし**)で、
+ESP-IDF v5.4-dev-2194(xtensa-esp-elf 13.2.0、`-O2` 相当の `COMPILER_OPTIMIZATION_PERF`)を使った。
+モデルは、wandb から取得した学習済みの本番バンドル(`har_dlgn_k600` / `har_dlgn_k2400` / `har_dlgn_k6000`)で、
+サンプルは UCI-HAR のテスト窓 50 件(MNIST は 20×20 二値のテスト画像 50 枚。いずれもラベルと、ホスト `ir/simulate.py` 由来の期待スコアつき)である。
+時間は **1 推論あたり**(サンプルごとに合計 5 ms 以上になるまで反復して平均)で、片方のコアだけを使っている。
+
+#### 既定(回路圧縮あり)の値
+
+`gen_model.py` の既定は、`codegen-c --dense-flat auto` を通した **平坦化後の回路** である。
+ここに挙げるのはその回路(後述「ゲート削減の効果」の flat)の実測で、**出力は圧縮なしと整数で一致**している(`score_hash` 同一、全 50 件)。
+圧縮なしの値は、次の表に参考として残してある。
+
+| モデル | 実行ゲート数 | 1 推論(平均) | 圧縮なしに対する速度比 | 正解率 | スコア一致 | 静的 DRAM 使用 | app bin |
+|---|---:|---:|---:|---|---|---:|---:|
+| 行動認識 k600 | 971 | 290.7 µs | 1.41 倍 | 38/50(76.0%) | 50/50 | 22,088 B | 208,064 B |
+| 行動認識 k2400 | 4,886 | 782.2 µs | 7.40 倍 | 38/50(76.0%) | 50/50 | 27,800 B | 229,888 B |
+| 行動認識 k6000 | 15,124 | 12.69 ms | 2.10 倍 | 40/50(80.0%) | 50/50 | 41,640 B | 288,272 B |
+| MNIST(20×20 二値) | 2,210 | 324.7 µs | 2.23 倍 | 42/50(84.0%) | 50/50 | 16,328 B | 190,176 B |
+
+XOR(32 ゲート)は小さすぎて圧縮の測定をしていない。k2400 の 7.40 倍は、ゲート削減率だけでは説明できない外れ値である(詳細は後述)。
+
+#### 圧縮なし(参考)
+
+| モデル | ゲート数 | 1 推論(平均) | 窓 | 正解率 | スコア一致 | 静的 DRAM 使用 | app bin |
+|---|---:|---:|---:|---|---|---:|---:|
+| XOR | 32 | 5.86 µs | 4 | 4/4 | -(ラベルのみ) | 10,952 B | 172,752 B |
+| 行動認識 k600 | 2,400 | 410.9 µs | 50 | 38/50(76.0%) | 50/50 | 17,104 B | 213,760 B |
+| 行動認識 k2400 | 9,600 | 5,785.5 µs | 50 | 38/50(76.0%) | 50/50 | 20,704 B | 246,160 B |
+| 行動認識 k6000 | 36,000 | 26.60 ms | 50 | 40/50(80.0%) | 50/50 | 27,904 B | 365,072 B |
+| MNIST(20×20 二値) | 4,000 | 725.2 µs | 50 | 42/50(84.0%) | 50/50 | 15,712 B | 195,392 B |
+| 顔検出 `det_face_lut_k256` | 2,686 | **ビルド不可** | - | - | - | 静的 DRAM を 1,394,696 B 超過 | - |
+
+静的 DRAM の総量は 180,736 B で、使用量は `idf.py size` の DRAM(`.data` + `.bss`)である。
+app bin は生成された `.bin` のサイズで、4MB のうち既定のアプリ用パーティション(約 1.5 MB)に十分収まる。
+
+- **整数一致**: 行動認識 3 モデル(k600・k2400・k6000)とも、実機とホスト(`cc -O2`)の **全 50 窓の `SAMPLE` 行と `score_hash` が完全一致** した。
+  正解率の 38/50・40/50 は、ホスト `ir/simulate.py` と同じ値である。50 窓は全体の部分集合なので、
+  全 2,947 窓での精度(k600 80.5%、k6000 90.1%)とは別の数になる
+- **スループット**: 圧縮なしで k600 は約 2,430 窓/秒、k6000 は約 37.6 窓/秒、MNIST は約 1,380 枚/秒(1 ÷ 平均時間)。
+  既定(圧縮あり)では k600 約 3,440 窓/秒、k6000 約 78.8 窓/秒、MNIST 約 3,080 枚/秒
+- **MNIST**: 20×20 二値の 4,000 ゲート(`LutLayer` 2×2,000)で、50 枚(クラス均等のテスト画像)の `SAMPLE` 行と `score_hash` がホストと完全一致した。`.rodata` 58,936 B、`MDL_CTX_BYTES` 4,000 B。
+  ビルドの壁時間は 111.9 秒だったが、他のジョブが並走していたためで、ユーザー時間は他モデルと同等だった
+- **ストレス**: 36,000 ゲートの IR にランダム入力 8 サンプルを流す試験でも、26.59 ms、スコア 8/8 一致だった
+- **XOR の時間**: `esp_timer` は µs 分解能なので、XOR 級の短い推論は 5.84〜5.93 µs の離散値になる
+
+### `idf.py size` の抜粋(行動認識 k6000、圧縮なし)
+
+```text
+Flash Data    228744 B   (.rodata 228488)   ← 重み・命令列
+Flash Code     79284 B   (.text   79284)    ← 大半は ESP-IDF 自身
+IRAM           48287 B / 131072 B
+DRAM           27904 B / 180736 B   (.bss 19256 + .data 8648)
+Total image size: 364962 bytes
+```
+
+IRAM は 3 モデルとも 48,287 B で変わらない(カーネルは flash 上で実行され、IRAM は ESP-IDF 自身が使う)。
+`.bss` の中身は `MDL_CTX_BYTES`(12,000 B)と入力の展開バッファ(4,608 B)などで、**重みは DRAM を食わず flash(`.rodata`)に置かれる**。
+k600 の `.rodata` は 77,256 B、k6000 は 228,488 B である。
+
+### ホストとの対比
+
+同じ `main.c` を Apple Silicon のホスト(`cc -O2`、スカラー)で動かした値と比べる(いずれも圧縮なしの回路どうし)。
+
+| モデル | ESP32(平均) | ホスト | 比 |
+|---|---:|---:|---:|
+| 行動認識 k600 | 410.9 µs | 1.85 µs(平均) | 約 220 倍 |
+| 行動認識 k6000 | 26.60 ms | 27.5 µs(中央値) | 約 970 倍 |
+| MNIST | 725.2 µs(平均) | 3.36 µs(中央値) | 約 216 倍 |
+
+ホストの k6000 の平均は 39.1 µs だが、最大 229.6 µs の外れ値が 1 件あるので中央値を使った。
+ESP32 側は平均と中央値がほぼ一致する(MNIST は平均 725.248 µs、中央値 725.200 µs)ので、平均で示している。
+原因の切り分けまではしていないが、ESP32 側は Xtensa に SIMD 実装が無くスカラー経路のみで、
+クロックやキャッシュの差も効いていると考えられる。デュアルコアの片方しか使っていない(`mdl_run_pool` は pthread 版なので FreeRTOS ではそのまま使えず、2 コアで回すには
+タスク 2 本にコンテキストを 2 つ持たせる書き換えが要る)。
+
+### ゲート削減の効果
+
+[デモモデルを用意する](/guides/deploy-models/#ゲート数を減らすlossless) で説明した、**ゲート数を減らす lossless な最適化** を実機で計測した。
+計測時のバンドルの作り方は `griffith deploy bundle --sweep`(sweep)と `--sweep --dense-flat`(flat)で、
+同じ手順(`gen_model.py` → `idf.py -B` / `-DMODEL_DIR` → flash → capture)で書き込んだ。
+
+:::note[この計測の旧フラグは、現在の既定と同じ回路を作る]
+計測は既定圧縮が入る前のもので、`--sweep --dense-flat` を明示して作った。現在は同じ圧縮が **既定で自動適用** される。
+- `griffith deploy bundle`(既定 `--compress fast`)が、dense に **sweep**(conv2d なら再合成)をかける(旧 `--sweep` 相当)
+- `griffith deploy codegen-c`(既定 `--dense-flat auto`)が、実効ゲート削減率が 25% 以上なら **`lut_flat` に平坦化** する(旧 `--dense-flat` 相当)
+
+両者とも同じ変換(`flatten_dense`)を使うので、回路は同じである。ただし、**現在の既定経路で実機を測り直してはいない**。
+上の「既定の値」は、旧フラグで作った flat の実測値を指す。
+:::
+サンプルは先の 50 件と同じで、期待スコアも同一である。ボード・ESP-IDF・最適化は上と同じ。
+
+```bash
+uv run griffith deploy bundle out_examples/demo_models/har_dlgn_k2400.model.json --sweep \
+    -o out_examples/demo_models/har_dlgn_k2400.sweep.bundle.json
+uv run griffith deploy bundle out_examples/demo_models/har_dlgn_k2400.model.json --sweep --dense-flat \
+    -o out_examples/demo_models/har_dlgn_k2400.flat.bundle.json
+```
+
+今ならオプションなしの `griffith deploy bundle <model.json>` と、`gen_model.py`(既定 `--dense-flat auto`)で同じ flat 回路になる。
+
+**全ケースで `score_mismatch` は 0、`score_hash` は素・sweep・flat で同一、ホスト `cc -O2` の `SAMPLE` 行とも 50/50 一致**
+だった。つまり「出力は変わらない(lossless)」ことが実機でも確かめられている。
+全数値は `results/deploy/devices/esp32_summary_20261007.json` にある。
+
+| モデル | 素 | sweep | flat |
+|---|---|---|---|
+| 行動認識 k600 | 2,400 ゲート / 410.9 µs | 1,989 ゲート / 342.8 µs | 971 ゲート / 290.7 µs |
+| 行動認識 k2400 | 9,600 ゲート / 5,785.5 µs | 8,681 ゲート / 4,163.7 µs | 4,886 ゲート / 782.2 µs |
+| 行動認識 k6000 | 36,000 ゲート / 26,598.7 µs | 28,636 ゲート / 21,174.9 µs | 15,124 ゲート / 12,688.0 µs |
+| MNIST | 4,000 ゲート / 725.2 µs | 3,615 ゲート / 638.1 µs | 2,210 ゲート / 324.7 µs |
+
+セルは「実行するゲート数 / 1 推論の平均時間」である。flat のゲート数は、パススルーと定数を除いた **実効ゲート** の数
+(`lut_flat` のゲート総数)で、`RESULT` の `gates` は `model.h` のマクロ由来のため flat では 0 と出る。
+
+メモリは次のとおり(静的 DRAM の総量は 180,736 B)。
+
+| モデル | variant | `MDL_CTX_BYTES` | `.rodata` | DRAM 使用 | app bin |
+|---|---|---:|---:|---:|---:|
+| 行動認識 k600 | 素 / sweep / flat | 1,200 / 1,396 / 6,180 B | 77,256 / 75,416 / 72,504 B | 17,104 / 17,304 / 22,088 B | 213,760 / 211,936 / 208,064 B |
+| 行動認識 k2400 | 素 / sweep / flat | 4,800 / 6,284 / 11,896 B | 109,640 / 105,528 / 95,672 B | 20,704 / 22,192 / 27,800 B | 246,160 / 242,080 / 229,888 B |
+| 行動認識 k6000 | 素 / sweep / flat | 12,000 / 13,872 / 25,736 B | 228,488 / 195,352 / 154,056 B | 27,904 / 29,776 / 41,640 B | 365,072 / 331,968 / 288,272 B |
+| MNIST | 素 / sweep / flat | 4,000 / 3,616 / 4,612 B | 58,936 / 57,208 / 55,976 B | 15,712 / 15,328 / 16,328 B | 195,392 / 193,664 / 190,176 B |
+
+- **sweep の速度は、実行ゲート数にほぼ比例する**: k6000 はゲート -20.5% に対し時間 -20.4%、k600 は -17.1% に対し -16.6% だった。
+  k2400(ゲート -9.6% に対し時間 -28.0%)と MNIST(-9.6% に対し -12.0%)は比例から外れる。原因は調べていない
+- **flat は 4 モデルすべてで最速**: 素に対する速度比は k600 1.41 倍、k2400 7.40 倍、k6000 2.10 倍、MNIST 2.23 倍で、
+  k6000 は 26.60 ms から 12.69 ms になった。flat は sweep とは違い、時間がゲート数にきれいには比例しない
+- **k2400 の flat の 7.4 倍は、ゲート削減率(-49.1%)だけでは説明できない**。素や sweep で効いていた何かが flat で消えた可能性があるが、
+  **原因は調査していない**。この値だけ他モデルから外れているので、そのつもりで読むこと
+- **メモリは、flash が減り、DRAM が増える**: `.rodata` は sweep・flat とも素より小さく、k6000 では 228,488 B から 154,056 B(flat)になる。
+  一方、flat は信号表のぶん `MDL_CTX_BYTES` が増え(k6000 で 12,000 B から 25,736 B)、DRAM 使用は k6000 で 41,640 B になる。
+  それでも静的 DRAM の空きは約 139 KB 残る。sweep も ctx が少し増える(k6000 +1,872 B)
+- ホストの傾向は ESP32 にそのまま当てはまらない: MNIST は、ホスト(`cc -O2`、中央値)では sweep 2.70 µs から flat 2.98 µs へ遅くなるのに、
+  実機では 638.1 µs から 324.7 µs へ半減した。切り分けはしていない
+
+## 顔検出が載らない理由
+
+顔検出(`det_face_lut_k256`、128px の畳み込みモデル)は、ホストでは 10 サンプル全てが期待スコアと整数一致し、
+1 枚 1.76 ms で動く。ロジック自体は正しいが、**無印の ESP32 には載らない**。ビルドは次のリンクエラーで止まる。
+
+```text
+ld: region `dram0_0_seg' overflowed by 1394696 bytes
+```
+
+原因は作業 RAM の大きさである。
+
+| 項目 | 大きさ |
+|---|---:|
+| `MDL_CTX_BYTES`(`static work[]`) | 1,544,000 B |
+| スコア出力 `scores[5120]`(int32) | 20,480 B |
+| 静的 DRAM の総量(`dram0_0_seg`) | 180,736 B |
+| `.bss` の合計 | 1,566,784 B |
+
+ヒープ(`malloc`)に逃がしても足りない。起動直後の空きヒープは 283,696〜300,648 B で、必要な 1,544,000 B の 5 分の 1 以下である。
+PSRAM を持たないボードでは、この作業 RAM を置く場所が無い。
+
+:::note[PSRAM 付きのボードなら(推測・未検証)]
+ESP32-WROVER(4MB PSRAM)や ESP32-S3(8MB PSRAM のモデル)のように PSRAM を持つボードなら、
+`mdl_ctx_init(&ctx, buf, bytes)` に `heap_caps_malloc(..., MALLOC_CAP_SPIRAM)` で確保した領域を渡せば、
+**容量上は載る可能性がある**。ただしこれは推測で、**実機では確かめていない**。PSRAM 経由の速度も未測定である。
+:::
+
+生成物の `main.c` は作業領域を `mdl_ctx_init` に渡す形なので、置き換えは `main.c` の差し替えだけで済む。
+詳しいビルドログは `results/deploy/devices/esp32_det_face_build_20261006.log` にある。
+
+## トラブルシューティング
+
+| 症状 | 原因と対処 |
+|---|---|
+| CMake が `main/model/ が無い` で止まる | `gen_model.py` を先に実行していない。上の手順 1 を実行する |
+| ビルドが `dram0_0_seg` の overflow で失敗する | `MDL_CTX_BYTES` + 入力の展開バッファが静的 DRAM(180,736 B)に収まらない。平坦化(`--dense-flat`)で作業 RAM が増えて溢れたなら `--dense-flat off` を試す。`-DMDL_NO_DEFAULT_CTX` が効いているか(二重確保になっていないか)を確認し、それでも足りなければ小さいモデルにするか、PSRAM 付きボードの PSRAM に置く(上の「顔検出が載らない理由」) |
+| フラッシュに収まらない | `sdkconfig.defaults` の `CONFIG_ESPTOOLPY_FLASHSIZE_*` とパーティションテーブルを、ボードの実フラッシュ容量に合わせる(大きいモデルは `model.c` が `.rodata` に載る) |
+| 書き込み時に `Failed to connect` | ボードによっては BOOT ボタンを押しながら書き込みを始める必要がある。ケーブルがデータ線つきかも確認する |
+| ログが出ない・文字化けする | ボーレートを確認する(`sdkconfig.defaults` は 115200)。`esp32_capture.py` は開いた直後にリセットをかけるので、`--no-reset` を付けていないか確認する |
+| 長い推論の途中でリセットされる | タスクウォッチドッグが動いている。`CONFIG_ESP_TASK_WDT_EN=n`(`sdkconfig.defaults` で指定済み)になっているかを確認する |
+| 生成コードの警告でビルドが落ちる | `-Werror` 由来。プロジェクトは `-Wno-error` を指定している。自前のプロジェクトに組み込むときは同じ指定を足す |
+| ターゲットを変えたらビルドが壊れた | `idf.py set-target` を実行し直す(必要なら `idf.py fullclean` のあとで) |
+
+## 次に読む
+
+- [デモモデルを用意する](/guides/deploy-models/) — ESP32 に載せるバンドルとサンプルの作り方
+- [デプロイキット クイックスタート](/guides/deploy-quickstart/) — C ソース生成と整数一致の検証
+- [対応プラットフォーム](/reference/platform-support/) — Xtensa(ESP32)を含む検証段階の一覧
+- [iPhone に載せる](/guides/deploy-ios/) — もう一つの実機ターゲット

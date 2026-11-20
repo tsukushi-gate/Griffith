@@ -1,0 +1,27 @@
+# IWP-1: OPアーム / XOR(L4級の論理関数タスク)。logic_xor.yaml を土台にした健全性チェック。
+# 対になるIWPアーム: iwp1_xor_iwp.yaml
+#   → 両者で異なるのは model.parameterization / estimator / residual_init のみ。
+# ローカル数秒で終わる。wandbはローカル健全性用途のため false(logic_xor.yaml に倣う)。
+# 実行: uv run python experiments/bench_iwp.py --task xor --arm both --seeds 0 1 2
+data:
+  name: logic:xor
+  batch_size: 32
+model:
+  kind: logic_mlp
+  k: 16
+  layers: 2
+  n_inputs: 2
+  parameterization: softmax
+optim:
+  name: adam
+  lr: 0.1
+run:
+  epochs: 10
+  eval_interval: 8  # 8ステップごと(1エポック=8ステップ)。収束step数の解像度確保
+  seed: 0
+  wandb: false
+# 期待メトリクス: 既存 logic_xor.yaml(同一構成・同一lr・同一エポック数)の実績閾値を流用。
+# XORはhard bit acc / exact matchともに1.0到達が既存レシピで確認済み。
+expected_metrics:
+  hard_acc_min: 1.0
+  hard_exact_match_min: 1.0

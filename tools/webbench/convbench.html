@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DLGN vs ORT Web — segベンチ</title>
+  <style>
+    :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+    body { margin: 0 auto; max-width: 900px; padding: 16px; line-height: 1.5; }
+    h1 { font-size: 1.3rem; }
+    nav a { margin-right: 14px; }
+    #status { font-family: ui-monospace, monospace; margin: 8px 0; }
+    pre { background: color-mix(in srgb, currentColor 8%, transparent);
+      padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <nav><a href="/">ベンチ</a><a href="/convbench.html">segベンチ</a><a href="/detbench.html">検出ベンチ</a><a href="/segbackends.html">segバックエンド行列</a><a href="/detbackends.html">検出バックエンド行列</a><a href="/seg.html">segデモ</a><a href="/detmono.html">モノクロ数字検出デモ</a><a href="/det.html">カラー数字検出デモ</a><a href="/detreal.html">実物体検出デモ</a><a href="/detface.html">顔検出デモ</a><a href="/webcam.html">webcamデモ</a></nav>
+  <h1>SegConvDLGN(packed / irflat)vs ORT Web(SmallUNet)ベンチ</h1>
+  <!-- 解像度・精度はロード済みモデルJSON / 参照値テーブル由来。-->
+  <p>同一 <span data-meta="inputRes">—</span> 入力での 配信サイズ/コールド起動/スループットを計測する
+    (packed=重み共有カーネルスイープ, irflat=全展開interpベースライン)。
+    DLGN=SegConvDLGN <span data-meta="kLabel">—</span>(<span data-meta="accuracy">—</span>)、
+    ORT Web=SmallUNet teacher(<span data-ref="seg_unet_teacher.accuracy">—</span>、
+    <span data-ref="seg_unet_teacher.params">—</span>)。</p>
+  <div id="status">初期化中…</div>
+  <pre id="out"></pre>
+  <script type="module" src="/src/convbench_main.ts"></script>
+</body>
+</html>

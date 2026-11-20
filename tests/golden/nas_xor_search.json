@@ -1,0 +1,19 @@
+{
+  "seed": 0,
+  "max_trials": 6,
+  "epochs": 3,
+  "space": {
+    "layers_choices": [1, 2],
+    "width_choices": [4, 8],
+    "n_inputs_choices": [2]
+  },
+  "trials": [
+    {"trial_id": 0, "genome": {"layers": 1, "width": 4, "n_inputs": 2}, "acc": 0.5, "total_luts": 1, "logic_depth": 1, "gates": 1, "partial": false, "parent_id": null, "state": "done"},
+    {"trial_id": 1, "genome": {"layers": 2, "width": 4, "n_inputs": 2}, "acc": 0.5, "total_luts": 5, "logic_depth": 2, "gates": 2, "partial": false, "parent_id": null, "state": "done"},
+    {"trial_id": 2, "genome": {"layers": 2, "width": 4, "n_inputs": 2}, "acc": 0.5, "total_luts": 5, "logic_depth": 2, "gates": 2, "partial": false, "parent_id": null, "state": "done"},
+    {"trial_id": 3, "genome": {"layers": 1, "width": 8, "n_inputs": 2}, "acc": 0.5, "total_luts": 1, "logic_depth": 1, "gates": 1, "partial": false, "parent_id": null, "state": "done"},
+    {"trial_id": 4, "genome": {"layers": 1, "width": 8, "n_inputs": 2}, "acc": 1.0, "total_luts": 1, "logic_depth": 1, "gates": 1, "partial": false, "parent_id": 3, "state": "done"},
+    {"trial_id": 5, "genome": {"layers": 2, "width": 8, "n_inputs": 2}, "acc": 0.5, "total_luts": 9, "logic_depth": 2, "gates": 2, "partial": false, "parent_id": 4, "state": "done"}
+  ],
+  "pareto": [4]
+}

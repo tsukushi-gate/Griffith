@@ -1,0 +1,285 @@
+/* Tailwind v4 + Starlight のレイヤ順序(Starlightのスタイルを上書きできるようにする) */
+@layer base, starlight, theme, components, utilities;
+
+@import '@astrojs/starlight-tailwind';
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* ------------------------------------------------------------------
+ * プロジェクトカラー
+ *   橙(amber)  = 実数NN(PyTorch側)
+ *   緑(emerald)= 論理ゲート(離散回路側)
+ * 既存の図・エディタの記法に合わせている。
+ * ------------------------------------------------------------------ */
+@theme {
+	--color-md-logic-50: #ecfdf5;
+	--color-md-logic-100: #d1fae5;
+	--color-md-logic-200: #a7f3d0;
+	--color-md-logic-300: #6ee7b7;
+	--color-md-logic-400: #34d399;
+	--color-md-logic-500: #10b981;
+	--color-md-logic-600: #059669;
+	--color-md-logic-700: #047857;
+	--color-md-logic-800: #065f46;
+	--color-md-logic-900: #064e3b;
+
+	--color-md-real-50: #fff7ed;
+	--color-md-real-100: #ffedd5;
+	--color-md-real-200: #fed7aa;
+	--color-md-real-300: #fdba74;
+	--color-md-real-400: #fb923c;
+	--color-md-real-500: #f97316;
+	--color-md-real-600: #ea580c;
+	--color-md-real-700: #c2410c;
+	--color-md-real-800: #9a3412;
+	--color-md-real-900: #7c2d12;
+}
+
+/* Starlight のアクセント/グレーを論理ゲート緑ベースへ差し替える */
+:root {
+	--sl-color-accent-low: #052e21;
+	--sl-color-accent: #0f9d6b;
+	--sl-color-accent-high: #9ceccc;
+
+	--md-real: var(--color-md-real-500);
+	--md-logic: var(--color-md-logic-500);
+}
+
+:root[data-theme='light'] {
+	--sl-color-accent-low: #b9ecd8;
+	--sl-color-accent: #0b7a53;
+	--sl-color-accent-high: #063b28;
+}
+
+/* ------------------------------------------------------------------
+ * レイアウト幅(広画面対策)
+ *   Starlight既定は本文45rem / ToCカラム18.75rem で、広い画面だと
+ *   本文が細く余白とToCばかり大きく見える。本文を70remまで広げ
+ *   (コードブロック・表・図が使える幅)、ToCは11.5remに絞る。
+ *   Starlightのレイアウトは main-pane と right-sidebar-container の
+ *   幅式が対になっているため、両方を同じ変数で書き換える。
+ * ------------------------------------------------------------------ */
+:root {
+	/* 本文カラム(70rem≒1120px。広画面の余白を詰め、表・コード・図を広く使う) */
+	--sl-content-width: 70rem;
+	/* 目次(ToC)カラム。既定 --sl-sidebar-width(18.75rem)より大幅に細く(項目は折り返す) */
+	--md-toc-width: 11.5rem;
+}
+
+/* 2カラム(本文+ToC)になるブレークポイント。Starlight本体と同じ 72rem */
+@media (min-width: 72rem) {
+	.right-sidebar-container {
+		width: max(
+			var(--md-toc-width),
+			calc(var(--md-toc-width) + (100% - var(--sl-content-width) - var(--md-toc-width)) / 2)
+		);
+	}
+
+	[data-has-sidebar][data-has-toc] .main-pane {
+		width: min(
+			calc(100% - var(--md-toc-width)),
+			calc(var(--sl-content-width) + (100% - var(--sl-content-width) - var(--md-toc-width)) / 2)
+		);
+	}
+
+	/* ToC本体の器も細いカラムに合わせる(既定は sidebar幅基準+25vwの上限) */
+	.right-sidebar-panel .sl-container {
+		width: calc(var(--md-toc-width) - 2 * var(--sl-sidebar-pad-x));
+		max-width: none;
+	}
+}
+
+/* ---- LP(スプラッシュ)専用のユーティリティ ----
+ * グラデーション(文字・背景)は使わない。強調は単色(プロジェクト緑)で行う。 */
+.md-accent-text {
+	color: var(--color-md-logic-400);
+}
+
+:root[data-theme='light'] .md-accent-text {
+	color: var(--color-md-logic-700);
+}
+
+.md-card {
+	border: 1px solid var(--sl-color-gray-5);
+	background: color-mix(in oklab, var(--sl-color-bg) 90%, var(--sl-color-gray-6));
+	transition:
+		border-color 0.18s ease,
+		background-color 0.18s ease;
+}
+
+/* ホバーは枠線の色変化のみ(影・移動なし) */
+.md-card:hover {
+	border-color: color-mix(in oklab, var(--color-md-logic-500) 55%, transparent);
+}
+
+/* ---- 小ラベル(バッジ/チップ)。ライトテーマでコントラストを確保する ---- */
+.md-chip-logic {
+	color: var(--color-md-logic-300);
+	background: color-mix(in oklab, var(--color-md-logic-500) 15%, transparent);
+	border-color: color-mix(in oklab, var(--color-md-logic-500) 40%, transparent);
+}
+
+.md-chip-real {
+	color: var(--color-md-real-300);
+	background: color-mix(in oklab, var(--color-md-real-500) 15%, transparent);
+}
+
+:root[data-theme='light'] .md-chip-logic {
+	color: var(--color-md-logic-800);
+	background: color-mix(in oklab, var(--color-md-logic-500) 14%, transparent);
+	border-color: color-mix(in oklab, var(--color-md-logic-600) 45%, transparent);
+}
+
+:root[data-theme='light'] .md-chip-real {
+	color: var(--color-md-real-800);
+	background: color-mix(in oklab, var(--color-md-real-500) 16%, transparent);
+}
+
+/* Mermaid 図はテーマ背景に馴染ませる */
+.mermaid,
+[data-mermaid-rendered] {
+	display: flex;
+	justify-content: center;
+	overflow-x: auto;
+}
+
+/* ------------------------------------------------------------------
+ * 図のクリック拡大(ライトボックス)
+ *   src/scripts/lightbox.ts が本文内の図に [data-md-zoomable] を付ける。
+ *   対象は .sl-markdown-content 内の <img> と Mermaid の SVG のみ。
+ * ------------------------------------------------------------------ */
+/* 図の器。右上の拡大ボタンだけがクリック対象(図本体のクリックは素通し)。
+   器は図に張り付く大きさにする(width:fit-content)。ただし Mermaid の SVG は
+   `width="100%"` なので、器が縮むと図まで極小になる。器の中では横幅いっぱいにする。 */
+.md-zoomable {
+	position: relative;
+	display: block;
+	width: fit-content;
+	max-width: 100%;
+}
+
+.mermaid > .md-zoomable,
+[data-mermaid-rendered] > .md-zoomable {
+	width: 100%;
+}
+
+.md-zoom-btn {
+	position: absolute;
+	top: 0.5rem;
+	right: 0.5rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: 1px solid var(--sl-color-gray-5);
+	border-radius: 0.375rem;
+	background: color-mix(in oklab, var(--sl-color-bg) 88%, transparent);
+	color: var(--sl-color-white);
+	cursor: zoom-in;
+	opacity: 0;
+	transition:
+		opacity 0.15s ease,
+		border-color 0.15s ease;
+}
+
+.md-zoomable:hover .md-zoom-btn,
+.md-zoom-btn:focus-visible {
+	opacity: 1;
+}
+
+.md-zoom-btn:hover {
+	border-color: var(--sl-color-accent);
+}
+
+/* タッチ端末はホバーが無いので常時表示する */
+@media (hover: none) {
+	.md-zoom-btn {
+		opacity: 1;
+	}
+}
+
+.md-lightbox-open {
+	overflow: hidden;
+}
+
+.md-lightbox {
+	position: fixed;
+	inset: 0;
+	z-index: 1000;
+	display: none;
+	background: color-mix(in oklab, var(--sl-color-black) 88%, transparent);
+	backdrop-filter: blur(2px);
+	touch-action: none;
+	overscroll-behavior: contain;
+}
+
+.md-lightbox.is-open {
+	display: block;
+}
+
+.md-lightbox__stage {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	cursor: grab;
+}
+
+.md-lightbox.is-grabbing .md-lightbox__stage {
+	cursor: grabbing;
+}
+
+.md-lightbox__content {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	transform-origin: center center;
+}
+
+/* 拡大した図はテーマ背景の板に載せる(Mermaid SVG の透過対策・ダーク/ライト両対応) */
+.md-lightbox__content > * {
+	display: block;
+	max-width: 94vw;
+	max-height: 88vh;
+	padding: 1rem;
+	border-radius: 0.5rem;
+	background: var(--sl-color-bg);
+	box-shadow: 0 1rem 3rem rgb(0 0 0 / 45%);
+	user-select: none;
+	-webkit-user-drag: none;
+}
+
+.md-lightbox__close {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	width: 2.5rem;
+	height: 2.5rem;
+	border: 1px solid var(--sl-color-gray-5);
+	border-radius: 999px;
+	background: var(--sl-color-bg);
+	color: var(--sl-color-white);
+	font-size: 1rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.md-lightbox__close:hover {
+	border-color: var(--sl-color-accent);
+}
+
+.md-lightbox__hint {
+	position: absolute;
+	bottom: 0.75rem;
+	left: 50%;
+	transform: translateX(-50%);
+	margin: 0;
+	padding: 0.25rem 0.75rem;
+	border-radius: 999px;
+	background: color-mix(in oklab, var(--sl-color-bg) 85%, transparent);
+	color: var(--sl-color-gray-2);
+	font-size: var(--sl-text-xs);
+	pointer-events: none;
+}

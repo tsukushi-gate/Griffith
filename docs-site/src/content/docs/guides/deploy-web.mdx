@@ -1,0 +1,212 @@
+---
+title: 'Web(ブラウザ)に載せる'
+description: '学習済み DLGN をブラウザで動かす手順。バンドルから codegen-web で配布物を作り、静的配信して loadBundle で推論する。engine の選択、verify-web による出荷ゲート、配信サイズと実測値までをまとめる。'
+---
+
+デプロイキットの Web ターゲットは、C や CUDA のように **ソースを生成しない**。
+実行体(TypeScript 製のエンジンと WASM カーネル)は最初からランタイムとして用意されていて、
+`codegen-web` は **バンドルそのものを配布用 JSON として書き出し、ランタイム一式を隣にコピーする** だけである。
+サーバは静的ファイルを返せれば足りる。推論はすべてブラウザの中で終わり、入力が端末の外へ出ない。
+このページは、その手順と、自分のページに組み込む方法、手元で測った数値をまとめる。
+
+## 得られるもの
+
+`codegen-web` の出力ディレクトリは、そのまま静的ホスティングに置ける。
+
+| ファイル | 役割 |
+|---|---|
+| `model.bundle.json` | 配布バンドル本体(`--name` で名前を変えられる) |
+| `mdl_web.js` | 公開 API(`loadBundle` など)。ESM で、ブラウザと Node の両方で動く |
+| `lib-*.js` / `release-*.js` / `assets/` | 上記が参照する共有チャンク。ファイル名にハッシュが付き、ビルドのたびに変わる |
+| `release.wasm` / `release-simd.wasm` | WASM カーネル(scalar / v128 SIMD)。`auto` と `wasm` では SIMD 版が使われる |
+| `verify.mjs` | Node の検証 CLI(`verify-web` が内部で呼ぶ) |
+| `demo.js` / `index.html` | 既定の単一ページデモ(`?model=<url>` で読み込み先を変えられる) |
+
+チャンクのファイル名は固定でないので、**`dist/` の中身は丸ごとコピーする**こと(`codegen-web` はそうしている)。
+
+## 前提
+
+- 本リポジトリを clone し、`uv sync --extra dev --extra cpu` を済ませていること
+- **node と npm**(WASM カーネルと JS ランタイムのビルドに使う。配布先のサーバには要らない)
+- ブラウザは WebAssembly が動くもの(SIMD が無い環境では、後述のとおり `auto` が JS エンジンへ落ちる)
+
+## 手順
+
+### 1. ランタイムをビルドする(初回のみ)
+
+```bash
+npm --prefix tools/webbench ci   # 初回のみ
+make web-runtime                 # = npm --prefix tools/webbench run build:runtime
+```
+
+`runtime/web/dist/` ができる。これは生成物なので git 管理されない。
+`runtime/web/dist` が無いと `codegen-web` は、先にこれを実行するよう指示して失敗する(古いランタイムを黙って配らないため)。
+
+
+### 2. バンドルから配布物を作る
+
+この例ではネットワーク不要の XOR モデルを使う。次の 1 コマンドで、学習 → バンドル → `codegen-web` →
+自前ページの配置 → `verify-web` までを通す。
+
+```bash
+uv run python examples/32_deploy_web/gen.py
+```
+
+中身は次の 3 つのコマンドである(自分のモデルならバンドルを用意して 2 行目から使う)。
+
+```bash
+uv run griffith deploy bundle out_examples/xor_model.json -o out_examples/xor.bundle.json
+uv run griffith deploy codegen-web out_examples/xor.bundle.json -o out_examples/deploy_web
+uv run griffith deploy verify-web out_examples/xor.bundle.json --engine wasm
+```
+
+バンドルの作り方は [Deploy Kit クイックスタート](/guides/deploy-quickstart/)、
+実データのモデルは [デモモデルを用意する](/guides/deploy-models/) を参照。
+`gen.py` は `--bundle <x.bundle.json> --samples <samples.json>` で別のバンドルにも使える。
+
+### 3. 静的配信してブラウザで開く
+
+```bash
+python -m http.server 8080 -d out_examples/deploy_web
+# → http://localhost:8080/
+```
+
+ページは `./model.bundle.json` と `./samples.json` を fetch し、全サンプルの予測クラス・正解率・µs/推論を表示する。
+engine のセレクタ(auto / js / wasm)で切り替えられる。`file://` で直接開くと fetch が拒否されるので、必ず HTTP で配る。
+
+## 公開 API
+
+`mdl_web.js` が公開するのは `loadBundle` である(仕様は `runtime/web/README.md`)。
+
+```ts
+import { loadBundle } from './mdl_web.js';
+
+const bundle = await loadBundle(bundleJson, { engine: 'auto' });
+// bundle.kind: 'seg' | 'detection' | 'classify-image' | 'dense'
+// bundle.scores(bits, batch)            全 kind 共通
+// bundle.scoresRgba(rgba)               画像入力の kind のみ
+// bundle.segLabels(rgba)                kind==='seg' のみ
+// bundle.detect(rgba)                   kind==='detection' のみ
+// bundle.notes: string[]                黙殺しない注記(program の出所・エンジンのフォールバック・バージョン警告)
+```
+
+- `bundleJson` は `JSON.parse` 済みのバンドル。`.mdlb` バイナリ形式なら `ArrayBuffer` / `Uint8Array` のまま渡せる。
+- `bundle.scores(bits, batch)` は、`batch × 入力ビット幅` の **0/1 の配列** を受け取り、整数スコア(`Int32Array`)を返す。
+  分類なら `argmax` が予測クラスである。
+- 画像入力のモデル(`kind` が `seg` / `detection` / `classify-image`)は、モデル解像度の RGBA(`ImageData.data`)を
+  `scoresRgba` / `segLabels` / `detect` に渡す。符号化はバンドルの前処理定義に従ってランタイムが行う。
+- 検出モデルの `detect` はピーク抽出まで含めて箱を返す。
+
+この例の `main.js` は、`dense` のバンドルを `scores(bits, 1)` で 1 件ずつ推論する最小の使い方になっている。
+
+```js
+const bundle = await loadBundle(await (await fetch('./model.bundle.json')).json(), { engine });
+const { data } = bundle.scores(Uint8Array.from([0, 1]), 1);   // XOR(0,1) → [0, 8]
+```
+
+## engine の選び方とフォールバック
+
+| `engine` | 実体 | 失敗したとき |
+|---|---|---|
+| `'auto'`(既定) | まず WASM を初期化し、だめなら JS へ落ちる | `bundle.notes` に理由を残して `'js'` で動く |
+| `'wasm'` | AssemblyScript 製のカーネル(`bitplane-wasm`) | 例外を投げる |
+| `'js'` | 純 TypeScript(`bitplane`) | — |
+
+実際に使われたエンジンは `bundle.engine` で分かる(`auto` 指定でも解決後の `'js'` / `'wasm'` が入る)。
+**出力の整数は両エンジンで完全に一致する** ので、フォールバックしても結果は変わらず、速度だけが変わる。
+フォールバックを気づかず出荷しないよう、`bundle.notes` を画面かログに出しておくとよい(この例は画面に出している)。
+
+`threads` の既定は 1 で、`SharedArrayBuffer` を使わない。そのため **COOP / COEP ヘッダは不要** で、
+素の `python -m http.server` のような静的ホスティングでそのまま動く。
+
+## 出荷前に `verify-web` を通す
+
+```bash
+uv run griffith deploy verify-web out_examples/xor.bundle.json --engine js
+uv run griffith deploy verify-web out_examples/xor.bundle.json --engine wasm
+```
+
+`verify-web` は Node 上で Web ランタイムを実際に動かし、出力を `ir/simulate` の参照実装と **整数で完全一致** させる出荷ゲートである。
+1 つでも違えばその場で失敗する。検証では `programs` 節が壊れていても黙って組み直さず、エラーにする(古い・改竄された `programs` を見逃さないため)。
+`-n` でサンプル数(既定 3)、`--seed` で乱数シードを変えられる。js と wasm の **両方** を通してから配る。
+
+## 自分のアプリに組み込む
+
+1. `codegen-web` の出力ディレクトリ(`mdl_web.js` とチャンク、`*.wasm`、`model.bundle.json`)を、そのままサイトの静的ファイルとして置く。
+   `mdl_web.js` は自分の隣の `release-simd.wasm` を `import.meta.url` 基準で読むので、**ファイルの相対配置を崩さない**。
+   別の場所に置くときは `loadBundle(doc, { wasmUrl })` で URL を渡す。
+2. 自分のページ(またはバンドラ越しのモジュール)から `import { loadBundle } from './mdl_web.js'` する。
+3. `loadBundle` はモデルごとに 1 回だけ呼んで使い回す。推論のたびに呼び直さない。
+4. 推論の入力は 0/1 の配列(dense)か RGBA(画像)。出力は整数スコアで、浮動小数点は出てこない。
+
+最小のページは `examples/32_deploy_web/` の `index.html`(約 1.2KB)と `main.js`(約 3.8KB)で、
+そのまま写して書き換えられる大きさにしてある。
+
+## 配信サイズ
+
+次は手元でビルドして測った値である(ランタイムは `runtime/web/dist`、`make web-runtime` の出力)。
+
+| 項目 | サイズ |
+|---|---:|
+| ランタイム一式(`dist/`、11 ファイル、モデル非依存) | 292,862B |
+| うち `lib-*.js`(エンジン本体、gzip 後 約 66KB) | 224,646B |
+| うち `release.wasm` + `release-simd.wasm` | 16,422B |
+| `model.bundle.json`(XOR、sweep 後 22 ゲート) | 1,928B |
+| 出力ディレクトリ全体(上記 + 例のページ + `samples.json`) | 297,562B |
+
+配信量の見積りは「バンドルサイズ + ランタイム約 290〜300KB」である(以前の記録では約 279KB、
+[配布バンドル仕様](/reference/deploy-bundle/) を参照。ランタイムのビルド内容で増減する)。
+実モデルのバンドルサイズは [配布バンドル仕様](/reference/deploy-bundle/) の実測表にある。
+
+## 実測(XOR、ブラウザ)
+
+:::note[この数値の条件]
+Apple M3 / macOS 26.6.2 上の、Claude デスクトップアプリ内蔵ブラウザ(Chromium 152 系)で測った。
+`python -m http.server` で配信し、`examples/32_deploy_web/` のページが「全 4 サンプル × 2,000 周 = 8,000 回の平均」を表示した値である。
+モデルは XOR(入力 2 ビット、sweep 後 22 ゲート)で、**非常に小さい**。実モデルの速度ではない。
+:::
+
+| 条件 | µs/推論 |
+|---|---:|
+| ページ初回読み込み(engine=auto → wasm) | 15.55 |
+| engine を js ↔ wasm で切り替えて計測(js, wasm, js, wasm の順) | 3.84 / 3.24 / 3.00 / 3.86 |
+
+読み取れることは次の 3 点である。
+
+- 4 サンプルとも予測が正解と一致した(正解率 4/4)。出力スコアは `[8, 1]` / `[0, 8]` のように整数で出る。
+- XOR 程度の小ささでは **js と wasm に有意な差は出なかった**(切り替えのたびに 3〜4µs の範囲でばらついた)。WASM の利点は、ゲート数の多いモデルで現れる見込みだが、この例では測っていない。
+- 初回の 15.55µs は、JIT のウォームアップを含む。ページを開いた直後の 1 回目の数字は定常値より大きく出る。
+
+実モデルの速度は、この XOR の値から推測せず、自分のバンドルで同じページを使って測ること。
+
+## 回路圧縮との関係
+
+`griffith deploy bundle` は既定で回路の圧縮(`--compress fast`、sweep)をバンドル生成の段階で焼き込む。
+この例の XOR は 32 ゲートが 22 ゲートになった(31.2% 減)。ブラウザ側では縮約をやり直さず、焼き込み済みの回路をそのまま実行する。
+
+さらに、`codegen-web` は C と同じく、配る直前に dense を **平坦化**(`lut_flat`)する。
+平坦化は、パススルー・NOT・定数・重複ゲートを配線へ畳んだ縮約済みネットリストで、lossless(スコアは整数で一致)である。
+Web では閾値を設けず、2 入力 `lut_layer` の列があれば常に使う(既定 `--dense-flat auto`)。
+Web の従来経路(`lut_layer`)は 1 ゲートあたりのコストが平坦化後より高いので、C と違って「平坦化で遅くなる」領域が無いためである。
+`--dense-flat off` で従来の `lut_layer` 列のまま配れる。`verify-web` も同じ判定で検証し、ゴールデンは元バンドルの `ir/simulate` である。
+
+HAR の実モデルで、内蔵ブラウザ(Chrome 152、Apple M3)の 1 推論あたりの時間を測ると次のようになった(µs、整数スコアは 4 通りとも一致)。
+
+| モデル | 枚数 | `lut_layer`(従来) | `lut_flat` js | `lut_flat` wasm |
+|---|---:|---:|---:|---:|
+| HAR k2400 | 1 | 80.8 | 19.4 | 11.1 |
+| HAR k2400 | 32 | 76.0 | 7.5 | 3.8 |
+| HAR k6000 | 1 | 248.3 | 46.4 | 27.6 |
+| HAR k6000 | 32 | 243.1 | 11.3 | 6.0 |
+
+3 枚以上をまとめて `scores(bits, n)` に渡すと、32 枚を 1 語に詰めて評価する経路へ自動で切り替わる。
+平坦化で配信サイズも小さくなる(HAR k6000 のバンドル 428KB → 262KB)。
+3 モデル分の棒グラフは [圧縮と最適化の一覧](/reference/deploy-optimizations/) の「Web の実測」にある。
+C 側の挙動は [Deploy Kit クイックスタート](/guides/deploy-quickstart/) を参照。
+
+## 次に読む
+
+- [Deploy Kit クイックスタート](/guides/deploy-quickstart/) — バンドルの作り方、C / CUDA / Metal へ進む道
+- [配布バンドル仕様](/reference/deploy-bundle/) — バンドルの形式と、Web の `programs` の扱い
+- [デモモデルを用意する](/guides/deploy-models/) — 実データのモデルを揃える手順
+- [ESP32 に載せる](/guides/deploy-esp32/) / [iPhone に載せる](/guides/deploy-ios/) — 実機での手順

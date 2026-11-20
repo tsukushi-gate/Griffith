@@ -1,0 +1,23 @@
+# XOR最小レシピ。数秒で終わる健全性チェック用。
+# 実行: uv run griffith train configs/recipes/logic_xor.yaml
+# 期待値照合込みでhard bit acc=1.0(全ビット一致)に到達すること。
+data:
+  name: logic:xor
+  batch_size: 32
+model:
+  kind: logic_mlp
+  k: 16
+  layers: 2
+  n_inputs: 2
+optim:
+  name: adam
+  lr: 0.1
+run:
+  epochs: 10
+  seed: 0
+  device: cpu  # 小規模のためCPU固定(決定的な健全性チェック)
+  wandb: false
+# 期待メトリクス(binary_vectorのhard_acc=bit accuracy)
+expected_metrics:
+  hard_acc_min: 1.0
+  hard_exact_match_min: 1.0

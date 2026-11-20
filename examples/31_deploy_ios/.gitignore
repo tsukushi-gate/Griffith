@@ -1,0 +1,10 @@
+# Xcode / ビルド成果物
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+.DS_Store
+
+# 生成物(gen_model.py / gen_xcodeproj.py が作る。コミットしない)
+Models/
+GriffithDemo.xcodeproj/

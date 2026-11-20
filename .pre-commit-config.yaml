@@ -1,0 +1,29 @@
+# pre-commit: コミット前の静的解析ゲート。導入は `uvx pre-commit install`
+# ruff/mypyはローカルのuv環境で実行し、CI(make lint / make type)と同一結果を保証する。
+# formatは未導入方針のためruff-formatは入れない。
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        # markdownの行末2スペース(強制改行)は保持する
+        args: ['--markdown-linebreak-ext=md']
+      - id: end-of-file-fixer
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check --fix
+        entry: uvx ruff check --fix
+        language: system
+        types: [python]
+      - id: mypy-core
+        name: mypy (core/encoding)
+        # 段階導入: 厳格化済みのコア2パッケージのみ検査する
+        entry: uv run mypy griffith_logic/core griffith_logic/encoding
+        language: system
+        pass_filenames: false
+        files: ^griffith_logic/(core|encoding)/

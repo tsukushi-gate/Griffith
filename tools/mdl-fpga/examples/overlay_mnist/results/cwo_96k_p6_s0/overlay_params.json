@@ -1,0 +1,88 @@
+{
+  "V": 8,
+  "W": 16000,
+  "DEPTH": 6,
+  "IN_BITS": 784,
+  "IN_PAD": 784,
+  "CLASSES": 10,
+  "GS": 1600,
+  "NROM": 1,
+  "TOTAL_GATES": 96000,
+  "GATE_WORDS": 12000,
+  "LAYER_WORDS": 2000,
+  "IN_WORDS": 98,
+  "ACT_WORDS": 2000,
+  "AW": 14,
+  "ACT_ADDR": 11,
+  "GATE_ADDR": 14,
+  "REM_DIV": 32000,
+  "REM_W": 15,
+  "CNT_W": 11,
+  "PRED_W": 4,
+  "WORDS_PER_CLASS": 200,
+  "CYCLES_PER_IMAGE": 12129,
+  "GATE_BITS": 4,
+  "layers": [
+    {
+      "index": 0,
+      "kind": "rot",
+      "w_in": 784,
+      "w_out": 16000,
+      "s_a": 1,
+      "s_b": 28,
+      "int_step": 8,
+      "rem_step": 0
+    },
+    {
+      "index": 1,
+      "kind": "rot",
+      "w_in": 16000,
+      "w_out": 16000,
+      "s_a": 0,
+      "s_b": 4,
+      "int_step": 8,
+      "rem_step": 0
+    },
+    {
+      "index": 2,
+      "kind": "rot",
+      "w_in": 16000,
+      "w_out": 16000,
+      "s_a": 0,
+      "s_b": 20,
+      "int_step": 8,
+      "rem_step": 0
+    },
+    {
+      "index": 3,
+      "kind": "rot",
+      "w_in": 16000,
+      "w_out": 16000,
+      "s_a": 0,
+      "s_b": 90,
+      "int_step": 8,
+      "rem_step": 0
+    },
+    {
+      "index": 4,
+      "kind": "rot",
+      "w_in": 16000,
+      "w_out": 16000,
+      "s_a": 0,
+      "s_b": 400,
+      "int_step": 8,
+      "rem_step": 0
+    },
+    {
+      "index": 5,
+      "kind": "rot",
+      "w_in": 16000,
+      "w_out": 16000,
+      "s_a": 0,
+      "s_b": 1800,
+      "int_step": 8,
+      "rem_step": 0
+    }
+  ],
+  "warnings": []
+}

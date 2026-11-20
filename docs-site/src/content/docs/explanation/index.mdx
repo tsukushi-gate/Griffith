@@ -1,0 +1,36 @@
+---
+title: '解説'
+description: 'DLGN とは何か、なぜ微分可能にできるのか、学習則と設計判断の理屈。手順ではなく「なぜ」を扱う。'
+sidebar:
+  order: 0
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+**手順ではなく理屈**を扱う節。手を動かす順路は[チュートリアル](/tutorials/)と[ガイド](/guides/)にある。
+
+## 入口
+
+前提知識ゼロなら「そもそもニューラルネットとは」から。
+機械学習の経験があるなら「DLGNとは何か」だけで足りる。
+
+<CardGrid>
+  <LinkCard title="DLGNとは何か・NNとの違い" href="/explanation/dlgn/" description="重みではなく「どの論理ゲートになるか」を学習する。soft/hard の二相と、推論がビット演算になる理由。" />
+  <LinkCard title="そもそもニューラルネットとは" href="/explanation/ai-basics/" description="パーセプトロン → 勾配降下 → なぜ微分可能性が必要か。前提知識ゼロからの最短経路。" />
+</CardGrid>
+
+## 仕組みを掘る
+
+<CardGrid>
+  <LinkCard title="DLGNの分類と系譜" href="/explanation/taxonomy/" description="算術演算DLGN / native DLGN / 6-LUT DLGN の3分類と、ハイブリッドの位置づけ。" />
+  <LinkCard title="LutLayerの数理" href="/explanation/lut-layer/" description="y = Σ w_k · basis_k(x) の導出、butterfly基底、5つのパラメータ化、soft→hard の崩壊。" />
+  <LinkCard title="学習則(BP/AP/DFA/ES)" href="/explanation/learning-rules/" description="backprop・AP法(Akiho Propagation)・DFA・EGGROLL の信用割当の違いと、レイヤ単位で混在させる仕組み。" />
+  <LinkCard title="アーキテクチャ全体像" href="/explanation/architecture/" description="学習 → IR抽出 → 検証 → lowering → HDL の8段データフローと疎結合設計の狙い。" />
+</CardGrid>
+
+## 背景と言葉
+
+<CardGrid>
+  <LinkCard title="設計判断の記録" href="/explanation/design-decisions/" description="IRを真実源に据えた理由など、後から効いてくる7つの決定を ADR 形式で。" />
+  <LinkCard title="用語集" href="/explanation/glossary/" description="DLGN / LUT / soft・hard / 離散化ギャップ など、サイトとコードで同じ意味で使う言葉の定義。" />
+</CardGrid>

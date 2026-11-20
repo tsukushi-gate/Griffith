@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DLGN Web デプロイ例</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; }
+    table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+    th, td { border: 1px solid #8884; padding: .3rem .6rem; text-align: left; }
+    .ok { color: #1a7f37; } .ng { color: #cf222e; }
+    code { background: #8882; padding: 0 .25em; }
+  </style>
+</head>
+<body>
+  <h1>DLGN Web デプロイ例</h1>
+  <p>
+    <label>engine:
+      <select id="engine">
+        <option value="auto">auto(wasm → 失敗時 js)</option>
+        <option value="js">js(純TS)</option>
+        <option value="wasm">wasm(SIMD)</option>
+      </select>
+    </label>
+    <span id="status">読み込み中…</span>
+  </p>
+  <p id="summary"></p>
+  <table>
+    <thead><tr><th>#</th><th>入力bits</th><th>スコア</th><th>予測</th><th>正解</th><th></th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <h2>注記(黙殺しない情報)</h2>
+  <ul id="notes"></ul>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

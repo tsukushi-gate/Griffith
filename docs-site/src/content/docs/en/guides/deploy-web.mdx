@@ -1,0 +1,212 @@
+---
+title: 'Run in the Web browser'
+description: 'How to run a trained DLGN in the browser. Build the distribution with codegen-web from a bundle, serve it statically, and run inference with loadBundle. Covers engine selection, the verify-web shipping gate, delivery size, and measured numbers.'
+---
+
+The deploy kit's Web target, unlike C or CUDA, **does not generate source code**.
+The executor (a TypeScript engine plus WASM kernels) already exists as a runtime, so `codegen-web` only **writes the bundle itself out as a distribution JSON and copies the runtime next to it**.
+The server only needs to serve static files. Inference finishes entirely inside the browser, so the input never leaves the device.
+This page collects the procedure, how to embed it in your own page, and numbers measured on one machine.
+
+## What you get
+
+The output directory of `codegen-web` can be dropped straight onto static hosting.
+
+| File | Role |
+|---|---|
+| `model.bundle.json` | The bundle itself (rename with `--name`) |
+| `mdl_web.js` | The public API (`loadBundle` etc.). ESM, works in both the browser and Node |
+| `lib-*.js` / `release-*.js` / `assets/` | Shared chunks referenced by the above. File names carry a hash and change on every build |
+| `release.wasm` / `release-simd.wasm` | WASM kernels (scalar / v128 SIMD). `auto` and `wasm` use the SIMD one |
+| `verify.mjs` | Node verification CLI (called by `verify-web`) |
+| `demo.js` / `index.html` | The default single-page demo (`?model=<url>` changes what it loads) |
+
+The chunk file names are not fixed, so **copy the contents of `dist/` as a whole** (this is what `codegen-web` does).
+
+## Prerequisites
+
+- This repository cloned, with `uv sync --extra dev --extra cpu` done
+- **node and npm** (used to build the WASM kernels and the JS runtime; the serving host does not need them)
+- A browser with WebAssembly (without SIMD, `auto` falls back to the JS engine, as described below)
+
+## Steps
+
+### 1. Build the runtime (first time only)
+
+```bash
+npm --prefix tools/webbench ci   # first time only
+make web-runtime                 # = npm --prefix tools/webbench run build:runtime
+```
+
+This produces `runtime/web/dist/`. It is a build artifact, so it is not tracked by git.
+If `runtime/web/dist` is missing, `codegen-web` fails and tells you to run this first (so a stale runtime is never shipped silently).
+
+
+### 2. Build the distribution from a bundle
+
+This example uses the XOR model, which needs no network. One command runs training, bundling, `codegen-web`,
+placing the custom page, and `verify-web`.
+
+```bash
+uv run python examples/32_deploy_web/gen.py
+```
+
+Underneath are these three commands (for your own model, prepare a bundle and start from the second line).
+
+```bash
+uv run griffith deploy bundle out_examples/xor_model.json -o out_examples/xor.bundle.json
+uv run griffith deploy codegen-web out_examples/xor.bundle.json -o out_examples/deploy_web
+uv run griffith deploy verify-web out_examples/xor.bundle.json --engine wasm
+```
+
+For how to make a bundle, see the [Deploy Kit Quickstart](/en/guides/deploy-quickstart/); for real-data models, see [Prepare the demo models](/en/guides/deploy-models/).
+`gen.py` also works with another bundle via `--bundle <x.bundle.json> --samples <samples.json>`.
+
+### 3. Serve statically and open in a browser
+
+```bash
+python -m http.server 8080 -d out_examples/deploy_web
+# → http://localhost:8080/
+```
+
+The page fetches `./model.bundle.json` and `./samples.json`, then shows each sample's predicted class, the accuracy, and µs per inference.
+The engine selector (auto / js / wasm) switches engines. Opening the page directly via `file://` makes fetch fail, so always serve it over HTTP.
+
+## Public API
+
+`mdl_web.js` exposes `loadBundle` (spec: `runtime/web/README.md`).
+
+```ts
+import { loadBundle } from './mdl_web.js';
+
+const bundle = await loadBundle(bundleJson, { engine: 'auto' });
+// bundle.kind: 'seg' | 'detection' | 'classify-image' | 'dense'
+// bundle.scores(bits, batch)            common to all kinds
+// bundle.scoresRgba(rgba)               image-input kinds only
+// bundle.segLabels(rgba)                kind==='seg' only
+// bundle.detect(rgba)                   kind==='detection' only
+// bundle.notes: string[]                notes that are never swallowed (program provenance, engine fallback, version warnings)
+```
+
+- `bundleJson` is the parsed bundle. A `.mdlb` binary can be passed as an `ArrayBuffer` / `Uint8Array` as it is.
+- `bundle.scores(bits, batch)` takes an **array of 0/1** of length `batch × input bit width` and returns integer scores (`Int32Array`).
+  For classification, the `argmax` is the predicted class.
+- For image-input models (`kind` of `seg` / `detection` / `classify-image`), pass model-resolution RGBA (`ImageData.data`) to
+  `scoresRgba` / `segLabels` / `detect`. The runtime does the encoding according to the bundle's preprocessing definition.
+- `detect` for detection models returns the boxes, including peak extraction.
+
+The `main.js` in this example is the minimal use: it runs a `dense` bundle one sample at a time with `scores(bits, 1)`.
+
+```js
+const bundle = await loadBundle(await (await fetch('./model.bundle.json')).json(), { engine });
+const { data } = bundle.scores(Uint8Array.from([0, 1]), 1);   // XOR(0,1) → [0, 8]
+```
+
+## Choosing an engine, and the fallback
+
+| `engine` | Implementation | On failure |
+|---|---|---|
+| `'auto'` (default) | Tries to initialize WASM first, else falls back to JS | Runs on `'js'` and records the reason in `bundle.notes` |
+| `'wasm'` | AssemblyScript kernels (`bitplane-wasm`) | Throws |
+| `'js'` | Pure TypeScript (`bitplane`) | — |
+
+The engine actually used is in `bundle.engine` (even with `auto`, it holds the resolved `'js'` or `'wasm'`).
+**The integer outputs match exactly between the two engines**, so a fallback changes only the speed, not the result.
+To avoid shipping a fallback unnoticed, show `bundle.notes` on screen or in a log (this example shows it on the page).
+
+`threads` defaults to 1 and does not use `SharedArrayBuffer`. So **no COOP / COEP headers are needed**, and it works as is
+on plain static hosting such as `python -m http.server`.
+
+## Run `verify-web` before shipping
+
+```bash
+uv run griffith deploy verify-web out_examples/xor.bundle.json --engine js
+uv run griffith deploy verify-web out_examples/xor.bundle.json --engine wasm
+```
+
+`verify-web` is the shipping gate: it actually runs the Web runtime on Node and requires the output to **match the `ir/simulate` reference as integers, exactly**.
+A single difference fails it on the spot. In verification, a broken `programs` section is an error rather than silently rebuilt (so stale or tampered `programs` cannot slip through).
+`-n` changes the sample count (default 3) and `--seed` the random seed. Pass **both** js and wasm before shipping.
+
+## Embedding in your own app
+
+1. Put the output directory of `codegen-web` (`mdl_web.js` and chunks, `*.wasm`, `model.bundle.json`) on your site as static files.
+   `mdl_web.js` loads the `release-simd.wasm` next to it relative to `import.meta.url`, so **do not break the relative layout**.
+   If you place it elsewhere, pass a URL with `loadBundle(doc, { wasmUrl })`.
+2. From your page (or a bundler-built module), `import { loadBundle } from './mdl_web.js'`.
+3. Call `loadBundle` once per model and reuse the result. Do not call it again on every inference.
+4. The input to inference is an array of 0/1 (dense) or RGBA (images). The output is integer scores; no floating point appears.
+
+The minimal page is `index.html` (about 1.2KB) and `main.js` (about 3.8KB) in `examples/32_deploy_web/`,
+small enough to copy and adapt.
+
+## Delivery size
+
+These were measured on the author's machine (runtime from `runtime/web/dist`, the output of `make web-runtime`).
+
+| Item | Size |
+|---|---:|
+| Runtime (`dist/`, 11 files, model-independent) | 292,862B |
+| of which `lib-*.js` (engine core, about 66KB gzipped) | 224,646B |
+| of which `release.wasm` + `release-simd.wasm` | 16,422B |
+| `model.bundle.json` (XOR, 22 gates after sweep) | 1,928B |
+| Whole output directory (the above + the example page + `samples.json`) | 297,562B |
+
+The delivery estimate is "bundle size + about 290–300KB of runtime" (an earlier record says about 279KB,
+see the [Bundle specification](/en/reference/deploy-bundle/); it varies with the runtime build).
+Bundle sizes of real models are in the measurement table of the [Bundle specification](/en/reference/deploy-bundle/).
+
+## Measured (XOR, in a browser)
+
+:::note[Conditions for these numbers]
+Measured on an Apple M3 / macOS 26.6.2, in the Claude desktop app's built-in browser (Chromium 152 series).
+Served with `python -m http.server`; the page of `examples/32_deploy_web/` shows the average over "4 samples × 2,000 rounds = 8,000 inferences".
+The model is XOR (2 input bits, 22 gates after sweep), which is **very small**. This is not the speed of a real model.
+:::
+
+| Condition | µs/inference |
+|---|---:|
+| First page load (engine=auto → wasm) | 15.55 |
+| Switching the engine js ↔ wasm and measuring (js, wasm, js, wasm in that order) | 3.84 / 3.24 / 3.00 / 3.86 |
+
+What can be read from this:
+
+- All four predictions matched the labels (accuracy 4/4). The output scores are integers such as `[8, 1]` / `[0, 8]`.
+- At XOR's tiny size, **js and wasm showed no meaningful difference** (the values scattered within 3–4µs across switches). WASM is expected to help on models with many gates, but this example did not measure that.
+- The first 15.55µs includes JIT warm-up. The very first number after opening the page reads higher than the steady state.
+
+Do not infer a real model's speed from this XOR figure; measure your own bundle with the same page.
+
+## Relation to circuit compression
+
+`griffith deploy bundle` bakes circuit compression (`--compress fast`, a sweep) in at bundle time by default.
+In this example, XOR went from 32 gates to 22 (31.2% fewer). The browser does not redo the reduction; it runs the baked-in circuit as it is.
+
+In addition, `codegen-web`, like C, **flattens** dense right before shipping (`lut_flat`).
+Flattening is a reduced netlist in which pass-through, NOT, constant and duplicate gates are folded into wires; it is lossless (scores match as integers).
+On the Web there is no threshold: whenever there is a chain of 2-input `lut_layer`s, it is used (default `--dense-flat auto`).
+The Web's legacy path (`lut_layer`) costs more per gate than the flattened one, so unlike C there is no region where flattening makes it slower.
+`--dense-flat off` ships the legacy `lut_layer` chain. `verify-web` uses the same decision, and its golden is `ir/simulate` of the original bundle.
+
+On the real HAR models, the time per inference in the built-in browser (Chrome 152, Apple M3) was as follows (µs; the integer scores matched in all four).
+
+| Model | Count | `lut_layer` (legacy) | `lut_flat` js | `lut_flat` wasm |
+|---|---:|---:|---:|---:|
+| HAR k2400 | 1 | 80.8 | 19.4 | 11.1 |
+| HAR k2400 | 32 | 76.0 | 7.5 | 3.8 |
+| HAR k6000 | 1 | 248.3 | 46.4 | 27.6 |
+| HAR k6000 | 32 | 243.1 | 11.3 | 6.0 |
+
+If you pass 3 or more samples at once to `scores(bits, n)`, it switches automatically to a path that packs 32 samples into one word.
+Flattening also shrinks the delivery size (the HAR k6000 bundle goes from 428KB to 262KB).
+Bar charts for all three models are in "Measured on the Web" of [Compression and Optimizations](/en/reference/deploy-optimizations/).
+For the C side, see the [Deploy Kit Quickstart](/en/guides/deploy-quickstart/).
+
+## Next
+
+- [Deploy Kit Quickstart](/en/guides/deploy-quickstart/) — how to make a bundle, and the path on to C / CUDA / Metal
+- [Bundle specification](/en/reference/deploy-bundle/) — the bundle format and how Web handles `programs`
+- [Prepare the demo models](/en/guides/deploy-models/) — how to gather real-data models
+- [Run on ESP32](/en/guides/deploy-esp32/) / [Run on iPhone](/en/guides/deploy-ios/) — procedures on real devices
+
+{/* i18n:source=guides/deploy-web.mdx hash=6867340200e2 */}

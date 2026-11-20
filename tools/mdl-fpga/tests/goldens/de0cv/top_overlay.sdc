@@ -1,0 +1,10 @@
+create_clock -name clk50 -period 20.000 [get_ports CLOCK_50]
+create_generated_clock -name clk_core -source [get_ports CLOCK_50] -divide_by 2 [get_registers {clk_core}]
+derive_clock_uncertainty
+set_false_path -to   [get_ports {LEDR[*]}]
+set_false_path -to   [get_ports {HEX0[*]}]
+set_false_path -to   [get_ports {HEX1[*]}]
+set_false_path -to   [get_ports {HEX2[*]}]
+set_false_path -to   [get_ports {HEX3[*]}]
+set_false_path -to   [get_ports {HEX4[*]}]
+set_false_path -to   [get_ports {HEX5[*]}]

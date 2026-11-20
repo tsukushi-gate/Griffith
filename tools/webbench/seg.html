@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>セグメンテーション — ブラウザ推論デモ</title>
+  <link rel="stylesheet" href="/src/app.css" />
+</head>
+<body class="bg-bg font-sans text-fg antialiased">
+  <div id="shell"></div>
+  <main class="px-4 py-6 md:pl-72 md:pr-8">
+    <h1 class="text-xl font-bold">セグメンテーション</h1>
+    <p class="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
+      Oxford-IIIT Pet の写真を、ペットと背景に1ピクセルずつ塗り分けます。
+      比較対象は同じタスクを学習した CNN(ONNX Runtime Web / TensorFlow.js)です。
+    </p>
+    <p class="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
+      モデル: 論理ゲート回路(<span data-meta="kLabel">—</span>)、
+      入力 <span data-meta="inputRes">—</span> /
+      <span data-meta="inputChannels">—</span>チャンネル(<span data-meta="preprocLabel">—</span>、
+      しきい値 <span data-meta="nThresholds">—</span>段)。<span data-about="recipe"></span>
+    </p>
+    <p class="mt-3 max-w-3xl rounded-lg border border-line bg-panel p-3 text-xs leading-relaxed text-muted"
+       data-note="concurrency"></p>
+    <div id="samples"></div>
+    <div id="grid"></div>
+    <p class="mt-6 max-w-3xl text-xs leading-relaxed text-muted">
+      サンプル画像の出典: The Oxford-IIIT Pet Dataset。
+    </p>
+  </main>
+  <script type="module" src="/src/seg_main.ts"></script>
+</body>
+</html>

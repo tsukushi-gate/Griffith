@@ -1,0 +1,32 @@
+# IWP-1: IWP(Input-Wise Parametrization, arXiv:2510.03250)アーム / MNIST k=2000×3層。
+# 対になるOPアーム: iwp1_mnist_2k_op.yaml
+#   → OPとの差分は model.parameterization / estimator / residual_init の3項目のみ。
+#     lr・batch_size・epochs・k・layers・n_inputs・tau・seed はOP側と完全に一致。
+# 注意: 論文のIWPは本ライブラリの parameterization='independent'(各エントリ独立、
+#       ρ(Ω_k)をエントリ確率とする一般化LUT)と数学的に同一。
+#       既存の parameterization='iwp'(リテラル積)は**別物**なので使わない。
+# 実行: uv run python experiments/bench_iwp.py --task mnist2k --arm both --seeds 0 1 2
+data:
+  name: mnist
+  batch_size: 128
+model:
+  kind: dlgn
+  k: 2000
+  layers: 3
+  n_inputs: 2
+  parameterization: independent  # = 論文IWP(Eq.11)
+  estimator: sin  # 論文 §C.1.1 が実験で採用した ρ(x)=0.5+0.5·sin(x)
+  residual_init: true  # 論文 §C.1.1 の Ω ~ N(±μ, σ) 初期化
+  tau: 10.0
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 10
+  eval_interval: 117
+  seed: 0
+  wandb: false  # 有効化するには wandb: true と WANDB_API_KEY を設定
+# 期待メトリクス: OPアームと同一の下限(dlgn_mnist_quick.yaml 由来の 0.90)。
+# IWP側の実測がまだ無いため、OPと同じ下限以上の値は置かない。
+expected_metrics:
+  hard_acc_min: 0.90

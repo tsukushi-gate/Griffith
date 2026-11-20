@@ -1,0 +1,26 @@
+{
+  "backend": "gowin-oss",
+  "top": "top",
+  "sources": [
+    "top.v",
+    "mdl_core.v",
+    "uart_rx.v",
+    "uart_tx.v",
+    "frame_rx.v",
+    "frame_tx.v"
+  ],
+  "device": "GW2AR-LV18QN88C8/I7",
+  "family": "GW2A-18C",
+  "cst": "top.cst",
+  "clock_hz": 27000000,
+  "nowidelut": true,
+  "nextpnr_vopts": [
+    "sspi_as_gpio"
+  ],
+  "gowin_pack_flags": [
+    "--mspi_as_gpio",
+    "--sspi_as_gpio",
+    "--ready_as_gpio",
+    "--done_as_gpio"
+  ]
+}

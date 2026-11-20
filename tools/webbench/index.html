@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ブラウザ推論デモ — 論理ゲート回路モデル</title>
+  <link rel="stylesheet" href="/src/app.css" />
+</head>
+<body class="bg-bg font-sans text-fg antialiased">
+  <div id="shell"></div>
+  <main class="px-4 py-6 md:pl-72 md:pr-8">
+    <h1 class="text-xl font-bold">ブラウザ推論デモ</h1>
+    <p class="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
+      学習したモデルを論理ゲートだけの回路に変換し、ブラウザ上でそのまま動かすデモです。
+      同じ画像を、同じタスクを学習した CNN(ONNX Runtime Web / TensorFlow.js / MediaPipe)にも
+      流し、推論時間・配信サイズ・読み込み時間・精度を並べて比べます。
+    </p>
+    <p class="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
+      計算方法(CPU / WebAssembly / WebGPU)は左のメニューで切り替えられます。
+      どの計算方法でも出力は完全に一致します(整数演算のみで実装しているため)。
+    </p>
+    <p class="mt-3 max-w-3xl rounded-lg border border-line bg-panel p-3 text-xs leading-relaxed text-muted"
+       data-note="concurrency"></p>
+    <div id="tasks" class="mt-6 grid max-w-3xl gap-3 sm:grid-cols-2"></div>
+  </main>
+  <script type="module" src="/src/index_main.ts"></script>
+</body>
+</html>

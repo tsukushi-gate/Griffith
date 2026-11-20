@@ -1,0 +1,211 @@
+---
+title: 'インストール'
+description: 'uv によるセットアップ、CPU/CUDA extras の選び方、動作確認コマンド。'
+---
+
+import { Tabs, TabItem, Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+griffith-logic のパッケージ管理は [uv](https://docs.astral.sh/uv/) を使う。
+`.venv` の直叩きや `pip install` / `uv pip install` は使わない(常に `uv run` / `uv sync`)。
+
+## 前提
+
+| 項目 | 要件 |
+|---|---|
+| Python | 3.11 以上 |
+| uv | 最新版を推奨 |
+| OS | macOS(Apple Silicon)/ Linux / Windows |
+
+uv が未導入なら次のどちらかで入れる。
+
+<Tabs>
+  <TabItem label="macOS / Linux">
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+  </TabItem>
+  <TabItem label="Homebrew">
+
+```bash
+brew install uv
+```
+
+  </TabItem>
+  <TabItem label="Windows (PowerShell)">
+
+```powershell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+  </TabItem>
+</Tabs>
+
+## セットアップ
+
+<Steps>
+
+1. リポジトリを取得する。
+
+   ```bash
+   git clone https://github.com/tsukushi-gate/Griffith.git
+   cd Griffith
+   ```
+
+2. 環境に合わせて extras を選んで同期する。
+
+   <Tabs syncKey="platform">
+     <TabItem label="Mac / Linux CPU">
+
+   ```bash
+   uv sync --extra dev --extra cpu
+   ```
+
+     </TabItem>
+     <TabItem label="Linux CUDA (GPU)">
+
+   ```bash
+   uv sync --extra dev --extra cu128
+   ```
+
+     </TabItem>
+   </Tabs>
+
+3. 動作確認する(下記「動作確認」参照)。
+
+</Steps>
+
+<Aside type="caution" title="cpu と cu128 は同時指定できない">
+`torch` / `torchvision` は `cpu` extra と `cu128` extra の**どちらか一方のみ**を選ぶ
+[conflicting extras](https://docs.astral.sh/uv/concepts/projects/dependencies/#conflicting-dependencies)
+として `pyproject.toml` の `[tool.uv] conflicts` に定義されている。両方を同時に指定すると
+`uv sync` が解決エラーになる。迷ったら Mac / CPU 開発は `cpu`、GPU 訓練は `cu128`。
+</Aside>
+
+## extras 一覧
+
+`pyproject.toml` の `[project.optional-dependencies]` で定義されている。よく使うものは上4つ。
+
+| extra | 主な中身 | いつ使うか |
+|---|---|---|
+| `cpu` | torch, torchvision, timm(CPU / MPS 版で解決) | 通常の開発・CI。Mac は常にこれ |
+| `cu128` | torch, torchvision, timm(CUDA 12.8 版で解決) | GPU 機・Modal / RunPod での訓練 |
+| `dev` | pytest, hypothesis, pytest-cov, httpx, mypy | テスト・型チェック(開発するなら必須) |
+| `editor` | fastapi, uvicorn, python-multipart | [ビジュアルエディタ](/guides/editor/)のバックエンド |
+| `visualizer` | websockets | ゲート単位の WebGL 描画ビューア(`tools/visualizer/`) |
+| `cloud` | modal, runpod, wandb-workspaces | [クラウド GPU](/guides/cloud-gpu/) 実行・レポート生成 |
+| `figures` | matplotlib, pillow | 実験結果の図生成 |
+| `teachers` / `text` | onnxruntime, huggingface-hub / transformers, datasets | 事前学習モデルの変換・蒸留 |
+| `sat` | python-sat | SAT による容量判定(表現可能性の証明) |
+| `wmt` / `sentiment` | datasets, sacrebleu / fugashi ほか | 翻訳・日本語感情分析のデータセット |
+
+extras は組み合わせて指定できる(`cpu` と `cu128` の同時指定を除く)。
+
+```bash
+uv sync --extra dev --extra cpu --extra editor   # エディタも使う開発環境
+```
+
+:::note[エディタ / 可視化ビューアはリポジトリを clone すれば使える]
+`editor` / `visualizer` extra が支えるビジュアルエディタと WebGL ビューアは、
+**このリポジトリに含まれている**(`tools/editor/` / `tools/visualizer/`)。
+PyPI パッケージには入らないので、使うにはリポジトリを clone して
+`uv sync --extra editor`(ビューアは `--extra visualizer`)を実行し、
+`make editor` で起動する。
+:::
+
+## プラットフォーム別の torch 解決
+
+`[tool.uv.sources]` の `sys_platform` マーカーにより、同じ `--extra cpu` / `--extra cu128` でも
+プラットフォームごとに異なるインデックスから解決される。ユーザ側で意識することはない。
+
+| 環境 | 選ぶ extra | 解決元 |
+|---|---|---|
+| Mac | `cpu` | PyPI(Apple Silicon MPS 対応版) |
+| Linux(CPU) | `cpu` | `pytorch-cpu` 専用 index(軽量。CI 用) |
+| Linux(CUDA) | `cu128` | `pytorch-cu128` 専用 index(CUDA 12.8 版) |
+
+## pip で使いたい場合
+
+uv を使わずライブラリとしてだけ利用することもできるが、**torch は別途インストールする**必要がある。
+`torch` / `torchvision` は上記のとおりプラットフォームごとに解決先が異なるため、
+本パッケージのコア依存には含まれていない。
+
+```bash
+# 1. torch を環境に合わせて先に入れる(https://pytorch.org/get-started/locally/)
+pip install torch torchvision
+
+# 2. リポジトリを取得して編集可能インストール
+pip install -e .
+```
+
+<Aside type="caution" title="pip 利用時の注意">
+- `pip install -e .` だけでは torch が入らないため、import 時に `ModuleNotFoundError: No module named 'torch'` になる。先に torch を入れること。
+- リポジトリ内での開発(テスト実行・実験スクリプト・エディタ)は uv 前提の手順で書かれている。開発するなら `uv sync` を使う。
+- CUDA 版 torch は PyPI の既定 wheel ではなく [公式インデックス](https://pytorch.org/get-started/locally/)から入れる。
+</Aside>
+
+## 環境変数
+
+`.env.example` を `.env` にコピーして必要な値を設定する。現状は wandb 関連の変数のみ。
+
+```bash
+cp .env.example .env
+```
+
+## 動作確認
+
+```bash
+uv run python -c "import griffith_logic as gl, torch; print(gl.__name__, torch.__version__)"
+uv run python examples/01_xor.py   # XOR学習 → hard eval で accuracy 1.00
+make test                          # 高速テストスイート(2分以内・常時グリーン)
+```
+
+`examples/01_xor.py` が `XOR: soft acc=1.00, hard acc=1.00` を表示すれば導入は完了。
+何が起きているかは[付録: XORチュートリアル](/tutorials/xor/)で1セルずつ追える。
+実データで動かすなら[1. MNISTを学習する](/tutorials/mnist/)へ進む。
+
+## HDL 検証ツール(任意)
+
+Verilog / VHDL の等価性検証を行う場合のみ、外部シミュレータを別途入れる。
+未導入でも HDL の生成自体はできる(照合がスキップされるだけ)。
+
+```bash
+brew install icarus-verilog   # Verilog 照合(iverilog)
+```
+
+VHDL 側(ghdl)は **macOS へのローカル導入を推奨しない**。Homebrew Cask 版 ghdl は
+破損しておりビルドできないことが実測で確認されており、VHDL 等価性検証は
+CI / クラウド(Modal)コンテナで走らせるのが公式運用。ghdl 未導入の環境では
+`hdl_vhdl` マーカーのテストが自動 skip されるだけで、他のテストには影響しない。
+詳しくは[HDLエクスポート](/guides/hdl-export/)を参照。
+
+## データセットの取得とライセンス
+
+チュートリアルと `examples/` のスクリプトは、必要なデータセットを**実行時に自動ダウンロード**する
+(既定の保存先はリポジトリ直下の `data-mnist/` などで、各ローダの `root=` 引数で変更できる)。
+本リポジトリはデータそのものを同梱・再配布しない。
+
+| データセット | 使うページ | 配布元 |
+|---|---|---|
+| MNIST / Fashion-MNIST | MNIST・XOR 以外のほぼ全チュートリアル | torchvision 経由 |
+| CIFAR-10 / CIFAR-100 | CNN・ResNet・Mixer 系 | torchvision 経由 |
+| Tiny Shakespeare | Logic GPT・RNN 系(文字言語モデル) | 原著者の公開テキスト |
+| SST-2 | TextCNN・感情分類の蒸留 | Hugging Face Datasets |
+| WRIME | 日本語感情分析 | Hugging Face Datasets |
+| Oxford-IIIT Pet / WIDER FACE ほか | セグメンテーション・物体検出 | 各配布元 |
+
+**利用条件は各配布元のライセンス・利用規約に従うこと。** 研究用途に限定されるもの、
+再配布が禁止されているものが含まれる。ダウンロードした時点でその条件に同意したことになるため、
+商用利用の可否は必ずデータセット側の一次情報で確認してほしい。ライブラリ本体
+(griffith-logic)のライセンスはデータセットには及ばない。
+
+## 次のステップ
+
+<CardGrid>
+  <LinkCard title="クイックスタート" href="/getting-started/quickstart/" description="LutLayer を積んで学習し、離散回路として動かすまでの最短経路。" />
+  <LinkCard title="基本コンセプト" href="/getting-started/concepts/" description="連続緩和と離散化、N入力LUT、IRが真実源という設計思想。" />
+  <LinkCard title="1. MNISTを学習する" href="/tutorials/mnist/" description="実行済み出力つきのチュートリアル。論理ゲートの塊が手書き数字を読む。" />
+  <LinkCard title="付録: XORで仕組みを覗く" href="/tutorials/xor/" description="16ゲートの全ノード図で soft→hard の崩壊を最小構成で観察する。" />
+  <LinkCard title="ビジュアルエディタ" href="/guides/editor/" description="IRグラフ表示・学習監視を GUI で。" />
+</CardGrid>

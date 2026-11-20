@@ -1,0 +1,230 @@
+---
+title: 'ベンチマーク一覧'
+description: 'モデル×データセット×hard精度×ゲート数を横断で並べた実測表。出典(実験日・環境・条件)つき。自前で測り直すための `griffith bench` の使い方も。'
+---
+
+このライブラリで実測した数値を、**モデル × データセット × hard 精度 × 規模**で
+横断的に並べる。各行に**いつ・どの環境で・どの条件で測ったか**を付けてある。
+
+モデル単位で「代表精度・主要課題・世界初判定」を1行ずつ俯瞰したい場合は
+[モデル動物園](/reference/model-zoo/) を先に読むとよい。
+
+:::caution[数値の読み方]
+- 掲載値はすべて **hard**(学習後に argmax でゲートを確定させ、**純ブール回路として
+  推論**したときの値)を主とする。soft(学習時の連続緩和)の値は差分を見る目的でのみ併記する。
+- 断りがない限り **単一シード・単一構成の実測**で、シード分散は取っていない。
+- ここに載るのは**このライブラリ内の設定間比較**である。外部実装との横並び比較表は、
+  条件を揃えた再測定をしていないため掲載しない(先行手法を本ライブラリ上で再実装して
+  比較した行には、その旨を明記している)。
+- 「要較正」と付いた行は**まだ収束していない・原因未特定**の記録であり、
+  到達点ではなく現在地として載せている。
+:::
+
+## 1. 画像分類
+
+| モデル / 構成 | データセット | hard | soft | ゲート数 | 実験日・環境 |
+|---|---|---|---|---|---|
+| DLGN(softmax N=2、6層×8,000、τ=10、unique 接続、200k iter) | MNIST 20×20 | **0.9784** | 0.9787 | 48,000 | 2026-07-02 / Modal A10G |
+| DLGN(Hard-ST 選択、6層×64,000、N=2、50k iter) | MNIST 28×28 | 0.9802 | — | 384,000 | 2026-04-15 / RunPod GPU |
+| DLGN(Soft-Mix 選択、同上) | MNIST 28×28 | 0.9746 | — | 384,000 | 2026-04-15 / RunPod GPU |
+| DLGN(softmax N=2、6層×16,000、50ep) | MNIST 28×28 | 0.9774 | 0.9830 | 96,000 | 2026-04-20 / RTX 5090 |
+| DLGN(warp N=2、同上) | MNIST 28×28 | 0.9611 | 0.9605 | 96,000 | 2026-04-20 / RTX 5090 |
+| DLGN(warp N=4、同上) | MNIST 28×28 | 0.9550 | 0.9564 | 24,000 | 2026-04-20 / RTX 5090 |
+| DLGN(softmax N=4、同上) | MNIST 28×28 | 0.9454 | 0.9566 | 24,000 | 2026-04-20 / RTX 5090 |
+| BinaryBrain 型(raw + BatchNorm + Binarize、N=6、10ep) | MNIST | 0.9483 | — | 14,516 | 2026-04-20 / GPU |
+| BinaryBrain 型(同、小規模、10ep) | MNIST | 0.9308 | — | 3,182 | 2026-04-20 / GPU |
+| DLGN(softmax N=6、10ep、上と同ゲート数条件) | MNIST | 0.6352 | — | 3,180 | 2026-04-20 / GPU |
+| Conv-DLGN(`softmax16g` 修正後) | CIFAR-10 | 0.5808 | — | — | 2026-07-05 / GPU |
+| Conv-DLGN(修正前、4 エントリ simplex) | CIFAR-10 | 0.4921 | — | — | 2026-07-05 / GPU |
+| LogicMixer(20k step、**要較正**) | MNIST | 0.671 | — | — | 2026-07-10 / A10G |
+| LogicResNet(3ep、**要較正**) | MNIST | 0.113 | — | — | 2026-07-10 / A10G |
+
+ゲート数は「層数 × 層幅」で数えた LUT 数(`GroupSum` は含まない)。
+
+## 2. パラメータ化の比較(同一条件)
+
+MNIST 28×28・6層・τ=10・50 エポック・bs=128・lr=0.01・seed=0、RTX 5090(32GB)、2026-04-20。
+
+| | softmax N=2 | warp N=2 | warp N=4 | softmax N=4 |
+|---|---|---|---|---|
+| hard 精度 | **97.74%** | 96.11% | 95.50% | 94.54% |
+| soft 精度 | 98.30% | 96.05% | 95.64% | 95.66% |
+| 離散化ギャップ | 0.56pp | **−0.06pp** | 0.14pp | 1.12pp |
+| ゲート数 | 96,000 | 96,000 | 24,000 | 24,000 |
+| パラメータ数 | 1,536,000 | 384,000 | 384,000 | 384,000 |
+| 訓練時間 | 5.0 min | 3.1 min | 2.1 min | 1.7 min |
+| 訓練時 FLOPs/サンプル | 16,896,000 | 1,920,000 | 1,440,000 | 2,976,000 |
+| 精度 / K ゲート | 0.0102 | 0.0100 | **0.0398** | 0.0394 |
+| 精度 / M パラメータ | 0.636 | **2.503** | 2.487 | 2.462 |
+
+離散化後の回路はどの方式でも同一の LUT 回路になるため、**推論性能に差はなく、
+違いは訓練時のみ**である。選び方は [パラメータ化を選ぶ](/guides/parameterization/)、
+実験の詳細は [パラメータ化の選び方を決めた実験](/explanation/results/parameterization-study/)。
+
+## 3. 学習則の比較(MNIST)
+
+| 学習則 | soft | hard | 条件 |
+|---|---|---|---|
+| BP(softmax N=2) | 0.983 | **0.977** | 6層・τ=10・50ep / RTX 5090 |
+| BP(Hard-ST 選択) | — | **0.980** | 6層×64,000・50k iter / RunPod GPU |
+| BP(Soft-Mix 選択) | — | 0.975 | 同上 |
+| AP 法(Akiho Propagation、誤差ブロードキャスト型、backprop 不使用) | ≈0.90 | ≈0.85 | flat 4層×16,000・30ep |
+
+AP 法は backprop を使わずに `重み += 誤差 × 基底 × 学習率` で LUT を直接更新する
+自社の学習則で、**全結合 MLP では深さ 2〜8 のどこでも soft ≈0.90 で安定する**
+(0.898〜0.909)。一方で **CNN では ≈0.11 に崩壊**(loss が ln 10 に固定=ランダム相当)、
+**RNN(seq2seq)では chance 水準で成立しない**(破綻境界は系列長 T=1 と T=2 の間)。
+崩壊の原因を「単調性の破れ」とする仮説は、単調錐への射影で単調度違反をゼロに強制しても
+3 シード全てで崩壊したため**棄却**されている。一方、誤差ブロードキャストの符号を
+ランダム化すると完全崩壊するため、**符号の一貫性は必須**である。
+
+`DFA` と `EGGROLL`(進化戦略)も学習則として実装されているが、
+現時点で公開できる MNIST 級の実測は XOR / パリティ / 全加算器での収束確認
+(hard eval 100%)にとどまる。
+
+学習則の仕組みは [学習則(BP/AP/DFA/ES)](/explanation/learning-rules/) を参照。
+
+## 4. 系列・言語
+
+| モデル | タスク | 指標 | 値 | 条件・環境 |
+|---|---|---|---|---|
+| LogicGPT L0(全 FP、天井) | Tiny Shakespeare 文字 LM | hard ppl | 4.94 | 語彙65・T=64・20k step / A10G |
+| LogicGPT L0b(FFN のみ論理) | 同上 | hard ppl | ≈7.9 | 同上 |
+| LogicGPT L1(+射影回路化) | 同上 | hard ppl | 19.24 | 同上 |
+| LogicGPT L2(+XNOR スコア) | 同上 | hard ppl | 19.39 | 同上 |
+| LogicGPT L3-C(attention 完全回路化) | 同上 | hard ppl | 15.54 | soft ≈12.2、ギャップ 0.29 |
+| **LogicGPT L3-C + Gumbel** | 同上 | hard ppl | **13.31** | soft ≈12.2、ギャップ 0.107 |
+| LogicLSTM | 遅延コピー(T=8) | hard acc | **1.00** | 全 seed で ≤200 step |
+| Elman 型(RDDLGN 相当) | 同上 | hard acc | ≈0.86 | 800 step でも未達 |
+| LogicReservoir(凍結回路 + 学習 readout) | 遅延ビット再生 | hard acc | **1.00** | 全 seed、readout のみ学習 |
+| DLGNAttentionTranslator | copy(seq_len=16) | hard acc | 25.77% | soft 71.66%、9,352 ゲート / 156,032 params、50k step |
+| RDDLGN(本ライブラリでの再実装) | copy(seq_len=16) | hard acc | 15.54% | soft 22.54%、10,888 ゲート / 180,608 params、同条件 |
+
+LogicGPT の構成は d=128・4 ヘッド・2 層・T=64・文字語彙 65 で、
+**論理部パラメータ 33,349・チェックポイント 545KB**。
+埋め込み・LayerNorm・残差加算・LM ヘッドは FP のまま残している。
+
+## 5. 検出・密予測・生成
+
+| モデル | タスク | 指標 | 値 | 条件・環境 |
+|---|---|---|---|---|
+| CenterNetLUT | Multi-MNIST 検出(96×96、1 物体) | mAP(hard) | **0.5425**(epoch 78、**修正前指標・再計測待ち**) | soft 0.1791、13,944 params、1,000ep・11h45m / RTX 5090。mAP は画像スコープのバグ修正前の計測 |
+| LogicUNet | 8×8 トイ領域分割 | IoU | 0.875 | **要較正** |
+| LogicUNet | フル MNIST マスク | IoU | 0.373 | **要較正** |
+| LogicBinaryDiffusion | binary MNIST | acc@t1 | 0.886 | デノイズマージン +0.377(passthrough 基準 0.499)、4ep、**3,937 params** |
+| LogicVAE(二値潜在) | binary MNIST | 再構成 | 193.6 nat/枚 | KL 0.448、active_bits 0.99、30ep |
+| LutAutoencoder | MNIST 再構成 | Test MSE(hard) | 0.0863(epoch 63) | soft 0.0438、30,784 ゲート / 492,544 params / Apple M4 Pro (MPS) |
+| LogicYOLO | Multi-MNIST 検出 | — | 本走未実施 | 往復 IoU > 0.8 の構造検証まで |
+| LogicGAN | 8×8 二値パターン | — | **研究課題** | 未調整では発散、安定化策で拮抗 |
+
+## 6. テキスト分類(実データ)
+
+WRIME(日本語 SNS 投稿の感情分析)、LUT ベース TextCNN。すべて hard 側の値。
+
+| タスク | Accuracy | F1 | パラメータ | 参考(外部公表値) |
+|---|---|---|---|---|
+| 2 値分類 | 82% | — | — | — |
+| 8 感情 2 値分類 | 83.4% | 0.367 | 約 208 万 | DeBERTa-v3-base 87.0% / F1 0.630 |
+
+8 感情版は DeBERTa の 1/88 のパラメータで Accuracy −3.6pt だが、**F1 は −0.263 と大きく劣る**
+(少数クラスの取りこぼし)。訓練時間は GPU で約 15 分。
+参考列は各モデルの公表値であり、本ライブラリ側と条件を揃えた再測定ではない。
+
+## 7. 事前学習モデルからの変換
+
+| 経路 | データセット | hard | 備考 |
+|---|---|---|---|
+| 枝刈り転写 + STE ft + int4 QAT + 加算木 lowering | MNIST | **0.9558** | teacher −2% 以内を達成、厳密 lowering、418k LUT 出力 |
+| 同レシピの転移(fan-in 48 / bits 6) | Fashion-MNIST | 0.8196 | 量子化・lowering はデータ非依存、fan-in 予算はタスク難度で約 1.5 倍必要 |
+| 枝刈り転写(fan-in 32、lowering 前) | MNIST | 0.9268 | 素朴な疎化転写は 0.097 に崩壊 → 枝刈り + STE で回復 |
+| 公開 ResNet18(CIFAR-10、0.9498)からの KD | CIFAR-10 | scratch 比 **+2.3pt** | dense DLGN。teacher と student の実力差が利得の源泉 |
+| 弱 teacher(MNIST)からの native DLGN 変換 | MNIST | scratch 未満(3 経路とも) | 負の結果。native DLGN 自体は 6〜8k ゲートで scratch 0.9739 |
+| 公開 DistilBERT からの KD | SST-2 | 80.7%(+7.3pt) | 73.4% → 80.7%、回復率 88.4%、α=0.25 / T=2 |
+| 公開 nanoGPT からのデータフリー蒸留 | 文字 LM | BPC 2.71 | 教師との差 0.51 bit、学習データ無し(教師生成テキストのみ) |
+
+## 8. CPU だけで追試できる実測(チュートリアル)
+
+本サイトのチュートリアルはすべて **GPU 不要・CPU のみ**で完走する縮小版として
+実行・生成されている。以下はページ内に出力されている実測値である
+(所要時間は目安で、CPU の型番は固定していない)。
+
+| チュートリアル | タスク | 実測 | 規模 | 所要 |
+|---|---|---|---|---|
+| [MNISTを学習する](/tutorials/mnist/) | MNIST 20×20 | soft 0.8765 / hard 0.8670 | 4,000 ゲート、4,000 step | 約10分 |
+| [ハイブリッドNNを作る](/tutorials/hybrid/) | 合成(Transformer ブロック 2 段) | loss 2.0758 → 1.6405 | 実数 8,706 + 論理 16,384 params | 約5分 |
+| [HDLへエクスポート](/tutorials/hdl-export/) | XOR | IR simulate 予測が正解一致、Verilog 照合 ALLPASS | — | 約10分 |
+| [CNNのHDLエクスポート](/tutorials/cnn-hdl-export/) | 小規模画像分類 | hard 0.760、IR 一致率 100%、Verilog ALLPASS | unroll 後 864 ゲート | 約10分 |
+| [学習則(DFA/AP)](/tutorials/learning-rules/) | XOR | DFA / AP / BP すべて acc 1.00 | AP は 7 step で早期終了、BP は 600 step | 約5分 |
+| [通しチュートリアル](/tutorials/full-pipeline/) | XOR | hard 1.00(step 100 以降)、Verilog ALLPASS | LutLayer 2→16→16 | 約15分 |
+| [付録: XOR](/tutorials/xor/) | XOR | soft / hard とも 1.00 | 16 ゲート | 約5分 |
+| [DWN(温度計符号化)](/tutorials/dwn/) | MNIST 20×20(1,200bit) | test acc 0.9540、soft-hard ロジット最大差 0.0 | 64 エントリ LUT、幅 (2000,1000) | 約7分 |
+| [BinaryBrain互換API](/tutorials/binarybrain/) | MNIST(7 フレーム変調) | eval 0.8030 / 0-1 丸め後 0.2110 / BN 再較正 0.6320 | LUT6 430 個、エントリ 27,520 | 約10分 |
+| [TextCNN](/tutorials/textcnn/) | 合成バイグラム XOR 感情分類 | soft / hard とも 1.0000(step 800 で到達) | ユニグラム上限 0.535 の課題 | 約5分 |
+| [Attentionツアー](/tutorials/attention-tour/) | 連想想起ほか 4 課題 | Boolean / MultiQuery / Positional は 1.0000、Pointer は soft 0.9843 / hard 0.8351 | 各 6,144 params(Pointer は 9,280) | 約2分 |
+| [論理化の梯子](/tutorials/logic-ladder/) | コピー課題 | hard: L0 1.000 / L1 0.746 / L2 1.000 / L3-C 0.990 | 800 step | 約8分 |
+| [論理ゲートGPT](/tutorials/logic-gpt/) | Tiny Shakespeare(語彙 32) | val bpc 3.134(一様分布ベースライン 5.00) | 合計 48,640 params、1,500 step | 約10分 |
+| [seq2seq(RDDLGN)](/tutorials/rddlgn-seq2seq/) | copy / reverse(語彙 8) | copy soft 1.0000 / hard 0.9688、reverse soft 0.9980 / hard 0.9414 | ゲートパラメータ 30,080 | 約8分 |
+| [LSTM / GRU](/tutorials/logic-lstm/) | 遅延コピー(8 時刻) | LSTM / GRU hard 1.0000、Elman 0.5781 | LSTM 1,024 / GRU 768 / Elman 256 params | 約5分 |
+| [WaveNet(因果conv)](/tutorials/logic-wavenet/) | 周期ビットパターン予測 | 1層(RF=2) hard 0.8167、3層(RF=8) hard 1.0000 | 3層で 1,536 ゲート | 約5分 |
+| [リザバー](/tutorials/logic-reservoir/) | parity / delay-d recall | parity hard: k=1,2 は 1.0000、k=3 は 0.8223、k=4 は 0.5723。delay-d は d=0〜5 すべて満点 | 凍結 16,384 + readout 1,026 params(学習対象 5.9%) | 約5分 |
+| [Mixer](/tutorials/logic-mixer/) | MNIST 28×28(16 トークン) | soft 0.6740 / hard 0.6580 | 3,000 step、depth 2 | 約8分 |
+| [ResNet(厳密な恒等)](/tutorials/logic-resnet/) | 縮小画像分類 | hard: XOR 残差 0.361 / OR 残差 0.299、恒等性の最大誤差 0.0 | 総ゲート数 200 | 約8分 |
+| [U-Net(密予測)](/tutorials/logic-unet/) | ノイズ入り MNIST マスク復元 | test IoU 0.5678(恒等ベースライン 0.4556) | 1,000 step、depth 2 | 約6分 |
+| [VAE(二値潜在)](/tutorials/logic-vae/) | MNIST 14×14 | 再構成 BCE 43.27 / KL 13.22 / 画素一致率 0.9073 / active bits 1.00 | 70,436 params、潜在 96bit | 約7分 |
+| [GAN](/tutorials/logic-gan/) | 8×8 二値パターン 4 種 | 安定化条件: late_g 1.459 / D acc 0.874 / hamming 3.7(素朴条件は 7.221 / 1.000 / 21.9) | 両条件でモード崩壊 1/4 | 約8分 |
+| [拡散モデル](/tutorials/logic-diffusion/) | 8×8 二値 MNIST(T=8) | acc@t1 0.8508(blank 0.7606 / copy 0.9380)、acc@tT 0.7544 | 1,633 params | 約6分 |
+| [物体検出](/tutorials/detection/) | 合成 Multi-MNIST | mAP@0.5 = 0.3003 | 679 ゲート、500 step | 約7分 |
+
+## 9. 自分で測る — `griffith bench`
+
+同じ土俵で測り直すためのベンチマークコマンドが同梱されている。
+レシピ YAML または保存済みチェックポイントを渡すと、
+**hard eval 精度・ゲート数・forward レイテンシ**を測って JSON に落とす。
+
+```bash
+# レシピから(短時間学習 → best チェックポイントを計測)
+uv run python benchmarks/bench.py configs/recipes/logic_xor.yaml
+
+# 学習せずレイテンシとゲート数だけ測る(hard_acc は null になる)
+uv run python benchmarks/bench.py configs/recipes/logic_xor.yaml --skip-train
+
+# 保存済みチェックポイントを計測
+uv run python benchmarks/bench.py outputs/<run>/checkpoints/best.pt
+```
+
+出力は `benchmarks/results/<日付>_<name>.json` に、次の固定スキーマで保存される。
+
+```json
+{
+  "name": "...",
+  "timestamp": "...",
+  "config": { "...": "..." },
+  "metrics": {
+    "hard_acc": 0.0,
+    "total_gates": 0,
+    "latency_ms_b1": 0.0,
+    "latency_ms_b128": 0.0
+  },
+  "env": { "python": "...", "torch": "...", "platform": "..." }
+}
+```
+
+計測条件は次のとおり固定されている。
+
+- **ゲート数** — `LutLayer` はニューロン数、`LutConv2d` はツリー内部ノード数を合算。
+- **レイテンシ** — 再現性のため **CPU 固定**。ウォームアップ 5 回のあと 20 回計測の中央値を
+  batch=1 と batch=128 の両方で取る(学習だけはレシピの device 設定に従う)。
+- **環境** — Python / PyTorch / プラットフォームを JSON に記録する。
+
+:::note[レイテンシ列がない理由]
+上の各表は個別の実験レポートからの転記で、レイテンシは測定項目に入っていなかった。
+`griffith bench` のスキーマは揃っているので、レイテンシつきの横断表は
+測定結果が揃い次第ここへ追加する。
+:::
+
+## 関連ページ
+
+- [論文再現と改善 — DLGN MNIST](/explanation/results/dlgn-repro/) — 0.9784 に至るまでの要素分解
+- [パラメータ化の選び方を決めた実験](/explanation/results/parameterization-study/)
+- [離散化ギャップの実態と対策](/explanation/results/discretization-gap/)
+- [アーキテクチャ横断の到達点](/explanation/results/architecture-survey/)

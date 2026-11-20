@@ -1,0 +1,27 @@
+# DLGN CIFAR-10 scratch基線レシピ(強teacher領域)。
+# dense DLGN(k=16000×4層、n_inputs=2、τ=100、cifar-10-3-thresholds=9216入力)。
+# CIFAR-10 dense 構成(--n-inputs 2 -k 16000 -l 4 -t 100)に整合。
+#
+# 用途: KD無しのscratch基線を測定(主指標 KD lift = KD best − scratch best の分母)。
+# 基線測定のため expected_metrics は設定しない(較正値を持ち込まない)。
+#
+# 実行: uv run griffith launch configs/recipes/dlgn_cifar10_quick.yaml --local
+data:
+  name: cifar-10-3-thresholds
+  batch_size: 128
+model:
+  kind: dlgn
+  k: 16000
+  layers: 4
+  n_inputs: 2
+  parameterization: softmax
+  tau: 100.0
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 15
+  seed: 42
+  eval_interval: 500
+  wandb: false  # 有効化するには wandb: true と WANDB_API_KEY を設定
+  run_name: d6_scratch_cifar10

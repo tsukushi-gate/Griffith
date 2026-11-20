@@ -1,0 +1,121 @@
+{
+  "kind": "overlay",
+  "top": "top",
+  "n_images": 1000,
+  "clock_hz": 50000000,
+  "clock_div": 2,
+  "core_clock_hz": 25000000.0,
+  "cycles_per_image": 6129,
+  "expected_total_cycles": 6129000,
+  "probe": {
+    "done": [
+      0,
+      1
+    ],
+    "proc": [
+      1,
+      10
+    ],
+    "match": [
+      11,
+      10
+    ],
+    "cycle": [
+      21,
+      32
+    ],
+    "width": 53,
+    "source": {
+      "start": 0,
+      "rst": 1
+    }
+  },
+  "overlay": {
+    "V": 8,
+    "W": 8000,
+    "DEPTH": 6,
+    "IN_BITS": 784,
+    "IN_PAD": 784,
+    "CLASSES": 10,
+    "GS": 800,
+    "NROM": 1,
+    "TOTAL_GATES": 48000,
+    "GATE_WORDS": 6000,
+    "LAYER_WORDS": 1000,
+    "IN_WORDS": 98,
+    "ACT_WORDS": 1000,
+    "AW": 13,
+    "ACT_ADDR": 10,
+    "GATE_ADDR": 13,
+    "REM_DIV": 16000,
+    "REM_W": 14,
+    "CNT_W": 10,
+    "PRED_W": 4,
+    "WORDS_PER_CLASS": 100,
+    "CYCLES_PER_IMAGE": 6129,
+    "GATE_BITS": 4,
+    "layers": [
+      {
+        "index": 0,
+        "kind": "rot",
+        "w_in": 784,
+        "w_out": 8000,
+        "s_a": 1,
+        "s_b": 28,
+        "int_step": 8,
+        "rem_step": 0
+      },
+      {
+        "index": 1,
+        "kind": "rot",
+        "w_in": 8000,
+        "w_out": 8000,
+        "s_a": 0,
+        "s_b": 4,
+        "int_step": 8,
+        "rem_step": 0
+      },
+      {
+        "index": 2,
+        "kind": "rot",
+        "w_in": 8000,
+        "w_out": 8000,
+        "s_a": 0,
+        "s_b": 20,
+        "int_step": 8,
+        "rem_step": 0
+      },
+      {
+        "index": 3,
+        "kind": "rot",
+        "w_in": 8000,
+        "w_out": 8000,
+        "s_a": 0,
+        "s_b": 90,
+        "int_step": 8,
+        "rem_step": 0
+      },
+      {
+        "index": 4,
+        "kind": "rot",
+        "w_in": 8000,
+        "w_out": 8000,
+        "s_a": 0,
+        "s_b": 400,
+        "int_step": 8,
+        "rem_step": 0
+      },
+      {
+        "index": 5,
+        "kind": "rot",
+        "w_in": 8000,
+        "w_out": 8000,
+        "s_a": 0,
+        "s_b": 1800,
+        "int_step": 8,
+        "rem_step": 0
+      }
+    ],
+    "warnings": []
+  }
+}

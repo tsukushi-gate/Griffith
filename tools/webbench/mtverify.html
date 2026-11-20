@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DLGN CPU マルチスレッド整数一致検証</title>
+  <style>
+    :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+    body { margin: 0 auto; max-width: 900px; padding: 16px; line-height: 1.6; }
+    h1 { font-size: 1.2rem; }
+    .muted { opacity: 0.7; font-size: 0.85em; }
+    #status { font-family: ui-monospace, monospace; font-size: 0.85rem; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <nav class="muted"><a href="/">ベンチ</a></nav>
+  <h1>DLGN bitplane-wasm マルチスレッド整数一致検証</h1>
+  <p class="muted">
+    5タスク×3試行の生スコアを <code>window.__mtScores</code> に載せる。
+    <code>?mt=1</code>(単スレッド)と <code>?mt=N</code> を別々にロードして
+    node 側(scripts/mt_verify.mjs)で全要素を突き合わせる。
+    crossOriginIsolated でない配信では自動的に単スレッドへ落ちる(その場合も
+    結果は当然一致する = フォールバックの健全性確認になる)。
+  </p>
+  <pre id="status"></pre>
+  <script type="module" src="/src/mtverify_main.ts"></script>
+</body>
+</html>

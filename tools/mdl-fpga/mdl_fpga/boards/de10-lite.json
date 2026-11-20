@@ -1,0 +1,312 @@
+{
+  "schema_version": 2,
+  "key": "de10-lite",
+  "name": "Terasic DE10-Lite",
+  "tier": 2,
+  "unverified": true,
+  "tier_note": "Tier2 = 実機未検証。ピン表は litex-boards terasic_de10lite.py(BSD-2-Clause, commit 3abf3a1815d321e5a5c9adc1f5f03745aa74ed89)と DE10-Lite 実プロジェクト qsf(zhelnio/ahb_lite_adc_max10)の機械照合で全ピン一致を確認して転記(boards/NOTICE 参照)。手打ちピンなし",
+  "device": "10M50DAF484C7G",
+  "family": "MAX 10",
+  "toolchain": "quartus",
+  "pin_format": "intel",
+  "detection": {
+    "cable": "usb-blaster",
+    "jtag_idcodes": [
+      "0x031050dd"
+    ],
+    "jtag_idcodes_note": "openFPGALoader src/part.hpp(Apache-2.0)の MAX 10 dual-supply 10M50D エントリより転記。実機採取で確認したら本 note を更新",
+    "jtag_part_regex": "10M50",
+    "usb": [],
+    "silk_hint": "基板に『DE10-Lite』とシルク印字(VGA+Arduino互換ヘッダ+7セグ6桁)"
+  },
+  "clock": {
+    "port": "MAX10_CLK1_50",
+    "pin": "PIN_P11",
+    "hz": 50000000
+  },
+  "headers": [
+    {
+      "name": "GPIO",
+      "connector": "JP1",
+      "pin_count": 40,
+      "io": {
+        "0": {
+          "pin": "PIN_V10",
+          "physical": 1
+        },
+        "1": {
+          "pin": "PIN_W10",
+          "physical": 2
+        },
+        "2": {
+          "pin": "PIN_V9",
+          "physical": 3
+        },
+        "3": {
+          "pin": "PIN_W9",
+          "physical": 4
+        },
+        "4": {
+          "pin": "PIN_V8",
+          "physical": 5
+        },
+        "5": {
+          "pin": "PIN_W8",
+          "physical": 6
+        },
+        "6": {
+          "pin": "PIN_V7",
+          "physical": 7
+        },
+        "7": {
+          "pin": "PIN_W7",
+          "physical": 8
+        },
+        "8": {
+          "pin": "PIN_W6",
+          "physical": 9
+        },
+        "9": {
+          "pin": "PIN_V5",
+          "physical": 10
+        },
+        "10": {
+          "pin": "PIN_W5",
+          "physical": 13
+        },
+        "11": {
+          "pin": "PIN_AA15",
+          "physical": 14
+        },
+        "12": {
+          "pin": "PIN_AA14",
+          "physical": 15
+        },
+        "13": {
+          "pin": "PIN_W13",
+          "physical": 16
+        },
+        "14": {
+          "pin": "PIN_W12",
+          "physical": 17
+        },
+        "15": {
+          "pin": "PIN_AB13",
+          "physical": 18
+        },
+        "16": {
+          "pin": "PIN_AB12",
+          "physical": 19
+        },
+        "17": {
+          "pin": "PIN_Y11",
+          "physical": 20
+        },
+        "18": {
+          "pin": "PIN_AB11",
+          "physical": 21
+        },
+        "19": {
+          "pin": "PIN_W11",
+          "physical": 22
+        },
+        "20": {
+          "pin": "PIN_AB10",
+          "physical": 23
+        },
+        "21": {
+          "pin": "PIN_AA10",
+          "physical": 24
+        },
+        "22": {
+          "pin": "PIN_AA9",
+          "physical": 25
+        },
+        "23": {
+          "pin": "PIN_Y8",
+          "physical": 26
+        },
+        "24": {
+          "pin": "PIN_AA8",
+          "physical": 27
+        },
+        "25": {
+          "pin": "PIN_Y7",
+          "physical": 28
+        },
+        "26": {
+          "pin": "PIN_AA7",
+          "physical": 31
+        },
+        "27": {
+          "pin": "PIN_Y6",
+          "physical": 32
+        },
+        "28": {
+          "pin": "PIN_AA6",
+          "physical": 33
+        },
+        "29": {
+          "pin": "PIN_Y5",
+          "physical": 34
+        },
+        "30": {
+          "pin": "PIN_AA5",
+          "physical": 35
+        },
+        "31": {
+          "pin": "PIN_Y4",
+          "physical": 36
+        },
+        "32": {
+          "pin": "PIN_AB3",
+          "physical": 37
+        },
+        "33": {
+          "pin": "PIN_Y3",
+          "physical": 38
+        },
+        "34": {
+          "pin": "PIN_AB2",
+          "physical": 39
+        },
+        "35": {
+          "pin": "PIN_AA2",
+          "physical": 40
+        }
+      },
+      "power": [],
+      "gnd": [],
+      "note": "io は litex JP1 コネクタ表からの機械変換(GPIO[n] は Terasic マニュアルの信号名)。物理 [11, 12, 29, 30] は非IO(電源/GND)だが 5V/3.3V/GND の別は未照合のため未収録(創作禁止)"
+    }
+  ],
+  "led": {
+    "port": "LEDR",
+    "pins": [
+      "PIN_A8",
+      "PIN_A9",
+      "PIN_A10",
+      "PIN_B10",
+      "PIN_D13",
+      "PIN_C13",
+      "PIN_E14",
+      "PIN_D14",
+      "PIN_A11",
+      "PIN_B11"
+    ]
+  },
+  "switch": {
+    "port": "SW",
+    "pins": [
+      "PIN_C10",
+      "PIN_C11",
+      "PIN_D12",
+      "PIN_C12",
+      "PIN_A12",
+      "PIN_B12",
+      "PIN_A13",
+      "PIN_A14",
+      "PIN_B14",
+      "PIN_F15"
+    ]
+  },
+  "button": {
+    "port": "KEY",
+    "active_low": true,
+    "note": "KEY[0..1](DE10-Lite は 2 本)",
+    "pins": [
+      "PIN_B8",
+      "PIN_A7"
+    ]
+  },
+  "hex": {
+    "note": "7セグ(負論理、セグメント a..g = bit0..6)。転記元は 8 ピン(bit7=小数点DP)だが本ツールは a..g の 7 本のみ使用。DP は未割当(RESERVE_ALL_UNUSED の弱プルアップ=負論理で消灯)",
+    "digits": [
+      {
+        "port": "HEX0",
+        "pins": [
+          "PIN_C14",
+          "PIN_E15",
+          "PIN_C15",
+          "PIN_C16",
+          "PIN_E16",
+          "PIN_D17",
+          "PIN_C17"
+        ]
+      },
+      {
+        "port": "HEX1",
+        "pins": [
+          "PIN_C18",
+          "PIN_D18",
+          "PIN_E18",
+          "PIN_B16",
+          "PIN_A17",
+          "PIN_A18",
+          "PIN_B17"
+        ]
+      },
+      {
+        "port": "HEX2",
+        "pins": [
+          "PIN_B20",
+          "PIN_A20",
+          "PIN_B19",
+          "PIN_A21",
+          "PIN_B21",
+          "PIN_C22",
+          "PIN_B22"
+        ]
+      },
+      {
+        "port": "HEX3",
+        "pins": [
+          "PIN_F21",
+          "PIN_E22",
+          "PIN_E21",
+          "PIN_C19",
+          "PIN_C20",
+          "PIN_D19",
+          "PIN_E17"
+        ]
+      },
+      {
+        "port": "HEX4",
+        "pins": [
+          "PIN_F18",
+          "PIN_E20",
+          "PIN_E19",
+          "PIN_J18",
+          "PIN_H19",
+          "PIN_F19",
+          "PIN_F20"
+        ]
+      },
+      {
+        "port": "HEX5",
+        "pins": [
+          "PIN_J20",
+          "PIN_K20",
+          "PIN_L18",
+          "PIN_N18",
+          "PIN_M20",
+          "PIN_N19",
+          "PIN_N20"
+        ]
+      }
+    ]
+  },
+  "io_standard": "3.3-V LVTTL",
+  "resources": {
+    "unit": "le",
+    "le": 49760,
+    "le_note": "Intel MAX 10 10M50 の LE 数(Terasic 表記は 50K)",
+    "m9k_kbits": 1638,
+    "multipliers_18x18": 144,
+    "sdram_mb": 64
+  },
+  "limits": {
+    "calibrated": false,
+    "note": "未較正。DE0-CV 実測則(fpga-sizing-guide)は ALM/Cyclone V 固有のため外挿しない。advisor は保守的既定で判定する。実機較正後に gates_per_le / spatial_le_fill / spatial_gates_max / overlay_gates_max を記録"
+  }
+}

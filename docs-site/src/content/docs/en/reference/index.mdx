@@ -1,0 +1,29 @@
+---
+title: 'Reference'
+description: 'Specifications for the public Python API, the griffith CLI, the IR schema, platform support and the deploy bundle — an index generated from docstrings and code.'
+sidebar:
+  order: 0
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+**The section you consult for specifications.** The Python API is generated from the public symbols
+in `griffith_logic/__init__.py` and the tutorials from `examples/*.py`, so both always match the
+code.
+
+<CardGrid>
+  <LinkCard title="Python API" href="/en/reference/api/" description="An index of every symbol exported by import griffith_logic, each with back-links to the examples that use it." />
+  <LinkCard title="griffith CLI" href="/en/reference/cli/" description="Subcommands of the unified griffith CLI (train / eval / export-hdl / deploy / editor / sweep / launch / runs / report)." />
+  <LinkCard title="IR Schema" href="/en/reference/ir-schema/" description="The IR (JSON) schema, node kinds, bit conventions, validation rules and versioning policy." />
+  <LinkCard title="Platform Support" href="/en/reference/platform-support/" description="Verification levels of each deploy-kit target (C / CUDA / Metal / Web), by compiler, OS, CPU architecture and GPU." />
+  <LinkCard title="Deploy Bundle Spec" href="/en/reference/deploy-bundle/" description="The distribution unit common to all targets: the programs / preproc_desc / readout sections, the .mdlb format and the compatibility policy." />
+</CardGrid>
+
+## Which section do you want?
+
+- **How do I do it?** → [Guides](/en/guides/) (step-by-step)
+- **Show me it working** → [Tutorials](/en/tutorials/) (gallery of executed examples)
+- **Why is it like that?** → [Explanation](/en/explanation/)
+- **What does this word mean?** → [Glossary](/en/explanation/glossary/)
+
+{/* i18n:source=reference/index.mdx hash=522989a3d565 */}

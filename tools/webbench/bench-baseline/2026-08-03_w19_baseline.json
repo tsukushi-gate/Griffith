@@ -1,0 +1,309 @@
+{
+  "generatedAt": "2026-08-03T12:10:42.045Z",
+  "frames": 50,
+  "port": 8787,
+  "headless": true,
+  "chromiumArgs": [
+    "--enable-unsafe-webgpu",
+    "--use-angle=metal"
+  ],
+  "webgpuHeadlessOk": true,
+  "env": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.7922.34 Safari/537.36",
+    "hardwareConcurrency": 8,
+    "crossOriginIsolated": true,
+    "webgpuApi": true,
+    "webgpuAdapter": {
+      "vendor": "apple",
+      "architecture": "metal-3",
+      "description": ""
+    }
+  },
+  "cells": [
+    {
+      "task": "det",
+      "backend": "js",
+      "status": "ok",
+      "result": {
+        "task": "det",
+        "backend": "js",
+        "actualBackend": "js",
+        "median": 21.024999976158142,
+        "p95": 23.522750014066695,
+        "min": 20.5349999666214,
+        "n": 50,
+        "loadMs": 116.51499998569489,
+        "modelGzipBytes": 170944
+      },
+      "round1Median": 21.117500007152557,
+      "round2Median": 21.024999976158142,
+      "notes": []
+    },
+    {
+      "task": "det",
+      "backend": "wasm",
+      "status": "ok",
+      "result": {
+        "task": "det",
+        "backend": "wasm",
+        "actualBackend": "wasm",
+        "median": 12.814999997615814,
+        "p95": 14.677500015497207,
+        "min": 12.584999918937683,
+        "n": 50,
+        "loadMs": 103.60500001907349,
+        "modelGzipBytes": 170944
+      },
+      "round1Median": 12.745000004768372,
+      "round2Median": 12.814999997615814,
+      "notes": []
+    },
+    {
+      "task": "det",
+      "backend": "webgpu",
+      "status": "ok",
+      "result": {
+        "task": "det",
+        "backend": "webgpu",
+        "actualBackend": "webgpu",
+        "median": 6.739999949932098,
+        "p95": 13.283250033855438,
+        "min": 5.995000004768372,
+        "n": 50,
+        "loadMs": 273.1749999523163,
+        "modelGzipBytes": 170944
+      },
+      "round1Median": 7.839999973773956,
+      "round2Median": 6.739999949932098,
+      "notes": []
+    },
+    {
+      "task": "detmono",
+      "backend": "js",
+      "status": "ok",
+      "result": {
+        "task": "detmono",
+        "backend": "js",
+        "actualBackend": "js",
+        "median": 16.069999992847443,
+        "p95": 17.80650001168251,
+        "min": 15.664999961853027,
+        "n": 50,
+        "loadMs": 71.5699999332428,
+        "modelGzipBytes": 47848
+      },
+      "round1Median": 15.784999966621399,
+      "round2Median": 16.069999992847443,
+      "notes": []
+    },
+    {
+      "task": "detmono",
+      "backend": "wasm",
+      "status": "ok",
+      "result": {
+        "task": "detmono",
+        "backend": "wasm",
+        "actualBackend": "wasm",
+        "median": 8.492500007152557,
+        "p95": 10.477249991893766,
+        "min": 8.355000019073486,
+        "n": 50,
+        "loadMs": 57.919999957084656,
+        "modelGzipBytes": 47848
+      },
+      "round1Median": 8.632499992847443,
+      "round2Median": 8.492500007152557,
+      "notes": []
+    },
+    {
+      "task": "detmono",
+      "backend": "webgpu",
+      "status": "ok",
+      "result": {
+        "task": "detmono",
+        "backend": "webgpu",
+        "actualBackend": "webgpu",
+        "median": 4.012499988079071,
+        "p95": 4.353249955177307,
+        "min": 3.4700000286102295,
+        "n": 50,
+        "loadMs": 241.87999999523163,
+        "modelGzipBytes": 47848
+      },
+      "round1Median": 3.9774999618530273,
+      "round2Median": 4.012499988079071,
+      "notes": []
+    },
+    {
+      "task": "detface",
+      "backend": "js",
+      "status": "ok",
+      "result": {
+        "task": "detface",
+        "backend": "js",
+        "actualBackend": "js",
+        "median": 25.8575000166893,
+        "p95": 28.11475002169609,
+        "min": 25.3400000333786,
+        "n": 50,
+        "loadMs": 166.92499995231628,
+        "modelGzipBytes": 323412
+      },
+      "round1Median": 26.092500030994415,
+      "round2Median": 25.8575000166893,
+      "notes": []
+    },
+    {
+      "task": "detface",
+      "backend": "wasm",
+      "status": "ok",
+      "result": {
+        "task": "detface",
+        "backend": "wasm",
+        "actualBackend": "wasm",
+        "median": 16.81749999523163,
+        "p95": 18.073249995708466,
+        "min": 16.544999957084656,
+        "n": 50,
+        "loadMs": 149.37000000476837,
+        "modelGzipBytes": 323412
+      },
+      "round1Median": 16.7325000166893,
+      "round2Median": 16.81749999523163,
+      "notes": []
+    },
+    {
+      "task": "detface",
+      "backend": "webgpu",
+      "status": "ok",
+      "result": {
+        "task": "detface",
+        "backend": "webgpu",
+        "actualBackend": "webgpu",
+        "median": 10.252499997615814,
+        "p95": 18.182249951362607,
+        "min": 9.860000014305115,
+        "n": 50,
+        "loadMs": 449.414999961853,
+        "modelGzipBytes": 323412
+      },
+      "round1Median": 12.965000033378601,
+      "round2Median": 10.252499997615814,
+      "notes": []
+    },
+    {
+      "task": "detreal",
+      "backend": "js",
+      "status": "ok",
+      "result": {
+        "task": "detreal",
+        "backend": "js",
+        "actualBackend": "js",
+        "median": 11.442499995231628,
+        "p95": 12.665250027179718,
+        "min": 11.079999923706055,
+        "n": 50,
+        "loadMs": 86.75499999523163,
+        "modelGzipBytes": 277108
+      },
+      "round1Median": 11.389999985694885,
+      "round2Median": 11.442499995231628,
+      "notes": []
+    },
+    {
+      "task": "detreal",
+      "backend": "wasm",
+      "status": "ok",
+      "result": {
+        "task": "detreal",
+        "backend": "wasm",
+        "actualBackend": "wasm",
+        "median": 9.040000021457672,
+        "p95": 10.603249967098236,
+        "min": 8.81000006198883,
+        "n": 50,
+        "loadMs": 77.89999997615814,
+        "modelGzipBytes": 277108
+      },
+      "round1Median": 8.927500009536743,
+      "round2Median": 9.040000021457672,
+      "notes": []
+    },
+    {
+      "task": "detreal",
+      "backend": "webgpu",
+      "status": "ok",
+      "result": {
+        "task": "detreal",
+        "backend": "webgpu",
+        "actualBackend": "webgpu",
+        "median": 5.502499938011169,
+        "p95": 8.948500049114227,
+        "min": 4.695000052452087,
+        "n": 50,
+        "loadMs": 211.62999999523163,
+        "modelGzipBytes": 277108
+      },
+      "round1Median": 8.709999978542328,
+      "round2Median": 5.502499938011169,
+      "notes": []
+    },
+    {
+      "task": "seg",
+      "backend": "js",
+      "status": "ok",
+      "result": {
+        "task": "seg",
+        "backend": "js",
+        "actualBackend": "js",
+        "median": 11.217500030994415,
+        "p95": 11.527750039100647,
+        "min": 10.15500009059906,
+        "n": 50,
+        "loadMs": 50.825000047683716,
+        "modelGzipBytes": 79078
+      },
+      "round1Median": 11.262499988079071,
+      "round2Median": 11.217500030994415,
+      "notes": []
+    },
+    {
+      "task": "seg",
+      "backend": "wasm",
+      "status": "ok",
+      "result": {
+        "task": "seg",
+        "backend": "wasm",
+        "actualBackend": "wasm",
+        "median": 9.224999964237213,
+        "p95": 9.448250049352646,
+        "min": 9.09500002861023,
+        "n": 50,
+        "loadMs": 48.10000002384186,
+        "modelGzipBytes": 79078
+      },
+      "round1Median": 9.225000023841858,
+      "round2Median": 9.224999964237213,
+      "notes": []
+    },
+    {
+      "task": "seg",
+      "backend": "webgpu",
+      "status": "ok",
+      "result": {
+        "task": "seg",
+        "backend": "webgpu",
+        "actualBackend": "webgpu",
+        "median": 1.862500011920929,
+        "p95": 2.0692499995231626,
+        "min": 1.3600000143051147,
+        "n": 50,
+        "loadMs": 73.97000002861023,
+        "modelGzipBytes": 79078
+      },
+      "round1Median": 2.715000033378601,
+      "round2Median": 1.862500011920929,
+      "notes": []
+    }
+  ]
+}

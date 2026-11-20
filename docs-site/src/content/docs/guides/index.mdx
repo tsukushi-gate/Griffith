@@ -1,0 +1,63 @@
+---
+title: 'ガイド'
+description: '学習・パラメータ化・IR・HDLエクスポート・デプロイ(C/CUDA/Metal/Web・ESP32・iPhone)・FPGA実装・エディタまで、目的別の手順書。'
+sidebar:
+  order: 0
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+**やりたいことから引く手順書**。理屈は[解説](/explanation/)、引数の一覧は[リファレンス](/reference/api/)、
+動く実例は[チュートリアル](/tutorials/)にある。
+
+## まず読む
+
+サイト全体のどこから読むかは学習ロードマップで決まる(RNN/CNN/Transformer 等の
+一般名からチュートリアルを引く対応表もここにある)。
+どのアーキテクチャ・パラメータ化・学習則を選ぶかで迷ったら、選択ガイドが最短。
+PyTorch 経験者は対応表から入ると差分だけを拾える。
+
+<CardGrid>
+  <LinkCard title="学習ロードマップ(どこから読むか)" href="/guides/roadmap/" description="NN初心者・PyTorch経験者・FPGAエンジニア・研究者の4経路と、一般名→チュートリアルの対応表。" />
+  <LinkCard title="何を使えばいいのか(選択ガイド)" href="/guides/choosing/" description="アーキテクチャ・パラメータ化・N入力数・学習則の4つの選択を、タスクと制約から1ページで決める。" />
+  <LinkCard title="PyTorchユーザーのための対応表" href="/guides/from-pytorch/" description="nn.Linear→LutLayer、model.eval() の意味の違いなど、常識が通じない点も含めた対応表。" />
+</CardGrid>
+
+## 学習する
+
+<CardGrid>
+  <LinkCard title="学習を回す" href="/guides/training/" description="CLI(griffith train)と Python API(run_training)の2経路、ハイパーパラメータの相場。" />
+  <LinkCard title="学習曲線の見方" href="/guides/training-curves/" description="wandb の記録規約と soft/hard 精度の読み分け。離散化ギャップ・崩壊を曲線から見抜く。" />
+  <LinkCard title="パラメータ化を選ぶ" href="/guides/parameterization/" description="softmax / independent / iwp / raw / warp の比較と、N=2 と N≥4 で答えが変わる理由。" />
+  <LinkCard title="クラウドGPU" href="/guides/cloud-gpu/" description="ローカル CPU / MPS / CUDA の使い分けと、大規模学習をクラウドへ投げる手順。" />
+</CardGrid>
+
+## 回路にする
+
+<CardGrid>
+  <LinkCard title="IRを扱う" href="/guides/ir/" description="学習済みモデルを IR(JSON)へ抽出し、検証・シミュレーション・保存する。" />
+  <LinkCard title="HDLエクスポートと等価性検証" href="/guides/hdl-export/" description="Verilog/VHDL を生成し、iverilog / ghdl で「元のモデルと同じ回路であること」を確かめる。" />
+</CardGrid>
+
+## デプロイする
+
+学習済みモデルを **ソフトウェアとして** 既存のデバイスで動かす道(デプロイキット)と、**回路として** FPGA に焼く道がある。
+どちらも同じ IR を起点にし、同じ golden model との整数一致で検証する。
+
+<CardGrid>
+  <LinkCard title="デプロイキット クイックスタート" href="/guides/deploy-quickstart/" description="IR から依存ゼロの C 実行ファイルまで XOR で通しで動かす。CUDA / Metal / Web への分岐も。" />
+  <LinkCard title="自分のモデルをデプロイする" href="/guides/deploy-your-model/" description="学習した torch モデルを IR → バンドル → C / Web / GPU へ。Python でバンドルを推論する方法と、CLI と Python API の既定の違いも。" />
+  <LinkCard title="デモモデルを用意する" href="/guides/deploy-models/" description="MNIST・行動認識・顔検出の3モデルを、学習済みの成果物から配布バンドルにする手順。" />
+  <LinkCard title="ESP32に載せる" href="/guides/deploy-esp32/" description="ESP-IDF でマイコンに書き込み、UART のログで整数一致とレイテンシを確かめる。" />
+  <LinkCard title="iPhoneに載せる" href="/guides/deploy-ios/" description="Xcode / SwiftUI から生成 C を呼び、複数モデルを同梱してシミュレータと実機でビルドする。" />
+  <LinkCard title="ブラウザで動かす" href="/guides/deploy-web/" description="codegen-web の WASM ランタイムと loadBundle で、静的ファイルだけのページから推論する。" />
+  <LinkCard title="GPU(CUDA / Metal)で動かす" href="/guides/deploy-gpu/" description="codegen-cuda / codegen-metal と自動選択の判定表。batch=1 で GPU が遅くなる理由と verify-metal。" />
+  <LinkCard title="FPGA実機へ焼く" href="/guides/fpga/" description="Tang Nano 20K / DE0-CV で実機動作させるまで。doctor → convert → build → flash。" />
+</CardGrid>
+
+## 見る・触る
+
+<CardGrid>
+  <LinkCard title="回路と配線を可視化する" href="/guides/wiring-visualization/" description="plot_circuit でモデルをゲート+配線の図にする。大きな網は俯瞰図へ自動で切り替わる。" />
+  <LinkCard title="ビジュアルエディタ" href="/guides/editor/" description="ブラウザで論理ゲートNNを組み・学習し・評価する。5タブの使い方をスクリーンショットで。" />
+</CardGrid>

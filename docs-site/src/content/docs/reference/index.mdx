@@ -1,0 +1,26 @@
+---
+title: 'リファレンス'
+description: '公開Python API・griffith CLI・IRスキーマ・対応プラットフォーム・配布バンドルの仕様。docstring とコードから自動生成した索引。'
+sidebar:
+  order: 0
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+**仕様を引くための節**。Python API は `griffith_logic/__init__.py` の公開シンボルから、
+チュートリアルは `examples/*.py` から自動生成しているので、コードと必ず一致する。
+
+<CardGrid>
+  <LinkCard title="Python API" href="/reference/api/" description="import griffith_logic が公開する全シンボルの索引。各シンボルに「このAPIを使っている例」の逆リンクつき。" />
+  <LinkCard title="griffith CLI" href="/reference/cli/" description="統一CLI md のサブコマンド(train / eval / export-hdl / deploy / editor / sweep / launch / runs / report)。" />
+  <LinkCard title="IRスキーマ" href="/reference/ir-schema/" description="IR(JSON)のスキーマ、ノード種別、ビット規約、検証ルール、バージョニング方針。" />
+  <LinkCard title="対応プラットフォーム" href="/reference/platform-support/" description="デプロイキットの各ターゲット(C / CUDA / Metal / Web)の検証段階。コンパイラ・OS・CPUアーキ・GPU別。" />
+  <LinkCard title="配布バンドル仕様" href="/reference/deploy-bundle/" description="全ターゲット共通の配布単位。programs / preproc_desc / readout の各節、.mdlb 形式、互換ポリシー。" />
+</CardGrid>
+
+## 使い方の目安
+
+- **やり方を知りたい** → [ガイド](/guides/)(手順書)
+- **動く実例が見たい** → [チュートリアル](/tutorials/)(実行済みの例ギャラリー)
+- **なぜそうなのか** → [解説](/explanation/)
+- **言葉の定義** → [用語集](/explanation/glossary/)

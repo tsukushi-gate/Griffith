@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebGPU 自己較正ルーフライン計測</title>
+  <style>
+    :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+    body { margin: 0 auto; max-width: 900px; padding: 16px; line-height: 1.6; }
+    h1 { font-size: 1.2rem; }
+    .muted { opacity: 0.7; font-size: 0.85em; }
+    #status { font-family: ui-monospace, monospace; font-size: 0.8rem; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <nav class="muted"><a href="/">ベンチ</a></nav>
+  <h1>WebGPU 自己較正ルーフライン計測</h1>
+  <p class="muted">
+    (a) 純ALU較正(XOR/AND/OR、メモリアクセス無し・分岐無し・依存連鎖無し)で
+    このマシンのWebGPU実測ALUピーク(instr/s)を出す。
+    (b) gate2(2入力LUT)の switch(tt&amp;0xf) 版 vs 無分岐マスク式版を、実カーネルと
+    同じ「命令列を読んでスクラッチへread-modify-write」ループでA/B比較する
+    (出力の完全一致を必ず検査する)。<br>
+    scripts/gpu_calib/metal_calib.mm・gate2_ab.mm(Metal直計測)の比較列。
+    クエリ: <code>?unroll=256&amp;threads=1048576&amp;trials=3&amp;warmups=8</code>
+    (ALU較正) / <code>?instr=2000&amp;slots=32&amp;gtrials=8&amp;gwarmups=4</code>(gate2 A/B)。
+  </p>
+  <pre id="status"></pre>
+  <script type="module" src="/src/gpualubench_main.ts"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+Griffith (griffith-logic)
+Copyright 2026 Masato Akiho and Griffith contributors
+
+This product includes software developed by Dr. Felix Petersen
+(difflogic, https://github.com/Felix-Petersen/difflogic), licensed under
+the MIT License.
+
+Portions of this product follow the formulation described in DIST_KD
+(https://github.com/hunto/DIST_KD), licensed under the Apache License,
+Version 2.0.
+
+The browser benchmark (tools/webbench) loads the MediaPipe Tasks Vision
+WASM runtime and models (https://github.com/google-ai-edge/mediapipe),
+Copyright The MediaPipe Authors, licensed under the Apache License,
+Version 2.0. These files are fetched at setup time and are not part of
+this repository.
+
+The visual editor (tools/editor) and the paper tree (tools/paper-tree)
+depend on elkjs (https://github.com/kieler/elkjs), licensed under the
+Eclipse Public License 2.0. elkjs is used unmodified.
+
+See THIRD_PARTY_NOTICES.md for the full text of all third-party licenses
+and for additional attributions.

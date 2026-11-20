@@ -1,0 +1,38 @@
+# 手元スモーク: conv-DLGN を MNIST(二値化 1×28×28)で 1 エポックだけ回す。
+# 形は内部調査リポジトリ先行実験の mnist_smoke(channels [8, 32, 128]、tau 6.5、lr 0.01)。
+# 葉は dilated8(5×5 窓、座標が (チャネル, 層) の計算可能関数 = 座標ストアゼロ)。
+# 28 → (conv 5×5 pad 2 → OR プール) 14 → 7 → 3、flat = 128·3·3 = 1152、
+# 頭部 [11520, 5760, 2880](cdlgn 頭部則)、rot2 の (r, s_b) = [(1, 6), (2, 107), (2, 661)]。
+#
+# 実行: uv run --no-sync griffith train configs/recipes/conv_dlgn_mnist_quick.yaml
+data:
+  name: mnist
+  batch_size: 256
+  params:
+    limit: 5000
+model:
+  kind: conv_dlgn
+  n_inputs: 2
+  parameterization: independent
+  estimator: sin
+  residual_init: true
+  selection: soft
+  tau: 6.5
+  group_assign: stride
+  conv:
+    in_shape: [1, 28, 28]
+    channels: [8, 32, 128]
+    sampler: dilated8
+    input_channels_per_tree: 2
+    downsample: orpool
+    head_wiring: rot2
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 1
+  eval_interval: 10
+  wandb: false
+  wandb_group: conv-dlgn
+  wandb_tags: [conv-dlgn-calibration, smoke, mnist, conv-dlgn]
+  run_name: conv_dlgn_mnist_quick

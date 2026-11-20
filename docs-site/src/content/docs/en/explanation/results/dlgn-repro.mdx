@@ -1,0 +1,79 @@
+---
+title: 'Reproducing the paper, and beating it — DLGN on MNIST'
+description: 'Against the paper''s 97.69%, hard acc 0.9784. An element-by-element ablation that traces the remaining gap to recipe differences and measurement bias.'
+---
+
+The first real answer to "can logic gates alone actually reach useful accuracy" is this: **can the
+MNIST results of the DLGN paper (Petersen et al., NeurIPS 2022) be reproduced with this library's
+`LutLayer` / `GroupSum` as they are?**
+
+The conclusion first. **Matching the official recipe gives hard accuracy 0.9784** (measured on the
+full 10,000-image test set), which is +0.15pt above the paper's 97.69%. Hard accuracy here means
+fixing each gate to a single Boolean function by argmax after training and **running inference as a
+pure logic circuit**.
+
+:::note[Experimental setup for this page]
+NVIDIA A10G on Modal (1 GPU), seed=0, run on 2026-07-02.
+`LutLayer` (softmax parameterization, N=2) × 6 layers × 8,000 neurons + `GroupSum`.
+The numbers are single-seed measurements; seed variance was not taken.
+:::
+
+## 1. Starting point: the naive reproduction was 4.4pt short
+
+The initial reproduction test (4 layers, τ=√(k/10)≈28.28, inputs binarized at 0.5, random wiring,
+evaluated on the first 2,000 test images) reached only **hard acc 0.9285** — 4.4pt below the paper.
+An ablation that restored one element at a time separated "implementation bug" from "recipe
+difference".
+
+## 2. Result after matching the official recipe
+
+| Run | Configuration | iteration | hard acc | soft acc | Runtime |
+|---|---|---|---|---|---|
+| A | official recipe (mnist20x20, 6 layers, τ=10, bs=100, unique wiring, continuous-valued inputs) | 50k | 0.9739 (best 0.9756) | 0.9751 | 2.7 min |
+| **A200** | **same, with the paper's 200k iterations** | **200k** | **0.9784 (best 0.9785)** | 0.9787 | 10.4 min |
+| C | initial test configuration (mnist784, 4 layers, τ=28.28, bs=128, random, binarized inputs) | 28k | 0.9489 (best 0.9497) | 0.9496 | 1.1 min |
+| C2 | same model as C, also reporting "first 2,000 images" evaluation | 28k | 0.9478 / **0.9220 on the first 2000** | 0.9489 | 1.1 min |
+
+Row C2 settled it. **For the very same model, evaluating on the first 2,000 test images comes out
+about 2.6pt lower than the full 10,000.** The first 2,000 simply happen to be a harder subset — a
+measurement bias.
+
+## 3. Element-by-element ablation
+
+Results of reverting **exactly one element** of the official recipe (50k iterations, hard 0.9739)
+back to the initial test setting.
+
+| Change | hard acc | Δ vs official |
+|---|---|---|
+| (official, unchanged) | 0.9739 | — |
+| binarize training inputs at 0.5 | 0.9726 | −0.13pt |
+| 6 layers → 4 layers | 0.9760 | +0.21pt |
+| **τ=10 → 28.284** | 0.9639 | **−1.00pt** |
+| mnist20x20 → mnist (784 inputs) | 0.9745 | +0.06pt |
+| unique wiring → random wiring | 0.9721 | −0.18pt |
+
+## 4. Breaking down the −4.4pt residual
+
+1. **Measurement bias, about −2.6pt** — evaluating on the first 2,000 images is consistently lower
+   than full evaluation.
+2. **τ scaling, about −1.0pt** — τ=√(k/10)≈28.28 under-scales the logits. The largest single
+   factor. The official small configuration fixes τ=10.
+3. **Combined recipe differences + training budget, the remaining ~−0.8pt** — input binarization
+   (−0.13pt), random wiring (−0.18pt), iteration count (50k → 200k gives +0.4pt), and so on.
+4. **What did not matter** — 4 vs. 6 layers (at 50k, 4 layers is marginally ahead) and 784 vs. 400
+   inputs (essentially no difference). With the same gate budget, 28×28 is fine as is.
+
+## 5. What this tells us
+
+- **It was a recipe difference, not an implementation difference.** With the same `LutLayer` /
+  `GroupSum`, simply aligning the hyperparameters reaches paper-level accuracy.
+- **τ (the `GroupSum` temperature) matters.** Setting it to a vague √(k/10) costs 1pt. For what the
+  setting means, see [Choosing a parameterization](/en/guides/parameterization/) and
+  [Running training](/en/guides/training/).
+- **Always state which sample set an evaluation used.** Partial evaluation moves the number by
+  2–3pt. Unless stated otherwise, MNIST numbers on this site are measured on the full 10,000 images.
+
+For the reproduction procedure itself, [Train on MNIST](/en/tutorials/mnist/) is the shortest path.
+A cross-cutting list of numbers is collected in [Benchmarks](/en/reference/benchmarks/).
+
+{/* i18n:source=explanation/results/dlgn-repro.mdx hash=1cc47358e938 */}

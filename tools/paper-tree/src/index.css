@@ -1,0 +1,192 @@
+/* デザイントークン(ライト/ダーク両対応)。
+   SVG(React Flowのエッジ)やcanvasからも参照するため、色は必ずhex/rgbaで定義する。 */
+
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --primary: #2563eb;
+  --primary-foreground: #f8fafc;
+  --ring: #2563eb;
+  --radius: 0.5rem;
+
+  --canvas-bg: #ffffff;
+  --canvas-dot: #e2e8f0;
+  --panel-bg: #f8fafc;
+  --node-bg: #ffffff;
+  --node-stub-bg: #f1f5f9;
+  --node-stub-fg: #94a3b8;
+
+  /* ノード種別のアクセント */
+  --accent-root: #0f172a;
+  --accent-category: #2563eb;
+  --accent-paper: #15803d;
+  --accent-report: #7c3aed;
+
+  /* エッジ3種 */
+  --edge-parent: #94a3b8;
+  --edge-next: #2563eb;
+  --edge-report: #7c3aed;
+}
+
+.dark {
+  --background: #0b1120;
+  --foreground: #e2e8f0;
+  --card: #111a2e;
+  --card-foreground: #e2e8f0;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --border: #263449;
+  --primary: #60a5fa;
+  --primary-foreground: #0b1120;
+  --ring: #60a5fa;
+
+  --canvas-bg: #0b1120;
+  --canvas-dot: #1e293b;
+  --panel-bg: #0f1729;
+  --node-bg: #111a2e;
+  --node-stub-bg: #172033;
+  --node-stub-fg: #64748b;
+
+  --accent-root: #e2e8f0;
+  --accent-category: #60a5fa;
+  --accent-paper: #4ade80;
+  --accent-report: #c084fc;
+
+  --edge-parent: #475569;
+  --edge-next: #60a5fa;
+  --edge-report: #c084fc;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
+  --color-panel: var(--panel-bg);
+  --color-node: var(--node-bg);
+  --radius-lg: var(--radius);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+    font-size: 13px;
+    margin: 0;
+  }
+}
+
+/* React Flowの既定色をトークンへ寄せる */
+.react-flow__background {
+  background-color: var(--canvas-bg);
+}
+.react-flow__minimap {
+  background-color: var(--panel-bg);
+}
+.react-flow__controls-button {
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--foreground);
+  fill: currentColor;
+}
+.react-flow__attribution {
+  display: none;
+}
+
+/* 落合式本文のMarkdownレンダリング(react-markdown) */
+.md-body {
+  line-height: 1.75;
+  word-break: break-word;
+}
+.md-body h3 {
+  margin: 1.25rem 0 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent-category);
+}
+.md-body h1,
+.md-body h2 {
+  margin: 1.25rem 0 0.4rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.md-body p {
+  margin: 0.5rem 0;
+}
+.md-body ul,
+.md-body ol {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+.md-body ol {
+  list-style: decimal;
+}
+.md-body li {
+  margin: 0.2rem 0;
+}
+.md-body a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+.md-body code {
+  background: var(--muted);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+  font-size: 0.85em;
+}
+.md-body pre {
+  background: var(--muted);
+  border-radius: 6px;
+  padding: 0.6rem;
+  overflow-x: auto;
+}
+.md-body blockquote {
+  border-left: 3px solid var(--border);
+  color: var(--muted-foreground);
+  margin: 0.6rem 0;
+  padding-left: 0.7rem;
+}
+.md-body table {
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+}
+.md-body th,
+.md-body td {
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.5rem;
+}
+
+/* KaTeX(数式)。長い数式は縦スクロールを増やさず横スクロールさせる */
+.md-body .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.2rem 0;
+}
+
+/* cmdk */
+[cmdk-item][data-selected='true'] {
+  background: var(--muted);
+}

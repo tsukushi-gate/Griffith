@@ -1,0 +1,28 @@
+# IWP-1: IWPアーム / XOR(L4級の論理関数タスク)。iwp1_xor_op.yaml と対。
+#   → OPとの差分は model.parameterization / estimator / residual_init の3項目のみ。
+# 注意: 論文IWP = parameterization='independent'。既存の 'iwp'(リテラル積)は別物。
+# 実行: uv run python experiments/bench_iwp.py --task xor --arm both --seeds 0 1 2
+data:
+  name: logic:xor
+  batch_size: 32
+model:
+  kind: logic_mlp
+  k: 16
+  layers: 2
+  n_inputs: 2
+  parameterization: independent  # = 論文IWP(Eq.11)
+  estimator: sin  # 論文 §C.1.1 の ρ(x)=0.5+0.5·sin(x)
+  residual_init: true  # 論文 §C.1.1 の Ω ~ N(±μ, σ) 初期化
+optim:
+  name: adam
+  lr: 0.1
+run:
+  epochs: 10
+  eval_interval: 8
+  seed: 0
+  wandb: false
+# 期待メトリクス: OPアーム(=既存 logic_xor.yaml 由来)と同一の閾値。
+# IWP側の実測はまだ無いため、OPより緩い/厳しい値を独自に置くことはしない。
+expected_metrics:
+  hard_acc_min: 1.0
+  hard_exact_match_min: 1.0

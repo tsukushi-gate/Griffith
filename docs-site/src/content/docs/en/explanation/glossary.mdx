@@ -1,0 +1,184 @@
+---
+title: 'Glossary'
+description: 'DLGN / LUT / soft and hard / parameterization / discretization gap — the words this site and the code use, and what each one means.'
+---
+
+Definitions of the vocabulary used across this project. The goal is that **code, documentation, and
+conversation all use the same word for the same thing** (a ubiquitous language). For background on
+the terms, see [What is a DLGN?](/en/explanation/dlgn/) and
+[Taxonomy and lineage](/en/explanation/taxonomy/).
+
+## The lineage at a glance
+
+```
+Academic lineage                  Implementation in this library
+────────────────                  ──────────────────────────────
+difflogic (2022)                  griffith_logic
+  │  2 inputs fixed, softmax        │  generalized to N inputs (N=2,4,6)
+  ├─ DLGN     ← fully connected     ├─ LutLayer (fully connected)
+  ├─ CDDLGN   ← convolutional       ├─ LutConv2d (convolution)
+  ├─ RDDLGN   ← RNN                 ├─ RDDLGN (seq2seq)
+  ├─ LDDLGN   ← lightweight         ├─ iwp parameterization
+  ├─ WARP     ← WH transform        ├─ warp parameterization
+  └─ CAGE     ← better training     └─ Hard-ST + temperature scheduler
+
+BinaryBrain ─ independent parameterization ─→ independent / raw parameterization
+```
+
+## 1. Architecture names (from the literature)
+
+| Term | Full name | Source | Meaning |
+|---|---|---|---|
+| **DLGN** | Deep Differentiable Logic Gate Networks | Petersen et al., NeurIPS 2022 | A **fully connected** network that makes two-input logic gates differentiable via softmax. This library generalizes it to N inputs, so it is not DLGN itself |
+| **difflogic** | — | same (the reference implementation's name) | The name of the official DLGN implementation repository. "difflogic-compatible" = N=2 + softmax mode |
+| **CDDLGN** | Convolutional DDLGN | Petersen et al., NeurIPS 2024 | **Convolution** built from logic-gate trees. The design `LutConv2d` follows |
+| **RDDLGN** | Recurrent DDLGN | Buhrer et al., 2025 | The **RNN / seq2seq** extension of DLGN |
+| **LDDLGN** | Light DDLGN | Ruttgers et al., 2025 | **Lightweight** variant using per-input parameterization (IWP) |
+| **WARP** | WAlsh Relaxation for Probabilistic LNNs | Gerlach et al., 2025 | **Unconstrained optimization** via the Walsh-Hadamard transform. Stable at N=4, 6 |
+| **CAGE** | Align Forward, Adapt Backward | Kim, 2026 | Hard-ST training + adaptive temperature scheduling |
+| **DWN** | Differentiable Weightless Neural Networks | Bacellar et al., ICML 2024 | 6-input LUTs + learned wiring. EFD gradients |
+| **LogicNets** | — | Umuroglu et al., FPL 2020 | An "arithmetic DLGN": enumerates truth tables from quantization and sparsification |
+| **LL-ViT** | — | Nag et al., ICFPT 2025 | A hybrid that turns only the ViT MLP into LUTs |
+| **BinaryBrain** | — | Imamura | A framework for training LUTs directly (C++). Origin of the `independent` / `raw` parameterizations |
+
+## 2. Components
+
+### Core layers
+
+| Name | What it does | Input/output |
+|---|---|---|
+| **LutLayer** | A fully connected layer of N-input LUT gates. The smallest building block | `(B, in_dim)` → `(B, out_dim)`, values in [0,1] |
+| **LutConv2d** | A convolutional layer built from logic-gate trees | `(B, C, H, W)` → `(B, C', H', W')` |
+| **DWNLayer** | Binary inputs → N-input LUTs × n_luts → binary outputs (EFD gradients). An independent layer, not a LutLayer parameterization | `(B, in_bits)` → `(B, n_luts)`, values in $\{0,1\}$ |
+
+### Aggregation and output layers
+
+| Name | What it does | Used for |
+|---|---|---|
+| **GroupSum** | Splits neurons into k groups, sums each, divides by temperature τ | the output layer for **classification** |
+| **SpatialGroupSum** | GroupSum that preserves the spatial dimensions | the head for **detection** |
+| **OrPooling2d** | Max pooling (= logical OR pooling) | downsampling inside a CNN |
+
+### The boundary between reals and bits
+
+| Name | What it does |
+|---|---|
+| **Binarize** | Forward binarizes at a threshold; backward is a HardTanh STE |
+| **RealToBinary** | Binarizes real inputs at several thresholds and expands them along the batch dimension (binary modulation) |
+| **BinaryToReal** | Averages the modulation frames back into real values |
+| **DifferentiableLutBlock** | A composite layer of LutLayer(raw) + BatchNorm1d + Binarize (BinaryBrain-compatible) |
+
+## 3. Parameterization schemes
+
+How a LutLayer's weights $W$ are turned into gate outputs.
+
+| Scheme | Origin | Formula | Parameters/gate | Character |
+|---|---|---|---|---|
+| **softmax** (default) | DLGN | $w=\mathrm{softmax}(W)$ | $2^N$ | Entries **compete** (they sum to 1). At N=2 this is 16-gate mode |
+| **independent** | BinaryBrain | $w=\sigma(W)$ | $2^N$ | Each entry is **independent** (the sum ≠ 1) |
+| **iwp** | LDDLGN | $\prod_j [p_j x_j + (1-p_j)(1-x_j)]$ | **$N$** | One parameter per input. About a tenth of the parameter count |
+| **raw** | BinaryBrain | $w=\mathrm{clamp}(W,0,1)$ | $2^N$ | Keeps the weights directly in [0,1]; clamped after each optimizer step |
+| **warp** | WARP | $y=\sigma(\sum_k \theta_k \varphi_k^{WH}(1-2x)/\tau)$ | $2^N$ | **Unconstrained real** parameters on the Walsh-Hadamard basis. Recommended for stable training at N=4, 6 |
+
+:::caution
+`softmax` / `independent` / `iwp` / `raw` / `warp` are **flag names in the code**, and are kept
+distinct from the paper names (DLGN / BinaryBrain / LDDLGN / WARP).
+:::
+
+## 4. Training
+
+### Gate selection (`selection`)
+
+| Scheme | forward | backward | Selection gap | Origin |
+|---|---|---|---|---|
+| **soft** (default) | softmax mixture (weighted sum of all gates) | the analytic softmax Jacobian | **> 0** (training ≠ inference) | DLGN |
+| **hard_st** | argmax (a single gate is selected) | STE approximation via $\mathrm{softmax}(W/\tau_b)$ | **= 0** (training = inference) | CAGE |
+
+### Learning rules
+
+| Name | Approach | How the gradient is made |
+|---|---|---|
+| **BP** | PyTorch autograd | automatic differentiation (standard SGD / Adam) |
+| **AP** (Akiho Propagation) | manual updates | `w += error × basis × lr` (no backpropagation) |
+| **DFA** (Direct Feedback Alignment) | error sent directly through fixed random matrices | no sequential dependency between layers |
+| **EGGROLL** | evolution strategies | gradient-free search |
+
+Learning rules can be mixed per layer (`with_learning` + `HybridTrainer`).
+
+## 5. Technical concepts
+
+### LUTs
+
+| Term | Definition |
+|---|---|
+| **LUT** (look-up table) | A truth table storing the output for each input bit pattern. The basic building block of FPGAs / ASICs |
+| **N-input LUT / LUT-N** | A LUT with N inputs, holding $2^N$ entries (N=2, 4, 6 are supported) |
+| **LUT6** | A six-input LUT. The standard primitive in current FPGAs; N=6 mode maps onto one cell directly |
+| **n_inputs / N** | The number of LUT inputs (fan-in). The argument name in the code |
+| **n_entries** | The number of LUT entries, $=2^N$. N=2→4, N=4→16, N=6→64 |
+| **16-gate mode** | Active only for N=2 + softmax. A softmax over the 16 two-input Boolean functions (AND, OR, XOR, …), fully compatible with difflogic |
+
+### Computational techniques
+
+| Term | Definition |
+|---|---|
+| **Butterfly basis** | An efficient recursive algorithm for the LUT basis functions. $O(N\cdot 2^N)$ (the naive implementation is $O(2^{2N})$) |
+| **Binary regularization** | `loss = mean(w × (1-w))`, pushing weights toward 0/1 |
+| **Residual initialization** | Initially selects the "pass-through" gate in a gate tree, preventing vanishing gradients |
+| **STE** (straight-through estimator) | Discretize in the forward pass, pass gradients through a continuous approximation in the backward pass |
+
+### Modes
+
+| Term | Definition | In code |
+|---|---|---|
+| **soft mode** | Training mode. Outputs are continuous values in [0,1] and gradients flow | `model.train()` |
+| **hard mode** | Inference mode. Outputs are discrete values in $\{0,1\}$ — a pure logic circuit | `model.eval()` |
+| **Discretization gap / selection gap** | The performance difference between soft and hard outputs, `acc(soft) - acc(hard)` | can be driven to 0 with Hard-ST |
+| **Forward alignment** | The principle that the training forward pass and the inference forward pass must match (CAGE) | achieved with Hard-ST |
+
+### Wiring schemes
+
+| Scheme | Definition |
+|---|---|
+| **random** | Each neuron picks N inputs at random (with repetition). The default; some inputs may end up unused |
+| **unique** | Guarantees that every input is picked at least once |
+
+## 6. Downstream (IR and HDL)
+
+| Term | Definition |
+|---|---|
+| **IR** (intermediate representation) | JSON that freezes the trained circuit. Holds truth tables + wiring + shapes, and is the **source of truth**: everything downstream (HDL generation, the editor, resource estimates) looks only at the IR |
+| **lowering** | Expanding native nodes such as `conv2d` / `or_pool2d` into a sequence of `lut_layer` nodes. The stage before HDL generation |
+| **simulate** | The golden model that runs the IR bit-exactly under numpy. The reference for equivalence checking |
+| **Three-way equivalence** | "PyTorch hard eval ⇔ simulate ⇔ HDL simulation" agreeing on every vector |
+| **Resource estimate** | A synthesizer-independent first-order count of LUTs, logic depth, and wires taken from the IR |
+
+## 7. Hardware and business terms
+
+| Term | Definition | Relation to this project |
+|---|---|---|
+| **Differentiable circuit** | Relaxing a circuit into something continuous and differentiable, then optimizing it by backpropagation | The core technology; LutLayer is its implementation |
+| **FPGA** | A reprogrammable logic device whose basic building block is the LUT | A trained model in hard mode maps onto it directly |
+| **Sovereign AI** | AI that closes inside your own country or organization without depending on the cloud | FPGA inference gives low cost, low power, and data sovereignty |
+
+## 8. Terms that are easy to confuse
+
+**"LUT-Network" vs. "DLGN"**
+
+| | LUT-Network | DLGN |
+|---|---|---|
+| What it names | a **general category** of NNs built from LUTs | the **specific method** of Petersen et al. (2022) |
+| Coverage | includes BinaryBrain, difflogic, and this library | two inputs + softmax + fully connected only |
+| When to use it | as a technical category | as a citation |
+
+**"difflogic" vs. "DLGN"** — the former is an implementation (a repository name), the latter a
+method (a paper). Use difflogic when comparing code, DLGN in academic citations.
+
+**"softmax parameterization" vs. "DLGN"** — the former is a flag in the code, the latter the whole
+method of "a fully connected architecture + softmax".
+
+**"Hard-ST" vs. "CAGE"** — the former is a gate selection scheme based on an STE
+(`selection='hard_st'`), the latter the whole training method of "Hard-ST + adaptive temperature
+scheduling".
+
+{/* i18n:source=explanation/glossary.mdx hash=ad76cb5549fb */}

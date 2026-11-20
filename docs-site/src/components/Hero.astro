@@ -1,0 +1,81 @@
+---
+// LP専用のカスタムヒーロー。
+// frontmatter に `hero:` を持つページ(= トップのLP)だけがこのコンポーネントを通る。
+// 方針: グラデーション・装飾帯は使わず、余白と階層だけで見せる。
+const { hero } = Astro.locals.starlightRoute.entry.data;
+const title = hero?.title ?? Astro.locals.starlightRoute.entry.data.title;
+const tagline = hero?.tagline ?? '';
+const actions = hero?.actions ?? [];
+
+// ロケール依存のサブ動線(Starlightのlocaleはrootロケールでundefined)。
+const isEn = Astro.locals.starlightRoute.locale === 'en';
+// サブパス配信では BASE_URL が `/Griffith/` になる(base なしなら `/`)
+const sitePrefix = import.meta.env.BASE_URL.replace(/\/$/, '');
+const base = sitePrefix + (isEn ? '/en' : '');
+// hero.actions は frontmatter 由来なので remark プラグインが通らない。ここで前置する。
+const withBase = (/** @type {string} */ link) =>
+	link.startsWith('/') && !link.startsWith('//') ? sitePrefix + link : link;
+// 技術的な正体(微分可能論理ゲートNN)はサブテキストへ降格して残す。
+// Starlight の hero スキーマに任意フィールドは足せないため、ここでロケール別に持つ。
+const subtext = isEn
+	? 'Train logic-gate networks and deploy them straight to FPGAs'
+	: '学習した論理回路をそのままFPGAへ — 微分可能論理ゲートNNライブラリ';
+const subLinks = isEn
+	? [
+			{ text: 'Tutorials', link: `${base}/tutorials/xor/` },
+			{ text: 'API reference', link: `${base}/reference/api/` },
+		]
+	: [
+			{ text: 'チュートリアル', link: `${base}/tutorials/xor/` },
+			{ text: 'APIリファレンス', link: `${base}/reference/api/` },
+		];
+---
+
+<div class="pt-10 pb-4 sm:pt-16">
+	<div class="mx-auto flex max-w-3xl flex-col items-center text-center">
+		<h1 id="_top" class="text-4xl leading-tight font-bold text-(--sl-color-white) sm:text-6xl">
+			{title}
+		</h1>
+
+		{
+			tagline && (
+				<p class="mt-5 max-w-2xl text-base text-(--sl-color-gray-2) sm:text-xl">{tagline}</p>
+			)
+		}
+
+		<p class="mt-3 max-w-2xl text-sm text-(--sl-color-gray-3)">{subtext}</p>
+
+		{
+			actions.length > 0 && (
+				<div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+					{actions.map((action, i) => (
+						<a
+							href={withBase(action.link)}
+							class:list={[
+								'rounded-lg px-5 py-2.5 text-sm font-semibold no-underline transition-colors sm:text-base',
+								i === 0
+									? 'bg-md-logic-600 text-white hover:bg-md-logic-700'
+									: 'border border-(--sl-color-gray-5) text-(--sl-color-white) hover:border-md-logic-500',
+							]}
+						>
+							{action.text}
+						</a>
+					))}
+				</div>
+			)
+		}
+
+		<div class="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+			{
+				subLinks.map((l) => (
+					<a
+						href={l.link}
+						class="text-(--sl-color-gray-3) underline-offset-4 hover:text-(--sl-color-white)"
+					>
+						{l.text}
+					</a>
+				))
+			}
+		</div>
+	</div>
+</div>

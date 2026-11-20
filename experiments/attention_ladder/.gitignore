@@ -1,0 +1,11 @@
+# ダウンロードデータ（再取得可能なので追跡しない）
+data/
+# 実行ログ（tqdm等でノイズが多い）
+*.log
+# Pythonキャッシュ
+__pycache__/
+*.pyc
+# wandbローカルディレクトリ
+wandb/
+# per-seedの明細出力（集約 summary.csv・図・回路コストは追跡する）
+results/*_seed*/

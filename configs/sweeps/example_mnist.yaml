@@ -1,0 +1,18 @@
+# griffith sweep サンプル: MNISTのlr×k探索。
+# 実行(ローカル): uv run griffith sweep configs/sweeps/example_mnist.yaml --count 4 --local
+# 実行(Modal):    uv run griffith sweep configs/sweeps/example_mnist.yaml --count 8 --modal --parallel 2
+#
+# parametersのキーはTrainConfigのドットパス。base_configの設定をベースに
+# sweepが選んだ値で上書きされる(base_configはsweep作成時にJSONで埋め込まれる
+# ため、Modal上のagentもローカルファイルなしで同一設定を再現できる)。
+method: bayes
+metric:
+  name: hard_acc
+  goal: maximize
+parameters:
+  optim.lr:
+    min: 0.001
+    max: 0.05
+  model.k:
+    values: [1000, 2000]
+base_config: configs/recipes/dlgn_mnist_quick.yaml

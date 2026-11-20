@@ -1,0 +1,121 @@
+---
+title: 'Reading Training Curves'
+description: 'Conventions for recording experiments in wandb, and how to read soft vs. hard accuracy. Spot the discretization gap, overfitting, and collapse straight from the curves.'
+---
+
+DLGN training curves are read differently from those of an ordinary NN. **What matters is not soft
+(continuous relaxation) accuracy but hard (post-discretization) accuracy**, and the gap between the two
+directly expresses the quality of the resulting circuit
+(→ [The Two Phases: soft and hard](/en/explanation/dlgn/)).
+
+## Consolidate records in wandb
+
+In this project, the convention is to consolidate experiment records in [wandb](https://wandb.ai).
+Training scripts initialize their run through a shared helper.
+
+```python
+from wandb_utils import init_wandb, log_metrics, log_images
+
+init_wandb(
+    run_name='mnist_n4_k16000',   # a JST timestamp is appended automatically to make it unique
+    config_dict=vars(args),       # device info, parameter count and gate count are added automatically
+    model=model,
+    group='dlgn-mnist',           # groups the runs you want to compare. required
+    tags=['n4', 'softmax'],
+    hypothesis='raising fan-in to 4 should reduce the drop in hard accuracy',
+)
+```
+
+There are three points to the convention.
+
+1. **Always set `group`** — it becomes the unit for comparing runs side by side later
+2. **Write "what you want to confirm" in `hypothesis`** — it becomes your reference for interpretation when you revisit the curves
+3. **Never leave figures and numbers saved only locally** — images go through `log_images()` and files as Artifacts;
+   they must also live in wandb (local-only saving is forbidden)
+
+The short git hash is recorded automatically in the run's notes, so **which code produced a curve** can always be
+traced afterwards. Environment variables go in `.env` (if `WANDB_API_KEY` is unset, wandb is disabled automatically
+and training itself still runs).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `WANDB_API_KEY` | (none) | wandb is disabled if unset |
+| `WANDB_PROJECT` | `griffith-logic` | Project name |
+| `WANDB_MODE` | `online` | `offline` (sync later) / `disabled` (fully off) |
+
+## Metrics that get logged
+
+| Key | Meaning | How to read it |
+|---|---|---|
+| `loss` | Training loss (soft) | For confirming it goes down. **Do not look at this alone** |
+| `train_acc` | **hard** accuracy on training data | Difference from `test_acc` = degree of overfitting |
+| `test_acc` | **hard** accuracy on test data | ★ **This is the one that counts.** Real performance once it is a circuit |
+| `test_acc_soft` | soft accuracy on test data | Difference from `test_acc` = **the discretization gap** |
+| `best_test_acc` | Best hard accuracy | The criterion for saving checkpoints |
+
+## How to read the curves
+
+### 1. The soft–hard difference = the discretization gap
+
+Always overlay `test_acc_soft` and `test_acc`.
+
+- **The two lines coincide exactly** — ideal. The continuous relaxation has essentially converged onto a single gate, so nothing degrades in the circuit
+- **soft is high but hard is low** — the classic failure. The model is earning accuracy while gate selection stays ambiguous (the softmax stays spread out). **Turning a model in this state into HDL will not deliver performance**
+- **The gap narrows as training progresses** — the picture of healthy convergence. Temperature scheduling is doing its job
+
+When the gap will not close, your options are to switch the selection scheme to `hard_st` (making training = inference so
+the gap is structurally 0), revisit the temperature τ, or change the parameterization (`warp` is stable for N=4/6)
+([Choosing a Parameterization](/en/guides/parameterization/)).
+
+### 2. Hard accuracy is stepwise and jagged
+
+Hard accuracy is the result of an argmax, so **it does not move continuously**. The moment one gate's argmax flips,
+the output jumps, so the curve is inherently stepwise. Some jitter is not an anomaly.
+But if it **drops sharply and never recovers**, the learning rate is too high or regularization is too strong.
+
+### 3. train_acc and test_acc diverge
+
+DLGN, especially with a large fan-in (N=6), is **expressive and easy to memorize with**.
+If only `train_acc` rises while `test_acc` stalls, suspect overfitting and try one of: narrowing layer width,
+adding regularization, or lowering fan-in (→ [Taxonomy and Lineage §6](/en/explanation/taxonomy/)).
+
+### 4. Only hard accuracy collapses
+
+In configurations that use learnable wiring, soft can look fine while **only hard accuracy collapses**.
+This is a case of unstable wiring learning, and the standard fix is to fix the wiring
+(make only the first layer use learnable wiring).
+
+## Figures produced locally
+
+Training scripts save figures such as training curves as PNGs under `results/<experiment name>/`
+(e.g. `*_curves.png` = the evolution of loss and accuracy). The convention is that **the same images must also be
+logged to wandb via `log_images()`**, and local-only saving is forbidden. The reason is simple: a local PNG easily
+loses track of "which code and which settings produced this figure," making it irreproducible months later.
+
+The samples under `examples/` (XOR and hybrid) are self-verifying scripts that finish within a minute, so they are
+well suited for **confirming that you get the expected result** before you start staring at curves.
+
+```bash
+uv run python examples/01_xor.py    # both soft and hard reach acc=1.00
+```
+
+For small problems like XOR, **hard accuracy reaching 1.00** is the normal outcome. If it does not,
+it is faster to suspect the configuration (number of layers, width, learning rate) than to read the curves in detail.
+
+## Collecting runs
+
+`init_wandb` writes the most recent run ID into the current directory. Use it when picking up results
+mechanically from CI, agents, or cloud runs.
+
+| File | Contents |
+|---|---|
+| `.wandb_last_run_id` | The most recent run ID (overwritten each time) |
+| `.wandb_runs.jsonl` | An append log of run information |
+
+## Read next
+
+- [Running Training](/en/guides/training/) — the actual commands and options
+- [Choosing a Parameterization](/en/guides/parameterization/) — the choice that moves the discretization gap
+- [What is DLGN](/en/explanation/dlgn/) — why there are two of soft/hard at all
+
+{/* i18n:source=guides/training-curves.mdx hash=de04e1f3a084 */}

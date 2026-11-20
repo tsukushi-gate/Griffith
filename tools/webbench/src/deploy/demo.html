@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DLGN 配布バンドル デモ</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    line-height: 1.5;
+  }
+  h1 { font-size: 1.25rem; }
+  h2 { font-size: 1rem; margin-top: 2rem; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.25rem 0.6rem; border-bottom: 1px solid #8884; }
+  th { width: 12rem; white-space: nowrap; opacity: 0.75; }
+  #controls { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  #status { opacity: 0.75; font-size: 0.85rem; }
+  #notes { font-size: 0.85rem; padding-left: 1.2rem; }
+  #samples { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.75rem; }
+  .thr-control { width: 100%; font-size: 0.85rem; }
+  .thr-control label { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .thr-control .sample-info { margin-top: 0.2rem; opacity: 0.7; max-width: none; }
+  .sample-card { border: 1px solid #8884; border-radius: 6px; padding: 0.5rem; width: max-content; }
+  .canvas-holder { position: relative; }
+  .canvas-holder canvas { display: block; image-rendering: pixelated; max-width: 256px; }
+  .canvas-holder canvas + canvas { position: absolute; left: 0; top: 0; }
+  .sample-info { font-size: 0.8rem; margin-top: 0.35rem; opacity: 0.85; max-width: 256px; }
+</style>
+</head>
+<body>
+  <h1>DLGN 配布バンドル デモ</h1>
+  <p>
+    <code>./model.bundle.json</code> を読み込んで実行する(<code>?model=&lt;url&gt;</code>
+    で差し替え)。<code>runtime/web/dist</code>(<code>mdl_web.js</code>)を実際に使う
+    最小デモページ。
+  </p>
+
+  <div id="controls">
+    <label>engine:
+      <select id="engine-select">
+        <option value="auto">auto</option>
+        <option value="js">js</option>
+        <option value="wasm">wasm</option>
+      </select>
+    </label>
+    <span id="engine-info"></span>
+  </div>
+  <p id="status"></p>
+
+  <h2>notes</h2>
+  <ul id="notes"></ul>
+
+  <h2>meta</h2>
+  <table id="meta-table"><tbody></tbody></table>
+
+  <h2>samples</h2>
+  <div id="samples"></div>
+
+  <script type="module" src="./demo.js"></script>
+</body>
+</html>

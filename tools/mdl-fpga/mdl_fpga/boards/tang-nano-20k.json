@@ -1,0 +1,117 @@
+{
+  "schema_version": 2,
+  "key": "tang-nano-20k",
+  "name": "Sipeed Tang Nano 20K",
+  "tier": 1,
+  "tier_note": "Tier1 = 実機受入完了(detect 確信度1.0 / up 全段グリーン / hw-check full_adder 8/8・parity4 16/16 bit一致、EDA 完全不要経路)。ピンは litex-boards sipeed_tang_nano_20k.py(BSD-2, 4f4caad)と Sipeed TangNano-20K-example 公式 .cst 群(e23949a)の2ソース機械突合で転記(boards/NOTICE、references/tang-nano-20k/gen_board_json.py で再生成可)。注意: gowin-oss は配置依存の機能不良の実測があるため実機検証は必ず hw-check まで行う(backends/gowin_oss.py の既知の罠)",
+  "toolchain": "gowin-oss",
+  "pin_format": "gowin",
+  "device": "GW2AR-LV18QN88C8/I7",
+  "family": "GW2A-18C",
+  "family_note": "nextpnr-himbaechel の chipdb-GW2A-18C.bin / apycula の GW2A-18C デバイスデータに対応する die 名(GW2AR-18 は同 die の SDRAM 内蔵 SIP。litex devicename=GW2AR-18C)。gowin_pack -d の正確な値は実装時に確認",
+  "detection": {
+    "cable": "ft2232",
+    "ofl_board": "tangnano20k",
+    "ofl_board_note": "openFPGALoader v1.1.1 --list-boards の実出力から転記(tangnano20k / cable ft2232)",
+    "jtag_idcodes": [
+      "0x0000081b"
+    ],
+    "jtag_idcodes_note": "実機採取(openFPGALoader -b tangnano20k --detect。生出力: idcode 0x0000081b / part_text「GW2A GW2A(R)-18(C)」)",
+    "jtag_part_regex": "GW2A",
+    "usb": [
+      {
+        "vid": "0x0403",
+        "pid": "0x6010",
+        "desc_regex": "SIPEED|USB Debugger|Dual RS232"
+      }
+    ],
+    "usb_note": "実機採取(--scan-usb 生出力「FTDI2232   SIPEED       2025012315 USB Debugger」)。BL616 の FT2232 エミュレーションで VID/PID は汎用 FTDI のため desc_regex(SIPEED)込みの補助署名(スコア 0.2)",
+    "silk_hint": "基板裏に『Tang Nano 20K』シルク。HDMI コネクタ+microSD スロット+表面実装 LED 6 個"
+  },
+  "serial": {
+    "usb": [
+      {
+        "vid": "0x0403",
+        "pid": "0x6010",
+        "desc_regex": "USB Serial Port"
+      }
+    ],
+    "note": "BL616 内蔵 USB-UART(FT2232 エミュレーションのチャネル B 側)。実機採取。VCP ドライバ時は COM が2つ見える(A=JTAG/B=UART)。Zadig で A を WinUSB 化すると UART 側の COM だけが残る"
+  },
+  "clock": {
+    "port": "CLK27",
+    "pin": "4",
+    "hz": 27000000
+  },
+  "headers": [
+    {
+      "name": "BL616_UART",
+      "connector": "onboard",
+      "builtin": true,
+      "io": {
+        "0": {
+          "pin": "70"
+        },
+        "1": {
+          "pin": "69"
+        }
+      },
+      "power": [],
+      "gnd": [],
+      "note": "BL616 内蔵 USB-UART と基板上で直結(外部ブリッジ・結線不要)。io[0]=FPGA 側 RX(litex serial.rx)/ io[1]=FPGA 側 TX(litex serial.tx)= DEFAULT_UART_LINK の index 0/1 規約"
+    }
+  ],
+  "led": {
+    "port": "LED",
+    "active_low": true,
+    "active_low_note": "負論理(litex 命名 led_n + Sipeed blink_leds.v の assign leds = ~leds_value の2証拠。Phase4 実機で目視確認)",
+    "pins": [
+      "15",
+      "16",
+      "17",
+      "18",
+      "19",
+      "20"
+    ]
+  },
+  "button": {
+    "port": "BTN",
+    "active_low": false,
+    "active_low_note": "押下=High / idle=Low(正論理)。実機 A/B 実験で確定: ~BTN[1] リセットの top は hw-check 全滅(常時リセット)、リセット無効化版は 8/8 PASS → idle=Low を実測。Sipeed audio 例の rst(正論理、pin87)とも整合。picorv32 例の resetn は 9K 系の移植とみられ本ボードに非適合",
+    "note": "BTN[0]=S1(pin88)/ BTN[1]=S2(pin87)。litex btn0/btn1 と Sipeed 例(top.cst rst=88, nestang s1=88, audio rst=87, hdmi I_key=87)の突合",
+    "pins": [
+      "88",
+      "87"
+    ]
+  },
+  "io_standard": "LVCMOS33",
+  "io_standard_note": "両ソースの使用ピン(clk/uart/led/btn)全てで IOStandard(\"LVCMOS33\") / IO_TYPE=LVCMOS33 一致を突合済み",
+  "resources": {
+    "unit": "lut4",
+    "lut4": 20736,
+    "ff": 15552,
+    "bsram_kbits": 828,
+    "bsram_blocks": 46,
+    "sdram_mbits": 64,
+    "note": "Sipeed 公式 wiki(tang-nano-20k/nano-20k.html)の仕様表から転記(LUT4=20736 / FF=15552 / BSRAM 828K/46blocks / SDR SDRAM 64Mbit)"
+  },
+  "limits": {
+    "calibrated": true,
+    "gates_per_lut4": 1.5,
+    "spatial_lut4_fill": 0.5,
+    "spatial_gates_max": 15000,
+    "note": "実測較正(gowin-oss 既定=-nowidelut フロー、進捗記録同日エントリ): mnist24k(24000 ゲート)が yosys 後 LUT4 15966(1.50 ゲート/LUT4)で nextpnr 配置失敗(76% фで utilisation limit)。fill=0.5 は保守値(破綻境界未探索、76% 破綻のみ実測)。gates_max=20736×1.5×0.5 の丸め。成功実測: full_adder 517 LUT / parity4 382 LUT(いずれもラッパ込み、hw-check bit一致)"
+  },
+  "synth_options": {
+    "nextpnr_vopts": [
+      "sspi_as_gpio"
+    ],
+    "gowin_pack_flags": [
+      "--mspi_as_gpio",
+      "--sspi_as_gpio",
+      "--ready_as_gpio",
+      "--done_as_gpio"
+    ],
+    "note": "litex-boards sipeed_tang_nano_20k.py の toolchain.options(use_*_as_gpio)から機械転記。dual-purpose ピン(MSPI/SSPI/READY/DONE)を GPIO として開放する。nextpnr-himbaechel 側の vopt は sspi_as_gpio のみ存在(v0.8 系 --vopt help 実出力で確認)"
+  }
+}

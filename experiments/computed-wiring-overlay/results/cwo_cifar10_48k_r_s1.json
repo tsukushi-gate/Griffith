@@ -1,0 +1,36 @@
+{
+  "recipe": "cwo_cifar10_48k_r",
+  "anchor": "C4",
+  "seed": 1,
+  "overrides": [
+    "run.seed=1",
+    "run.run_name=cwo_cifar10_48k_r_s1",
+    "run.device=cuda"
+  ],
+  "wall_clock_s": 405.25747656822205,
+  "hard_acc": 0.40699998795986175,
+  "best_hard_acc": 0.41009998828172683,
+  "final_loss": 1.70448899269104,
+  "steps": 4000,
+  "out_dir": "outputs\\computed-wiring-overlay-wandb\\cwo_cifar10_48k_r_s1",
+  "checkpoint_latest": "outputs\\computed-wiring-overlay-wandb\\cwo_cifar10_48k_r_s1\\checkpoints\\latest.pt",
+  "checkpoint_best": "outputs\\computed-wiring-overlay-wandb\\cwo_cifar10_48k_r_s1\\checkpoints\\best.pt",
+  "netlist_path": null,
+  "expected_metrics": {
+    "ok": true,
+    "checks": [
+      {
+        "metric": "best_hard_acc",
+        "bound": "min",
+        "expected": 0.4048,
+        "actual": 0.41009998828172683,
+        "ok": true
+      }
+    ]
+  },
+  "smoke": false,
+  "library_commit": "b2dc0941cc3ef7ad76349b8662c27d7b699806f2",
+  "device_requested": "cuda",
+  "python": "3.13.2",
+  "finished_at": "2026-09-11T01:19:40.746313+09:00"
+}

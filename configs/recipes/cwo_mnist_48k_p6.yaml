@@ -1,0 +1,46 @@
+# 成果共有 computed-wiring-overlay / 較正アンカー C3: MNIST 48K の rot + 2D 近傍(P6)。
+# 社内先行実験掃引A の P6。層 0 だけ 28x28 画像の 2D 近傍
+# (s_a=1 で右 1 画素、s_b=28 で 1 行下)にし、層 1〜5 は P1 と同じ幾何級数。
+#
+# この構成の seed 1 のネットが実機アンカー C1(DE0-CV の fit でゲート ROM 32 M10K)の
+# 入力になる(先行実験 nets/w8000_p6 と同じ経路)。そのため netlist を書き出す。
+# 原値(2 seed): 0.9519 / 0.9545(先行実験実測表掃引A。P0 比 +1.29pt)
+#
+# 実行: uv run md launch --grid "run.seed=[0,1]" configs/recipes/cwo_mnist_48k_p6.yaml --local
+data:
+  name: mnist
+  batch_size: 100
+  params:
+    binarize_threshold: 0.5
+model:
+  kind: dlgn
+  k: 8000
+  layers: 6
+  n_inputs: 2
+  parameterization: softmax
+  selection: soft
+  tau: 30.0
+  connections:
+    kind: rot
+    s_a: [1, 0, 0, 0, 0, 0]
+    s_b: [28, 4, 20, 90, 400, 1800]
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 8
+  eval_interval: 0
+  wandb: true
+  wandb_group: dlgn-ffn
+  wandb_job_type: train
+  wandb_tags: [computed-wiring-overlay, calibration, P6, mnist-48k]
+  wandb_notes: >-
+    成果共有 computed-wiring-overlay の較正アンカー C3。MNIST 48K の rot + 層 0 の
+    2D 近傍(P6)。seed 1 のネットは実機アンカー C1(DE0-CV の overlay fit)の入力を兼ねる。
+  wandb_hypothesis: >-
+    層 0 のずらし量を画像の 2D 近傍に合わせた rot は、固定ランダム配線を上回り、
+    ランダム置換(全単射だが構造なし)も上回る。
+  run_name: cwo_mnist_48k_p6
+  export_netlist: true             # overlay(mdl-fpga)へ渡す平坦ネットリスト
+expected_metrics:
+  hard_acc_min: 0.9469

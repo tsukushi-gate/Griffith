@@ -1,0 +1,66 @@
+---
+// Starlight 既定の Head に Mermaid のクライアントサイド描画を足すだけの上書き。
+// rehype-mermaid はビルド時に Playwright/Chromium を要求するため、
+// 依存の軽いクライアントサイド描画を採用している(CI・オフラインでもビルドが通る)。
+import Default from '@astrojs/starlight/components/Head.astro';
+---
+
+<Default><slot /></Default>
+
+<script>
+	const isDark = () => document.documentElement.dataset.theme !== 'light';
+
+	let started = false;
+	async function render() {
+		// DOMContentLoaded と即時実行の両方から呼ばれるため二重描画を防ぐ
+		if (started) return;
+		started = true;
+
+		// Expressive Code は ```mermaid を <pre data-language="mermaid"> として出力し、
+		// 各行を .ec-line に分割する(textContent だと改行が失われる)。
+		const blocks = document.querySelectorAll<HTMLElement>('pre[data-language="mermaid"]');
+		if (blocks.length === 0) return;
+
+		// mermaid は重いので図があるページでだけ読み込む
+		const { default: mermaid } = await import('mermaid');
+
+		mermaid.initialize({
+			startOnLoad: false,
+			securityLevel: 'strict',
+			theme: isDark() ? 'dark' : 'default',
+			// CSS変数だと mermaid が文字幅を測れずノード枠が崩れるため実フォント名を渡す
+			fontFamily: '"Hiragino Sans", "Noto Sans JP", system-ui, sans-serif',
+			// securityLevel: strict では HTML ラベルが無効なので SVG テキストで折り返す
+			flowchart: { htmlLabels: false },
+		});
+
+		let i = 0;
+		for (const pre of blocks) {
+			const lines = pre.querySelectorAll<HTMLElement>('.ec-line');
+			const source =
+				lines.length > 0
+					? Array.from(lines, (line) => line.textContent ?? '').join('\n')
+					: (pre.textContent ?? '');
+			try {
+				const { svg } = await mermaid.render(`md-mermaid-${i++}`, source);
+				const host = document.createElement('div');
+				host.className = 'mermaid';
+				host.dataset.mermaidRendered = 'true';
+				host.innerHTML = svg;
+				// Expressive Code の <figure class="frame"> ごと差し替える
+				(pre.closest('figure.frame') ?? pre).replaceWith(host);
+			} catch (err) {
+				console.error('[mermaid] render failed', err);
+			}
+		}
+	}
+
+	document.addEventListener('DOMContentLoaded', render);
+	if (document.readyState !== 'loading') void render();
+</script>
+
+<script>
+	// 本文中の図(Mermaid SVG / コンテンツ画像)をクリックで拡大するライトボックス。
+	// 全ページに注入されるので、新しく追加した図も自動で対象になる。
+	import '../scripts/lightbox.ts';
+</script>

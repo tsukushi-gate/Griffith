@@ -1,0 +1,361 @@
+---
+title: 'Run on ESP32'
+description: 'How to run a trained DLGN on an ESP32 (ESP-IDF), with on-device measurements. Generate the model with gen_model.py, build and flash with idf.py, and check integer matching and latency from the UART log. Activity recognition fits; face detection does not.'
+---
+
+The C that the deploy kit generates is **C99 with zero dependencies, zero heap allocation, and zero floating point**.
+That is why even a small microcontroller like the ESP32 can run inference just by adding `model.c` and `mdl_kernels.c` to an ESP-IDF project.
+This page collects the **on-device procedure and the measured results**.
+
+:::note[Measured on real hardware]
+On an ESP32-D0WDQ6 (Xtensa LX6, 240 MHz, 4MB flash, no PSRAM), **all three activity-recognition models and MNIST run, and the output scores of
+all 50 samples match the host's `ir/simulate.py` as integers**. With the default circuit compression in effect, activity recognition k6000
+takes **12.7 ms per inference** (26.60 ms uncompressed). On the other hand, **face detection (a convolutional model) does not fit in
+static DRAM and cannot be built**. The numbers are in the [measurement table](#measurement-table).
+You can check the overall verification status in [Platform support](/en/reference/platform-support/).
+:::
+
+## Prerequisites
+
+- **ESP-IDF v5.x** installed, with the environment activatable in your shell
+- An ESP32 development board and a USB cable (flashing and log capture go through the UART bridge)
+- This repository cloned and `uv sync --extra dev --extra cpu` done (used to generate the model)
+- If you use `scripts/esp32_capture.py` to capture device logs, run `uv sync --extra fpga` (it brings in pyserial)
+
+Activate the ESP-IDF environment each time you open a shell.
+
+```bash
+. ~/esp/esp-idf/export.sh
+```
+
+## Project layout
+
+The ESP-IDF project is in `examples/30_deploy_esp32/`.
+
+| File | Role |
+|---|---|
+| `gen_model.py` | Builds `main/model/` (generated C + runtime + sample inputs) from a bundle |
+| `main/main.c` | Driver that infers on the bundled samples and prints accuracy and latency to the UART |
+| `CMakeLists.txt` / `main/CMakeLists.txt` | Wire `model.c` and `mdl_kernels.c` into the build |
+| `sdkconfig.defaults` | Default settings (CPU frequency, optimization, flash size, and so on) |
+
+`main/model/` is a generated artifact and is not committed. To swap the model, just run `gen_model.py` once and
+rebuild with `idf.py build`.
+
+## Procedure
+
+### 1. Generate the model
+
+```bash
+uv run python examples/30_deploy_esp32/gen_model.py
+```
+
+With no arguments it generates XOR (built-in 4 patterns). To load a demo model, pass a bundle and samples.
+For setting up bundles and samples, see [Prepare demo models](/en/guides/deploy-models/).
+
+```bash
+uv run python examples/30_deploy_esp32/gen_model.py \
+    --bundle out_examples/demo_models/har_dlgn_k600.bundle.json \
+    --samples out_examples/demo_models/samples/har_dlgn_k600.json --name har_dlgn_k600
+```
+
+Internally `gen_model.py` calls `griffith deploy codegen-c` and writes `model.c` / `model.h` /
+`mdl_kernels.c` / `mdl_kernels.h` / `mdl_simd.h` plus a header of sample inputs (`samples.h`) into `main/model/`.
+If the samples take too much flash, trim them with `--max-samples N`.
+
+`gen_model.py` also takes `--dense-flat {auto,on,off}` (default `auto`), which is passed straight through to the same option of `codegen-c`.
+`auto` adopts `lut_flat` (a flat netlist run through a signal table) for the dense 2-input `lut_layer` chains when
+the **effective-gate reduction is 25% or more**, and otherwise keeps the layer-by-layer execution. `on` always flattens, and `off` never does.
+Flattening grows the work RAM (`MDL_CTX_BYTES`) by the signal table (measured in [Effect of gate reduction](#effect-of-gate-reduction)),
+so use `--dense-flat off` when RAM is the priority. The decision and the final executed-gate count are printed to stdout and written to `model_info.json`.
+
+The sample JSON has the shape `{"input_width": N, "samples": [{"bits": "<hex>", "label": int|null, "expected_scores": [...]|null}]}`,
+where `bits` is **a hex byte string** (input `i` is bit `i%8` of byte `i/8`, LSB-first).
+If `expected_scores` is present, the device **checks the output scores of every sample as integers**.
+Image-input models (face detection) carry `image` (u8 NCHW) instead of `bits`; `gen_model.py` recognizes this automatically and
+sets `SAMPLE_INPUT_IS_IMAGE 1` in `samples.h`. In that case `main.c` does not expand to 0/1 but
+hands the u8 image straight to `mdl_infer_image_ctx`.
+
+### 2. Build and flash
+
+```bash
+cd examples/30_deploy_esp32
+idf.py set-target esp32
+idf.py build
+idf.py -p <port> flash
+```
+
+`<port>` depends on your environment (`/dev/cu.usbserial-*` on macOS, `/dev/ttyUSB0` and the like on Linux).
+`set-target` is only needed **the first time and when you change the target**. The first build took 43 to 44 seconds on an Apple Silicon Mac (measured with the activity-recognition models).
+
+#### Building several models side by side
+
+Without rewriting `main/model/`, you can **build side by side** by separating the output directory and the build directory per model.
+Pass `--out` to `gen_model.py`, and `-B` and `-DMODEL_DIR` to `idf.py`.
+
+```bash
+uv run python examples/30_deploy_esp32/gen_model.py \
+    --bundle out_examples/demo_models/har_dlgn_k6000.bundle.json \
+    --samples out_examples/demo_models/samples/har_dlgn_k6000.json \
+    --name har_dlgn_k6000 --out /tmp/m_har
+cd examples/30_deploy_esp32
+idf.py -B /tmp/b_har -DSDKCONFIG=/tmp/b_har.sdkconfig -DMODEL_DIR=/tmp/m_har set-target esp32
+idf.py -B /tmp/b_har -DSDKCONFIG=/tmp/b_har.sdkconfig -DMODEL_DIR=/tmp/m_har build
+idf.py -B /tmp/b_har -DSDKCONFIG=/tmp/b_har.sdkconfig -DMODEL_DIR=/tmp/m_har -p <port> flash
+```
+
+### 3. Capture the log
+
+Once flashing is done, capture the UART output. `scripts/esp32_capture.py` resets the board via DTR/RTS,
+picks up the boot log, and reads non-interactively until the end.
+
+```bash
+uv run python scripts/esp32_capture.py --port <port> \
+    --baud 115200 --seconds 30 --until DONE --out results/deploy/devices/esp32_xor.log
+```
+
+`idf.py -p <port> monitor` needs an interactive terminal. To collect non-interactively, use `esp32_capture.py`
+(it also turns the `RESULT` line into a `.json`). The output has two kinds of lines, and it prints `DONE` at the end and stops.
+
+| Output | Contents |
+|---|---|
+| `SAMPLE i pred=.. exp=.. ns=.. h=XXXXXXXX` | Per sample: the prediction, the expected label, the time per inference (ns), and a hash of the output scores |
+| `RESULT {...}` | A machine-readable summary (one line of JSON): accuracy, latency statistics, and so on |
+
+The `h=` hash is an FNV-1a over the whole output scores, and it can also be used to **check whether the output matches the host run**.
+The same `main.c` can be built on the host, so generated C that has matched `ir/simulate.py` integer-exactly can serve directly as the reference for the device's results.
+It passes when, on the device and the host, the `SAMPLE` fields other than `ns=` and `reps=` (`pred` / `exp` / `h` / `scores`) and the
+`score_hash` in `RESULT` **match exactly**.
+
+```bash
+cc -std=c99 -O2 -DHOST_BUILD -DMDL_NO_DEFAULT_CTX -Imain -Imain/model \
+    main/main.c main/model/model.c main/model/mdl_kernels.c -o host_demo
+```
+
+## Memory design
+
+The key to running on a microcontroller is being aware of **what lands in RAM and what lands in flash**.
+
+| Region | What goes there | Notes |
+|---|---|---|
+| Flash (`.rodata`) | Weights, instruction lists, truth tables (all `static const`) | Does not eat RAM however large the model is. Shared by all contexts |
+| RAM (`.bss`) | The work area `static uint32_t work[MDL_CTX_BYTES / 4]` | The region rewritten during inference. Its size is `MDL_CTX_BYTES` in `model.h` |
+
+This project's policy is to **place the work area yourself as a static**, and it uses two tricks for that.
+
+- **Place `MDL_CTX_BYTES` as a static**: pass it with `mdl_ctx_init(&ctx, work, sizeof(work))`. The caller provides the memory,
+  so no heap allocation ever happens (`work` needs 4-byte alignment)
+- **`-DMDL_NO_DEFAULT_CTX`**: removes the default context (the static the generated code holds internally).
+  Without it, a region of the same size would land in `.bss` **twice**. In CMake it is specified with
+  `target_compile_definitions(${COMPONENT_LIB} PRIVATE MDL_NO_DEFAULT_CTX)`
+
+```cmake
+idf_component_register(
+    SRCS main.c model/model.c model/mdl_kernels.c
+    INCLUDE_DIRS . model
+    REQUIRES esp_timer esp_system freertos)
+
+target_compile_definitions(${COMPONENT_LIB} PRIVATE MDL_NO_DEFAULT_CTX)
+```
+
+### Reading `idf.py size`
+
+Running `idf.py size` after the build prints a breakdown of the image. These are the three places to look.
+
+| Item | How to read it |
+|---|---|
+| DRAM (`.data` + `.bss`) | Statically allocated RAM. The `MDL_CTX_BYTES` portion goes into `.bss` |
+| Flash Code (`.text`) | Executable code. Most of it is ESP-IDF itself, and the increase from the model is small (measured: XOR 79,048 B → 36,000 gates 79,284 B) |
+| Flash Data (`.rodata`) | The model's weights and instruction lists. **The size of the model shows up here** |
+
+`idf.py size-components` also gives a per-component breakdown (the model placed in `main` versus everything else).
+
+## Measurement table
+
+Measured on real hardware. The board is an ESP32-D0WDQ6 rev v1.0 (Xtensa LX6 dual-core 240 MHz, 4MB flash, **no PSRAM**), with
+ESP-IDF v5.4-dev-2194 (xtensa-esp-elf 13.2.0, `COMPILER_OPTIMIZATION_PERF`, equivalent to `-O2`).
+The models are the trained production bundles fetched from wandb (`har_dlgn_k600` / `har_dlgn_k2400` / `har_dlgn_k6000`),
+and the samples are 50 UCI-HAR test windows (for MNIST, 50 test images of 20×20 binary; all with labels and expected scores from the host `ir/simulate.py`).
+Times are **per inference** (averaged, repeating each sample until the total reaches 5 ms or more), using only one of the two cores.
+
+#### Default values (with circuit compression)
+
+The default of `gen_model.py` is the **flattened circuit** that comes out of `codegen-c --dense-flat auto`.
+The values below are measurements of that circuit (the "flat" column in "Effect of gate reduction" further down), and **the output matches the uncompressed one as integers** (identical `score_hash`, all 50 samples).
+The uncompressed values stay in the next table for reference.
+
+| Model | Gates executed | Per inference (mean) | Speedup vs uncompressed | Accuracy | Score match | Static DRAM used | app bin |
+|---|---:|---:|---:|---|---|---:|---:|
+| Activity recognition k600 | 971 | 290.7 µs | 1.41x | 38/50 (76.0%) | 50/50 | 22,088 B | 208,064 B |
+| Activity recognition k2400 | 4,886 | 782.2 µs | 7.40x | 38/50 (76.0%) | 50/50 | 27,800 B | 229,888 B |
+| Activity recognition k6000 | 15,124 | 12.69 ms | 2.10x | 40/50 (80.0%) | 50/50 | 41,640 B | 288,272 B |
+| MNIST (20×20 binary) | 2,210 | 324.7 µs | 2.23x | 42/50 (84.0%) | 50/50 | 16,328 B | 190,176 B |
+
+XOR (32 gates) is too small and its compression was not measured. The 7.40x for k2400 is an outlier that the gate reduction alone does not explain (details below).
+
+#### Uncompressed (for reference)
+
+| Model | Gates | Per inference (mean) | Windows | Accuracy | Score match | Static DRAM used | app bin |
+|---|---:|---:|---:|---|---|---:|---:|
+| XOR | 32 | 5.86 µs | 4 | 4/4 | - (labels only) | 10,952 B | 172,752 B |
+| Activity recognition k600 | 2,400 | 410.9 µs | 50 | 38/50 (76.0%) | 50/50 | 17,104 B | 213,760 B |
+| Activity recognition k2400 | 9,600 | 5,785.5 µs | 50 | 38/50 (76.0%) | 50/50 | 20,704 B | 246,160 B |
+| Activity recognition k6000 | 36,000 | 26.60 ms | 50 | 40/50 (80.0%) | 50/50 | 27,904 B | 365,072 B |
+| MNIST (20×20 binary) | 4,000 | 725.2 µs | 50 | 42/50 (84.0%) | 50/50 | 15,712 B | 195,392 B |
+| Face detection `det_face_lut_k256` | 2,686 | **cannot be built** | - | - | - | exceeds static DRAM by 1,394,696 B | - |
+
+The total static DRAM is 180,736 B, and the usage is the DRAM (`.data` + `.bss`) from `idf.py size`.
+The app bin is the size of the generated `.bin`, which fits comfortably in the default app partition (about 1.5 MB) of the 4MB flash.
+
+- **Integer match**: for all three activity-recognition models (k600, k2400, k6000), **the `SAMPLE` lines and `score_hash` of all 50 windows match exactly** between the device and the host (`cc -O2`).
+  The accuracies 38/50 and 40/50 are the same values as the host `ir/simulate.py`. The 50 windows are a subset of the whole,
+  so they differ from the accuracy over all 2,947 windows (k600 80.5%, k6000 90.1%)
+- **Throughput**: uncompressed, about 2,430 windows/s for k600, about 37.6 windows/s for k6000, and about 1,380 images/s for MNIST (1 ÷ mean time).
+  With the default (compressed) circuit it is about 3,440 windows/s for k600, about 78.8 windows/s for k6000, and about 3,080 images/s for MNIST
+- **MNIST**: a 20×20 binary, 4,000-gate model (2 `LutLayer`s × 2,000); the `SAMPLE` lines and `score_hash` of 50 images (class-balanced test images) matched the host exactly. `.rodata` is 58,936 B and `MDL_CTX_BYTES` is 4,000 B.
+  The build's wall time was 111.9 seconds, but other jobs were running in parallel, and the user time was comparable to the other models
+- **Stress**: a test feeding a 36,000-gate IR with 8 random-input samples also gave 26.59 ms, with scores matching 8/8
+- **XOR timing**: `esp_timer` has µs resolution, so a short XOR-class inference shows up as discrete values of 5.84 to 5.93 µs
+
+### Excerpt of `idf.py size` (activity recognition k6000, uncompressed)
+
+```text
+Flash Data    228744 B   (.rodata 228488)   <- weights and instruction lists
+Flash Code     79284 B   (.text   79284)    <- mostly ESP-IDF itself
+IRAM           48287 B / 131072 B
+DRAM           27904 B / 180736 B   (.bss 19256 + .data 8648)
+Total image size: 364962 bytes
+```
+
+IRAM is 48,287 B for all three models (the kernels run from flash, and IRAM is used by ESP-IDF itself).
+The `.bss` consists of `MDL_CTX_BYTES` (12,000 B), the input expansion buffer (4,608 B), and so on, and **weights do not eat DRAM; they sit in flash (`.rodata`)**.
+The `.rodata` is 77,256 B for k600 and 228,488 B for k6000.
+
+### Comparison with the host
+
+Compared with the same `main.c` run on an Apple Silicon host (`cc -O2`, scalar); both sides are the uncompressed circuit.
+
+| Model | ESP32 (mean) | Host | Ratio |
+|---|---:|---:|---:|
+| Activity recognition k600 | 410.9 µs | 1.85 µs (mean) | about 220x |
+| Activity recognition k6000 | 26.60 ms | 27.5 µs (median) | about 970x |
+| MNIST | 725.2 µs (mean) | 3.36 µs (median) | about 216x |
+
+The host mean for k6000 is 39.1 µs, but there is one outlier of up to 229.6 µs, so we used the median.
+On the ESP32 the mean and median nearly coincide (MNIST: mean 725.248 µs, median 725.200 µs), so we show the mean.
+We have not isolated the cause, but the ESP32 side has no SIMD implementation for Xtensa and runs only the scalar path,
+and clock and cache differences probably also contribute. Only one of the two cores is used
+(`mdl_run_pool` is the pthread version and cannot be used as is on FreeRTOS; running on both cores would need a rewrite
+with two tasks each holding its own context).
+
+### Effect of gate reduction
+
+We measured on the device the **lossless gate-reducing optimizations** described in [Prepare demo models](/en/guides/deploy-models/#reducing-the-gate-count-lossless).
+The bundles used in the measurement are made with `griffith deploy bundle --sweep` (sweep) and `--sweep --dense-flat` (flat),
+and flashed with the same procedure (`gen_model.py` → `idf.py -B` / `-DMODEL_DIR` → flash → capture).
+
+:::note[The old flags in this measurement build the same circuit as today's defaults]
+The measurement predates the default compression and used the explicit `--sweep --dense-flat`. The same compression is now **applied automatically by default**.
+- `griffith deploy bundle` (default `--compress fast`) applies **sweep** to dense models (resynthesis for conv2d) (the old `--sweep`)
+- `griffith deploy codegen-c` (default `--dense-flat auto`) **flattens to `lut_flat`** when the effective-gate reduction is 25% or more (the old `--dense-flat`)
+
+Both use the same transform (`flatten_dense`), so the circuit is the same. However, **we have not re-measured on the device through today's default path**.
+The "default values" above refer to the flat measurement made with the old flags.
+:::
+The samples are the same 50 as before, with the same expected scores. The board, ESP-IDF, and optimization are as above.
+
+```bash
+uv run griffith deploy bundle out_examples/demo_models/har_dlgn_k2400.model.json --sweep \
+    -o out_examples/demo_models/har_dlgn_k2400.sweep.bundle.json
+uv run griffith deploy bundle out_examples/demo_models/har_dlgn_k2400.model.json --sweep --dense-flat \
+    -o out_examples/demo_models/har_dlgn_k2400.flat.bundle.json
+```
+
+Today, plain `griffith deploy bundle <model.json>` plus `gen_model.py` (default `--dense-flat auto`) gives the same flat circuit.
+
+**In every case `score_mismatch` is 0, `score_hash` is identical across raw, sweep, and flat, and the `SAMPLE` lines match the host `cc -O2` run on 50/50.**
+So "the output does not change (lossless)" is confirmed on the device too.
+All the numbers are in `results/deploy/devices/esp32_summary_20261007.json`.
+
+| Model | Raw | sweep | flat |
+|---|---|---|---|
+| Activity recognition k600 | 2,400 gates / 410.9 µs | 1,989 gates / 342.8 µs | 971 gates / 290.7 µs |
+| Activity recognition k2400 | 9,600 gates / 5,785.5 µs | 8,681 gates / 4,163.7 µs | 4,886 gates / 782.2 µs |
+| Activity recognition k6000 | 36,000 gates / 26,598.7 µs | 28,636 gates / 21,174.9 µs | 15,124 gates / 12,688.0 µs |
+| MNIST | 4,000 gates / 725.2 µs | 3,615 gates / 638.1 µs | 2,210 gates / 324.7 µs |
+
+Each cell is "gates executed / mean time per inference". The flat gate count is the number of **effective gates**, excluding pass-throughs and constants
+(the total gates of `lut_flat`); `gates` in `RESULT` comes from a macro in `model.h`, so it shows 0 for flat.
+
+Memory is as follows (the total static DRAM is 180,736 B).
+
+| Model | Variant | `MDL_CTX_BYTES` | `.rodata` | DRAM used | app bin |
+|---|---|---:|---:|---:|---:|
+| Activity recognition k600 | raw / sweep / flat | 1,200 / 1,396 / 6,180 B | 77,256 / 75,416 / 72,504 B | 17,104 / 17,304 / 22,088 B | 213,760 / 211,936 / 208,064 B |
+| Activity recognition k2400 | raw / sweep / flat | 4,800 / 6,284 / 11,896 B | 109,640 / 105,528 / 95,672 B | 20,704 / 22,192 / 27,800 B | 246,160 / 242,080 / 229,888 B |
+| Activity recognition k6000 | raw / sweep / flat | 12,000 / 13,872 / 25,736 B | 228,488 / 195,352 / 154,056 B | 27,904 / 29,776 / 41,640 B | 365,072 / 331,968 / 288,272 B |
+| MNIST | raw / sweep / flat | 4,000 / 3,616 / 4,612 B | 58,936 / 57,208 / 55,976 B | 15,712 / 15,328 / 16,328 B | 195,392 / 193,664 / 190,176 B |
+
+- **The speed of sweep is roughly proportional to the number of gates executed**: k6000 has -20.5% gates against -20.4% time, and k600 has -17.1% against -16.6%.
+  k2400 (-9.6% gates against -28.0% time) and MNIST (-9.6% against -12.0%) depart from proportionality. We have not investigated the cause
+- **flat is fastest on all four models**: the speedup over raw is 1.41x for k600, 7.40x for k2400, 2.10x for k6000, and 2.23x for MNIST,
+  and k6000 went from 26.60 ms to 12.69 ms. Unlike sweep, the time for flat is not cleanly proportional to the gate count
+- **The 7.4x of k2400 flat cannot be explained by the gate reduction (-49.1%) alone**. Something that helped in raw or sweep may have gone away in flat, but
+  **we have not investigated the cause**. Only this value departs from the other models, so read it with that in mind
+- **For memory, flash shrinks and DRAM grows**: `.rodata` is smaller than raw in both sweep and flat, going from 228,488 B to 154,056 B (flat) for k6000.
+  On the other hand, flat grows `MDL_CTX_BYTES` by the signal table (12,000 B to 25,736 B for k6000), and the DRAM used reaches 41,640 B for k6000.
+  Even so, about 139 KB of static DRAM stays free. Sweep also grows ctx a little (+1,872 B for k6000)
+- The host's trend does not carry straight over to the ESP32: for MNIST, on the host (`cc -O2`, median) it gets slower from 2.70 µs for sweep to 2.98 µs for flat,
+  yet on the device it halves from 638.1 µs to 324.7 µs. We did not isolate this
+
+## Why face detection does not fit
+
+Face detection (`det_face_lut_k256`, a 128px convolutional model) matches the expected scores as integers on all 10 samples on the host,
+and runs at 1.76 ms per image. The logic itself is correct, but it **does not fit on a plain ESP32**. The build stops with this link error.
+
+```text
+ld: region `dram0_0_seg' overflowed by 1394696 bytes
+```
+
+The cause is the size of the work RAM.
+
+| Item | Size |
+|---|---:|
+| `MDL_CTX_BYTES` (`static work[]`) | 1,544,000 B |
+| Score output `scores[5120]` (int32) | 20,480 B |
+| Total static DRAM (`dram0_0_seg`) | 180,736 B |
+| Total `.bss` | 1,566,784 B |
+
+Moving it to the heap (`malloc`) does not help either. The free heap right after boot is 283,696 to 300,648 B, less than a fifth of the 1,544,000 B needed.
+On a board without PSRAM, there is nowhere to put this work RAM.
+
+:::note[With a PSRAM board (speculation, unverified)]
+On a board with PSRAM, such as the ESP32-WROVER (4MB PSRAM) or an ESP32-S3 (variants with 8MB PSRAM), passing a region allocated with
+`heap_caps_malloc(..., MALLOC_CAP_SPIRAM)` to `mdl_ctx_init(&ctx, buf, bytes)` **may fit in terms of capacity**.
+This is speculation, and **we have not confirmed it on real hardware**. Speed through PSRAM is also unmeasured.
+:::
+
+Because the generated `main.c` hands the work area to `mdl_ctx_init`, the swap only needs a change to `main.c`.
+The detailed build log is in `results/deploy/devices/esp32_det_face_build_20261006.log`.
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| CMake stops with `main/model/ が無い` | `gen_model.py` has not been run yet. Do step 1 above |
+| The build fails with a `dram0_0_seg` overflow | `MDL_CTX_BYTES` plus the input expansion buffer does not fit in static DRAM (180,736 B). If flattening (`--dense-flat`) grew the work RAM past the limit, try `--dense-flat off`. Check that `-DMDL_NO_DEFAULT_CTX` is in effect (that you are not double-allocating); if it is still too big, use a smaller model, or place it in the PSRAM of a PSRAM board (see "Why face detection does not fit" above) |
+| It does not fit in flash | Match `CONFIG_ESPTOOLPY_FLASHSIZE_*` in `sdkconfig.defaults` and the partition table to the board's real flash size (a large model's `model.c` lands in `.rodata`) |
+| `Failed to connect` when flashing | Some boards need you to hold the BOOT button as flashing starts. Also check that the cable carries data |
+| No log, or garbled characters | Check the baud rate (`sdkconfig.defaults` uses 115200). `esp32_capture.py` resets the board right after opening, so check you have not passed `--no-reset` |
+| Reset in the middle of a long inference | The task watchdog is running. Check that `CONFIG_ESP_TASK_WDT_EN=n` (already set in `sdkconfig.defaults`) is in effect |
+| A warning in the generated code fails the build | It comes from `-Werror`. The project specifies `-Wno-error`. Add the same setting when embedding into your own project |
+| The build broke after changing targets | Run `idf.py set-target` again (after `idf.py fullclean` if needed) |
+
+## What to read next
+
+- [Prepare demo models](/en/guides/deploy-models/) — how to make the bundles and samples to put on the ESP32
+- [Deploy Kit Quickstart](/en/guides/deploy-quickstart/) — C source generation and integer-match verification
+- [Platform support](/en/reference/platform-support/) — the list of verification levels, including Xtensa (ESP32)
+- [Run on iPhone](/en/guides/deploy-ios/) — another on-device target
+
+{/* i18n:source=guides/deploy-esp32.mdx hash=022a3ec64ce1 */}

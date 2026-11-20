@@ -1,0 +1,50 @@
+# 成果共有 computed-wiring-overlay / 較正アンカー C4: CIFAR-10 48K の置換配線(P)。
+# 社内先行実験の P 腕(= 先行実験 W-B0)。受容野の設計則(R26)を測るときの対照で、
+# 「学習しない固定配線のうち最も素直な全単射」に当たる(クラス受容野 99.0%)。
+#
+# 先行実験の model.yaml と同一の構成。ただし regularization(λ=0 の縮約耐性正則化)は
+# 落としてある。λ=0 では損失グラフに一切触れないので学習は bitwise 不変で、
+# 記録用の指標 reg_penalty が出なくなるだけ。
+# 評価は 100 ステップごとの離散テスト精度の最大 best_hard_acc(先行実験の A_best)。
+# 原値(2 seed): 0.4636 / 0.4670
+#
+# 実行: uv run md launch --grid "run.seed=[0,1]" configs/recipes/cwo_cifar10_48k_p.yaml --local
+data:
+  name: cifar-10-3-thresholds      # in_width = 9,216(閾値 1/4・2/4・3/4)
+  batch_size: 100
+  params:
+    interleave_thresholds: true    # チャネル→行→列→しきい値 minor の平坦化順
+model:
+  kind: dlgn
+  k: 8000
+  layers: 6                        # 48,000 ゲート
+  n_inputs: 2
+  parameterization: softmax        # OP
+  selection: hard_st               # STE
+  init_mode: ri_randn              # N(0,1) に op3 だけ +init_scale
+  init_scale: 1.0
+  grad_factor: 1.0
+  tau: 30.0
+  connections:
+    kind: perm                     # 2·out_dim スロットを入力が等回数使う均衡全射
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 8
+  eval_interval: 100
+  wandb: true
+  wandb_group: dlgn-ffn
+  wandb_job_type: train
+  wandb_tags: [computed-wiring-overlay, calibration, P, cifar10-48k]
+  wandb_notes: >-
+    成果共有 computed-wiring-overlay の較正アンカー C4。CIFAR-10 48K の置換配線(P)。
+    受容野を満たした rot(SR2)と旧 rot(R)を比べるときの対照。
+  wandb_hypothesis: >-
+    精度が落ちない条件はクラス受容野が入力を覆うこと(R26)。置換配線は受容野 99.0% で、
+    受容野 100% に設計した rot(SR2)はこれを上回る。
+  run_name: cwo_cifar10_48k_p
+  save_eval_history: true
+# 原値の seed 別最小 0.4636 から 0.3pt 引いた下限(claims.json C4 の許容幅)
+expected_metrics:
+  best_hard_acc_min: 0.4606

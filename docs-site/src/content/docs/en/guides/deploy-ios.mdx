@@ -1,0 +1,337 @@
+---
+title: 'Run on iPhone'
+description: 'How to run a trained DLGN on an iPhone (Xcode / SwiftUI), with measurements on a real iPhone 17 and on the simulator. Call the generated C from Swift through a bridging header, bundle several models (including an image model) in one app, and build for the simulator and a real device.'
+---
+
+The C that the deploy kit generates can be called from Swift **directly through C interop**. No Objective-C wrapper or JNI-style bridging layer is needed;
+you only expose the C header through a bridging header. The aarch64 NEON path is enabled automatically at compile time.
+This page collects the **procedure for iPhone and the measured results on a real device and on the simulator**.
+
+:::note[Five models matched as integers on a real iPhone 17]
+On a **real iPhone 17 (iPhone18,3, iOS 26.6.2)**, all five models ran and their output scores **matched the host's `ir/simulate.py` as integers**.
+The real-device times are in "Measurement table (real iPhone 17)" below. The simulator times are **native execution times on the Apple Silicon Mac (host CPU)**,
+not iPhone values (the "Measurement table (simulator)" says so explicitly). You can check the verification status in [Platform support](/en/reference/platform-support/).
+:::
+
+## Prerequisites
+
+- macOS with **Xcode** (including the iOS SDK)
+- To run on a real device: an Apple ID (a free account works) registered in Xcode, and the iPhone in developer mode
+- This repository cloned and `uv sync --extra dev --extra cpu` done (used to generate the model)
+
+## Project layout
+
+The SwiftUI demo app is in `examples/31_deploy_ios/`.
+
+| File | Role |
+|---|---|
+| `gen_model.py` | From a bundle and samples, creates the files for one model under `Models/<name>/` |
+| `gen_xcodeproj.py` | Generates `GriffithDemo.xcodeproj` (`gen_model.py` calls it at the end) |
+| `GriffithDemo/` | The app itself (SwiftUI views, the inference calls, the bridging header) |
+| `Models/` | Generated C and samples per model (generated artifacts; one directory per model) |
+
+The C runtime (`runtime/c/src/mdl_kernels.c`) is **referenced by relative path from inside the repository rather than copied**.
+Only the single copy common to all models is linked.
+
+## Procedure
+
+### 1. Bring in a model
+
+Run `gen_model.py` once per model. You can run it any number of times, and it does not touch the other models' files.
+
+```bash
+uv run python examples/31_deploy_ios/gen_model.py har_dlgn_k600 \
+    --bundle out_examples/demo_models/har_dlgn_k600.bundle.json \
+    --samples out_examples/demo_models/samples/har_dlgn_k600.json
+```
+
+`<name>` (`har_dlgn_k600` in the example above) is lowercase alphanumerics and `_` only, and becomes the prefix of the C symbols.
+For setting up bundles and samples, see [Prepare demo models](/en/guides/deploy-models/).
+Every model you bring in is scanned from `Models/*/` and **automatically bundled into the app**.
+To put in only XOR, `bash examples/31_deploy_ios/setup_xor.sh` does everything from training to bringing it in.
+
+To put in the three demo models, loop like this.
+
+```bash
+D=out_examples/demo_models
+for n in har_dlgn_k6000 har_dlgn_k600 det_face_lut_k256; do
+  uv run python examples/31_deploy_ios/gen_model.py $n \
+      --bundle $D/$n.bundle.json --samples $D/samples/$n.json
+done
+```
+
+`gen_model.py` also takes `--dense-flat {auto,on,off}` (default `auto`). It is passed straight through to the same option of `codegen-c`
+and decides whether the dense 2-input `lut_layer` chains become the flat netlist `lut_flat`.
+`auto` adopts it only when the effective-gate reduction is 25% or more, `on` always does, and `off` never flattens.
+The decision and the executed-gate count after flattening are printed to stdout. Flattening grows the work memory (`MDL_CTX_BYTES`) by the signal table,
+so use `--dense-flat off` when memory is the priority. For the same option on ESP32, see [Run on ESP32](/en/guides/deploy-esp32/#1-generate-the-model).
+
+### 2. Call the generated C through a bridging header
+
+To call C from Swift, put the C header in a **bridging header** (specified with Xcode's `SWIFT_OBJC_BRIDGING_HEADER`).
+In this demo, the model-specific `model.h` is not put in the bridging header; **only the common descriptor `gd_model` (`GdModel.h`)** is exposed.
+
+```c
+/* GriffithDemo-Bridging-Header.h */
+#include "GdModel.h"
+```
+
+`gd_model` holds the model name, input and output widths, `MDL_CTX_BYTES`, the gate count, and function pointers for context initialization and inference.
+On the Swift side you enumerate models with `gd_model_count()` and `gd_model_at(i)` and call inference through the descriptor.
+The caller allocates the work area (`MDL_CTX_BYTES` worth) and passes it to `ctx_init`, so no heap allocation happens in C during inference.
+
+#### The image-model path (face detection)
+
+For a model whose input is a u8 image, such as face detection, `samples.json` carries
+`image` (u8 NCHW = 3×128×128 = 49,152 bytes as hex) instead of `bits`. If the generated `model.h` has
+`mdl_infer_image_ctx`, `gen_model.py` treats it as an image model and changes the following.
+
+- It sets `input_kind` of the descriptor `gd_model` to 1 (image) and `input_bytes` to `C×H×W`
+- The function the unity wrapper calls becomes **`mdl_infer_image_ctx`** (preprocessing included; it takes the u8 image as is)
+- The app decodes `image` into bytes and passes it. The expansion to bits is done by the C side in integers, so Swift needs no floating point
+
+For a model with no label (`label: null`), the screen shows accuracy as "—" and instead shows **the integer match with the host `ir/simulate.py` expected scores, n / N**, and
+the latency. The image model's work RAM (`MDL_CTX_BYTES`) is a large 1.5 MB, but it is allocated only once at run time.
+`mdl_threads.c` is not bundled for image models (single-threaded execution).
+
+### 3. Avoiding symbol collisions when bundling several models
+
+A generated `model.c` has **functions with the same names** for every model (such as `mdl_infer_ctx` and `mdl_ctx_init`),
+plus a type definition (`mdl_ctx`). Linking several models as is **collides symbols at link time**.
+
+This demo resolves it with a **per-model "unity wrapper" `<name>_unit.c`**.
+
+1. Inside the wrapper, the symbols `model.c` exposes externally are **replaced with model-name-prefixed ones**, as in `#define mdl_infer_ctx <name>_mdl_infer_ctx`
+2. With that in place, `model.c` is `#include`d and the replacement is reverted with `#undef`
+3. Each model exposes exactly one `const gd_model gd_model_<name>`
+
+The runtime (`mdl_kernels.c`) is linked as a single copy common to all models, so it is not subject to the replacement.
+Keeping `model.h` out of the bridging header is for the same reason: to avoid types overlapping between models.
+`gen_model.py` generates all of this automatically, so all you need to think about is "bring a model in under a name."
+
+### 4. Build and run
+
+Open `examples/31_deploy_ios/GriffithDemo.xcodeproj` in Xcode, pick a destination, and Run.
+From the command line, use `xcodebuild`. Check the scheme name and destinations with `xcodebuild -list` and `xcrun simctl list devices`.
+
+#### Simulator
+
+```bash
+xcodebuild -project examples/31_deploy_ios/GriffithDemo.xcodeproj -scheme GriffithDemo \
+    -destination 'platform=iOS Simulator,name=<simulator name>' \
+    -derivedDataPath /tmp/griffith_dd build
+xcrun simctl boot "<simulator name>" || true
+xcrun simctl install booted /tmp/griffith_dd/Build/Products/Debug-iphonesimulator/GriffithDemo.app
+xcrun simctl launch --console-pty booted com.example.griffithdemo
+```
+
+The simulator needs no code signing, so confirm that things work here first. On an Apple Silicon Mac the simulator also runs as aarch64.
+Use a device name shown by `xcrun simctl list devices available` for `<simulator name>` (a device name that does not exist on the latest OS fails to resolve).
+The measurements used an iPhone 17 (iOS 26.5), and **the C is built with `-O3` even in the Debug configuration**.
+
+#### Auto-run with launch arguments and collect the result
+
+With the launch arguments `-gd_autorun 1 -gd_model <name>`, the app runs the given model automatically right after launch
+(for screenshots and CI). The result goes to **standard output as one `RESULT {json}` line** and also to `os_log`
+(subsystem `com.example.griffithdemo`).
+
+```bash
+xcrun simctl launch --console-pty booted com.example.griffithdemo -gd_autorun 1 -gd_model har_dlgn_k600
+```
+
+Streaming standard output to the terminal with `--console-pty` lets you collect the `RESULT` line. `simctl launch` can
+time out after 30 seconds right after the simulator boots (a rerun gets through). The measurement table below is for the **Release** configuration.
+Add `-configuration Release` to `xcodebuild` to build it, and the install path becomes
+`Build/Products/Release-iphonesimulator/GriffithDemo.app`.
+
+#### Real device (signing)
+
+A real device needs code signing. In Xcode's **Signing & Capabilities**, **choose a Team** (a personal Team is available even with a free Apple ID).
+From the command line, pass the Team ID and allow automatic provisioning updates.
+
+```bash
+xcrun devicectl list devices                       # connected devices (Identifier / name)
+xcodebuild -project examples/31_deploy_ios/GriffithDemo.xcodeproj -scheme GriffithDemo \
+    -configuration Release -destination 'id=<udid>' -allowProvisioningUpdates \
+    DEVELOPMENT_TEAM=<team ID> PRODUCT_BUNDLE_IDENTIFIER=com.example.<yourname>.griffithdemo \
+    -derivedDataPath /tmp/griffith_dd build
+xcrun devicectl device install app --device <udid> \
+    /tmp/griffith_dd/Build/Products/Release-iphoneos/GriffithDemo.app
+for m in xor har_dlgn_k600 har_dlgn_k6000 det_face_lut_k256 mnist; do
+  xcrun devicectl device process launch --terminate-existing --console --device <udid> \
+      com.example.<yourname>.griffithdemo -- -gd_autorun 1 -gd_model $m | tee /tmp/ios_dev_$m.log
+done
+```
+
+:::caution[Put `--` before the app's arguments]
+With `devicectl device process launch`, **place `--` before the arguments you pass to the app**. Without it, `devicectl` parses `-gd_autorun` as one of its own options
+and fails with an error such as `Please specify a 'timeout' value between 5 and ...`.
+:::
+
+The generated `.xcodeproj` is created with the bundle ID (`com.example.griffithdemo`) and `DEVELOPMENT_TEAM` empty.
+To run it in your own environment, change the bundle ID to a value nobody else uses (`BUNDLE_ID` in `gen_xcodeproj.py`, or in Xcode).
+The first time, you need to **trust the developer on the iPhone via Settings → General → VPN & Device Management**, and
+turn on **Developer Mode** under Settings → Privacy & Security.
+The app does not exit after printing `RESULT`, so stop it with Ctrl-C once the line appears.
+
+Streaming the app's standard output to the terminal with `devicectl --console` is **confirmed on a real iPhone 17** (the `RESULT` JSON line was collected in the terminal).
+For the Release build, even a free personal Team had its provisioning profile created automatically just by passing `-allowProvisioningUpdates`.
+If `RESULT` does not appear, you can substitute any of these: send it from the on-screen "share result JSON" via AirDrop or Notes,
+look at `os_log` in Console.app, or take a screenshot.
+When measuring, use airplane mode, Low Power Mode OFF, a charging cable connected, and the screen on (heat costs a few percent).
+
+To check only that it compiles for a real device without signing, do this (this procedure is confirmed).
+
+```bash
+xcodebuild -project examples/31_deploy_ios/GriffithDemo.xcodeproj -scheme GriffithDemo \
+    -destination 'generic/platform=iOS' -configuration Release build CODE_SIGNING_ALLOWED=NO
+```
+
+## What to check
+
+For each model, the app infers the bundled samples and shows **whether the output scores match the expected values** and
+**the time per inference** on screen. The reference is the output of the generated C that matched `ir/simulate.py` integer-exactly on the host (a Mac).
+So if the iPhone's result differs from the expected scores, you can isolate it as a problem with the device-side build or environment.
+
+## Measurement table (real iPhone 17)
+
+Measured on a **real iPhone 17 (iPhone18,3), iOS 26.6.2 (Build 23G90)**. In the Release configuration (C with `-O3`, the aarch64 NEON path),
+collected from the `RESULT` line that `xcrun devicectl device process launch --console` prints to standard output. Times are the **median** per inference
+(a short inference is repeated and divided, the same method as on the simulator). The bundles were built with the current defaults (`bundle --compress fast`, `codegen-c` dense-flat `auto`);
+for XOR, MNIST, and the activity-recognition models, `auto` adopted the flat netlist `lut_flat`.
+
+| Model | Executed gates | `MDL_CTX_BYTES` | Windows / images | Accuracy | Score integer match | Per inference (median, device) |
+|---|---:|---:|---:|---|---|---:|
+| XOR | 3 | 24 B | 4 | 4/4 | 4/4 | 10.6 ns |
+| Activity recognition k600 | 971 | 6,180 B | 50 | 38/50 (76%) | 50/50 | 0.64 µs |
+| MNIST | 2,210 | 4,612 B | 50 | 42/50 (84%) | 50/50 | 1.73 µs |
+| Activity recognition k6000 | 15,124 | 25,736 B | 50 | 40/50 (80%) | 50/50 | 8.07 µs |
+| Face detection `det_face_lut_k256` | 1,279 | 1,373,440 B | 8 | — (no labels) | 8/8 | 0.803 ms |
+
+- **Every model matched the host `ir/simulate.py` as integers** (`score_mismatch` is 0). Accuracy is the same as the host run and the simulator
+- The activity-recognition k600 / k6000 bundles were built from the public webbench models (`tools/webbench/public/models/har_dlgn_k*_gumbel.json`). MNIST is the model from tutorial 29
+- Face detection used `tools/webbench/public/models/bundles/det_face_lut_k256.bundle.json` as is (not resynthesized; 1,279 executed gates).
+  The input is **8 synthetic images**; with no labels, accuracy is not shown and only integer agreement with the expected scores is checked. The 0.803 ms includes preprocessing
+- Each model was measured **once**; unlike the simulator's "raw / sweep / flat" figures (median of 12 runs), run-to-run variation was not examined.
+  These values are not recorded in wandb (no credentials were available in this environment). The raw data is in `results/deploy/devices/ios_device_*_20261014.json` and
+  the summary `ios_device_summary_20261014.json`
+
+#### Comparison with the simulator (host CPU)
+
+The values for the same models on the same path (`lut_flat`) are in the flat column of "Effect of gate reduction" below. The gate counts and `MDL_CTX_BYTES` match the device.
+
+| Model | Simulator flat (host CPU) | iPhone 17 device (median) | Ratio |
+|---|---:|---:|---:|
+| Activity recognition k600 | 1.25 µs | 0.64 µs | about 2.0x faster |
+| MNIST | 2.98 µs | 1.73 µs | about 1.7x faster |
+| Activity recognition k6000 | 15.42 µs | 8.07 µs | about 1.9x faster |
+
+On the models measured this time, the C on the iPhone 17 was **1.7 to 2.0 times faster than the simulator on the Apple Silicon Mac (host CPU)**.
+However, the host CPU model, the simulator figure being a median of 12 runs against one run on the device, and differences in load and power state were not controlled.
+The host was also under heavy load while the simulator side was measured (load average about 20; see `results/deploy/devices/ios_summary_20261007.json`). Do not generalize this ratio to other models or devices. For XOR and face detection, the simulator tables use circuits that are not the current defaults (XOR with 32 gates, face detection with 2,686 gates),
+so no like-for-like comparison was made.
+
+## Measurement table (simulator)
+
+:::caution[Times are host-CPU values]
+The table below is for the **iPhone 17 simulator (iOS 26.5), and what actually ran is native execution on the Apple Silicon Mac (host CPU)**.
+They are not iPhone values. For real-device values, see "Measurement table (real iPhone 17)" just above.
+:::
+
+Collected from the `RESULT` line on standard output via `xcrun simctl launch --console-pty`, in the Release configuration (C with `-O3`).
+Times are per inference: a short inference is repeated for about 200 µs worth and divided, measured 3 times, and the minimum is taken
+(the mean is the mean across samples).
+
+| Model | Gates | Input | `MDL_CTX_BYTES` | Windows / images | Accuracy | Score integer match | Per inference (mean, host CPU) |
+|---|---:|---|---:|---:|---|---|---:|
+| XOR | 32 | 2 bit | 32 B | 4 | 4/4 | 4/4 | 0.042 µs |
+| Activity recognition k600 | 2,400 | 4,608 bit | 1,200 B | 50 | 38/50 (76%) | 50/50 | 2.20 µs |
+| Activity recognition k6000 | 36,000 | 4,608 bit | 12,000 B | 50 | 40/50 (80%) | 50/50 | 32.9 µs |
+| MNIST | 4,000 | 400 bit (20×20 binary) | 4,000 B | 50 | 42/50 (84%) | 50/50 | 3.24 µs |
+| Face detection `det_face_lut_k256` | 2,686 | u8 image 3×128×128 | 1,544,000 B | 10 | — (no labels) | 10/10 | 1.76 ms |
+
+(This table is from an earlier measurement, taken before the default compression was introduced, and so on the uncompressed circuit. k2400 and sweep / flat / resynth are listed separately under "Effect of gate reduction" below, from a different measurement.)
+
+- The 50 activity-recognition windows are a subset made from UCI-HAR test windows, so they differ from the overall accuracy (k600 80.5%, k6000 90.1%).
+  The accuracy came out the same as the host run
+- Face detection is an image model that outputs a CenterNet score map (5,120 elements), and **all 10 synthetic images matched as integers** against the host `ir/simulate.py`
+  output (it has no labels, so no accuracy is given). The 1.76 ms per image is the time `mdl_infer_image_ctx` took including preprocessing
+- Even rerunning the same binary varies by **a few % to 10%** (the k6000 mean ranged from 29.6 to 33.0 µs),
+  so read the table values as a single measurement
+
+### App size
+
+The size of an unsigned Release build for a real device (`generic/platform=iOS`, five models bundled, arm64) is as follows.
+
+| Item | Size |
+|---|---:|
+| Total of files inside `.app` | 1,951,086 B |
+| Main binary | 709,840 B |
+| Unsigned `.ipa` (zip) | 433,067 B |
+
+The per-model increase (`__text` + `__const` + `__data` inside the binary, excluding bss) and `samples.json` (the samples that go into the Bundle) are as follows.
+
+| Model | Binary increase | samples JSON |
+|---|---:|---:|
+| XOR | 1,196 B | 251 B |
+| Activity recognition k600 | 11,514 B | 64,871 B |
+| Activity recognition k6000 | 162,843 B | 65,184 B |
+| Face detection | 115,507 B | 1,096,547 B |
+| MNIST | 19,154 B | 13,320 B |
+
+Most of the face-detection samples is image hex, so a production app does not need them. `mdl_ctx` (about 1.5 MB for face detection)
+is not in the binary and is allocated only at run time.
+
+### Effect of gate reduction (simulator)
+
+:::caution[Times here are also host-CPU values]
+The times in this section are also **run times on the iPhone 17 simulator, executed on the Apple Silicon Mac (host CPU)**, not iPhone values.
+:::
+
+We also measured the lossless gate reductions described in [Prepare demo models](/en/guides/deploy-models/#reducing-the-gate-count-lossless)
+(`--sweep`, `--sweep --dense-flat`, and `--resynth lossless`) in the iOS demo app. We put raw, sweep, and flat in the same binary (15 models bundled),
+ran them with the order rotated for 6 runs × 2 sets = **12 runs**, and took the median of each run's median (the host was heavily loaded during measurement, and 6 runs alone
+swung between fast and slow, so we used 12). **`score_mismatch` is 0 in all 144 runs**, and the accuracy (50 windows) is identical across raw, sweep, and flat
+(k6000 80%, k2400 76%, k600 76%, MNIST 84%).
+
+| Model | Raw | sweep | flat | Gates executed raw / sweep / flat | ctx raw / sweep / flat | raw ÷ flat |
+|---|---:|---:|---:|---|---|---:|
+| Activity recognition k6000 | 29.81 µs | 23.46 µs | 15.42 µs | 36,000 / 28,636 / 15,124 | 12,000 / 13,872 / 25,736 B | 1.93x |
+| Activity recognition k2400 | 7.67 µs | 6.93 µs | 5.35 µs | 9,600 / 8,681 / 4,886 | 4,800 / 6,284 / 11,896 B | 1.43x |
+| Activity recognition k600 | 1.98 µs | 1.65 µs | 1.25 µs | 2,400 / 1,989 / 971 | 1,200 / 1,396 / 6,180 B | 1.58x |
+| MNIST | 3.22 µs | 2.92 µs | 2.98 µs | 4,000 / 3,615 / 2,210 | 4,000 / 3,616 / 4,612 B | 1.08x |
+
+- **sweep gives 1.1 to 1.3x** (raw ÷ sweep is 1.27x for k6000, 1.20x for k600, 1.11x for k2400, 1.10x for MNIST), roughly in line with the gate reduction.
+- **flat is 1.4 to 1.9x over raw on the three HAR models**, and 1.3 to 1.5x over sweep, largest for k6000 where the gates roughly halve.
+  **For MNIST, flat is on par with sweep** (0.98 over sweep, very slightly slower): even though the gates drop from 3,615 to 2,210, the time did not drop.
+  We have not isolated the cause (it looks like the table-driven cost per gate is higher than sweep's dedicated loop, but we have not confirmed it).
+  Together with the fact that the same MNIST halves with flat on the real ESP32, this means the host's trend must not be applied as is to a real device
+- **flat grows ctx** (12,000 B to 25,736 B for k6000). In exchange for time, the work memory becomes 2 to 5 times larger
+- **Moving from k6000 to k2400**: the speed ratio is 3.89x for raw, 3.39x for sweep, and 2.88x for flat. The gate count is 3.75 times smaller,
+  and the accuracy over all 2,947 windows with the host `ir/simulate.py` drops by **1.0 point**, from 0.9009 to 0.8911
+- **Face detection `--resynth lossless`**: the gates fall from 2,686 to 2,319 (-13.7%, 253.5 seconds of resynthesis), but **the time per inference is
+  1,584 µs against 1,577 µs, with no difference** (1.004x). `MDL_CTX_BYTES` also stays at 1,544,000 B.
+  The time looks dominated by preprocessing and the image convolutions and does not depend on the gate count (not isolated)
+
+An unsigned Release build for a real device with 15 models bundled (raw, sweep, and flat included) also succeeded. The total of files inside `.app` is
+**4,034,511 B** (main binary 1,214,432 B, unsigned zip 987,636 B). The number of bundled models differs from "App size" above (5 models).
+The aggregate is in `comparisons_flat_12runs` of `results/deploy/devices/ios_summary_20261007.json`.
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+|---|---|
+| `duplicate symbol` at link time | Several models' `model.c` are linked directly without the unity wrapper. Bring them in again with `gen_model.py` so they go through `<name>_unit.c` |
+| `No account for team` or a signing error | Choose a Team under Xcode's Signing. Add `-allowProvisioningUpdates` and pass the correct Team ID as `DEVELOPMENT_TEAM` |
+| `Untrusted Developer` on the device and it will not launch | Trust the developer under the iPhone's Settings → General → VPN & Device Management |
+| Added a model but it does not appear in the app | Check that you ran `gen_model.py` to update `gd_registry.c` and the `.xcodeproj` (reopen the project in Xcode) |
+| `mdl_kernels.c` not found | The runtime is referenced by relative path to `runtime/c/`. Check that you have not moved only `examples/31_deploy_ios/` out of the repository |
+
+## What to read next
+
+- [Prepare demo models](/en/guides/deploy-models/) — how to make the bundles and samples to bundle into the app
+- [Deploy Kit Quickstart](/en/guides/deploy-quickstart/) — C source generation and integer-match verification
+- [Platform support](/en/reference/platform-support/) — the list of verification levels, including iOS
+- [Run on ESP32](/en/guides/deploy-esp32/) — another on-device target
+
+{/* i18n:source=guides/deploy-ios.mdx hash=23e05947975b */}

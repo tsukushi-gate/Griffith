@@ -1,0 +1,203 @@
+---
+title: 'モデル動物園'
+description: '論理ゲートだけで組んだモデルの全一覧。分類・言語・生成・検出・NLP・実験ブランチまで、何を解くのか・代表精度・主要課題・世界初判定の強度を1行ずつ並べる索引。'
+---
+
+このライブラリで動かしたモデルを**一箇所に並べた索引**である。
+1モデル1行で「解くタスクを1文だけ」「代表精度を1指標だけ」「主要課題を1行だけ」に絞り、
+詳しい条件・考察はリンク先に委譲する。考察を読みたい場合は
+[アーキテクチャ横断の到達点](/explanation/results/architecture-survey/) と
+[実験ブランチのモデル群](/explanation/results/experimental-models/) へ進んでほしい。
+
+**「解くタスク」列は前提知識ゼロで読めるように1文へ圧縮してある。**
+より具体的な**入力 → 出力**と**データセット**は、各表の直下の折りたたみにまとめた
+(表を横に伸ばすとスマートフォンで読めなくなるため分けている)。
+
+:::caution[代表精度の読み方]
+- 掲載しているのは**本走値**である。各チュートリアルのページに出てくる数値は
+  **CPU で数分の縮小版**(小さいゲート数・短いステップ)であり、条件が違うので一致しない。
+  同じモデル名で桁の違う数値が2系統あるのはそのためである。
+- 断りがない限り**単一シード・単一構成**の実測で、シード分散は取っていない。
+  複数シードがあるものは行内に明記した。
+- 指標はすべて **hard**(argmax でゲートを確定させた純ブール回路)側を主に載せる。
+- 「要較正」と付いた行は**まだ収束していない・原因未特定**の記録であり、到達点ではなく現在地である。
+- 数値の単一情報源は [ベンチマーク一覧](/reference/benchmarks/)。矛盾を見つけたらそちらを正とする。
+:::
+
+## 世界初主張の強度バッジ
+
+このページの「世界初」列は、**主張そのもの**ではなく**主張を支える監査の強度**を表す。
+
+> **S1**=論文級不在証明あり(検索クエリ・調査日・主張範囲の限定を明文化) / **S2**=反証探索監査済み(最近接文献明記・限定形必須) / **🟡**=近接文献あり(限定形でのみ生存) / **S3**=主張のみ・未監査 / **撤回**=反例発見により撤回済み / **—**=再現・移植(世界初主張なし)
+
+判定の根拠(検索クエリ・調査日・限定形の文言・撤回した主張)は
+[「世界初」主張の監査](/explanation/results/world-firsts/) にある。
+いずれのバッジも「絶対に存在しない」ことの証明ではなく、
+**網羅検索の範囲で反例が見つからなかった**という意味である。
+直近数週のプレプリント・非英語文献・ペイウォール文献は網羅外。
+
+## 1. 画像分類
+
+| モデル | 解くタスク | 実装場所 | 代表精度 | 主要課題 | 世界初 | リンク |
+|---|---|---|---|---|---|---|
+| DLGN(基準線) | 手書き数字の画像を見て**0〜9のどれか**を当てる(画像分類) | `griffith_logic/layers/` | MNIST hard **0.9784**(48,000ゲート、公式レシピ・200k iter) | ライブラリ最高精度。別構成の Hard-ST・6層×64,000 では 0.9802 だがゲート数が8倍 | — | [再現実験](/explanation/results/dlgn-repro/) ・ [ベンチマーク](/reference/benchmarks/) ・ [MNIST](/tutorials/mnist/) |
+| Conv-DLGN | カラー写真を見て**10種類のどれか**を当てる(畳み込みを LUT の木で組んだ画像分類) | `griffith_logic/conv.py` | CIFAR-10 hard **0.5808**(`softmax16g` 修正後) | 修正前は 4エントリ simplex の構造欠陥で 0.4921。MNIST 級を超えると精度が急落する | — | [ベンチマーク](/reference/benchmarks/) ・ [アーキ横断](/explanation/results/architecture-survey/) |
+| LogicMixer(MLP-Mixer) | 画像を小さなパッチに切り、**パッチ間とパッチ内を交互に混ぜて**何が写っているかを当てる | `griffith_logic/models/mlp_mixer.py` | MNIST hard **0.671**(20k step で飽和、**要較正**) | 20k step で飽和し DLGN 0.9784 に遠く及ばない。スケール時の較正が未了 | **S1** | [チュートリアル](/tutorials/logic-mixer/) ・ [ベンチマーク](/reference/benchmarks/) |
+| LogicResNet | 画像のクラスを当てる。**入力をそのまま通す残差(近道)**を論理ゲートで作れるかの検証が主眼 | `griffith_logic/models/logic_resnet.py` | MNIST hard **0.113**(3ep、≈chance、**要較正**) | loss は 1.55→1.31 と下降するのに精度が chance のまま。τ(GroupSum温度)・出力スケールの較正が未解決 | **S2** | [チュートリアル](/tutorials/logic-resnet/) ・ [ベンチマーク](/reference/benchmarks/) |
+| LLViT | 画像をパッチに切って Transformer で分類する。**チャネル混合の MLP だけ**を回路に置き換えたハイブリッド | `griffith_logic/models/llvit.py` | **本走数値なし**(ハイブリッド置換のテストのみ) | teacher 較正が WIP。**精度を載せられる段階にない** | — | [ハイブリッド](/tutorials/hybrid/) ・ [API](/reference/api/dwn/) |
+| BinaryBrainModel | 手書き数字を当てる。**6入力 LUT + フレーム変調**という BinaryBrain 流の再現 | `experiments/train_binarybrain.py` | MNIST hard **0.9483**(N=6、10ep、14,516ゲート) | 10ep で 0.9483→0.9299 へ劣化(BatchNorm `momentum=1.0` が原因)。精度優位は FLOPs 15.1倍・壁時間9倍の対価 | — | [チュートリアル](/tutorials/binarybrain/) ・ [API](/reference/api/binarybrain/) ・ [パラメータ化](/explanation/results/parameterization-study/) |
+
+<details>
+<summary>入力 → 出力 と データセット(画像分類)</summary>
+
+- **DLGN** — 入力: 二値化した MNIST 画像 400bit(20×20。28×28 版は 784bit) → 出力: 10クラスのロジット / データセット: **MNIST**
+- **Conv-DLGN** — 入力: カラー画像 `(B,C,H,W)` の [0,1] → `LutConv2d` + `OrPooling2d` → 出力: 10クラスのロジット / データセット: **CIFAR-10**
+- **LogicMixer** — 入力: thermometer 符号化した画像を非重複パッチへ分割(MNIST は 7×7 パッチ=16トークン) → 出力: クラスのロジット / データセット: **MNIST**(CIFAR-10 も選択可)
+- **LogicResNet** — 入力: thermometer 符号化した画像 `(B, C*bits, H, W)` → 出力: クラスのロジット / データセット: **MNIST**(チュートリアルは MNIST 20×20)
+- **LLViT** — 入力: 画像 `(B,3,224,224)`(実験では 32×32 も)→ パッチ埋め込み + cls トークン → 出力: クラスのロジット / データセット: **CIFAR-10**
+- **BinaryBrainModel** — 入力: MNIST `(B,1,28,28)` を確率的に二値変調(既定15フレーム) → 出力: 10クラス / データセット: **MNIST**
+
+</details>
+
+## 2. 系列・言語
+
+| モデル | 解くタスク | 実装場所 | 代表精度 | 主要課題 | 世界初 | リンク |
+|---|---|---|---|---|---|---|
+| LogicGPT | 文章を1文字ずつ読んで**次の1文字を予測する**(文字レベル言語モデル)。埋め込みから出力まで回路で閉じている | `griffith_logic/models/logic_gpt.py` | Tiny Shakespeare hard val ppl **13.31**(Gumbel 較正腕、**seed0 のみ**) | FP 天井 4.94 との差が大きい。greedy 生成はモード崩壊し、射影のゲート化(L1)で attention 分布が一様に潰れる | **S2** | [チュートリアル](/tutorials/logic-gpt/) ・ [API](/reference/api/logic-gpt/) ・ [離散化ギャップ](/explanation/results/discretization-gap/) |
+| LogicLadderGPT | 同じく次の1文字を予測する。**Transformer のどの部品まで回路化できるか**を L0→L3 の段階で切り替えて測る | `griffith_logic/models/logic_ladder_gpt.py` | 梯子 L1 段 hard ppl **19.242±0.939**(3シード。L0b 7.880±0.382 からの劣化幅) | 離散化ギャップが LM で sMNIST の約10倍(LM 0.3〜0.5 nat 対 sMNIST 0.02〜0.05) | — | [チュートリアル](/tutorials/logic-ladder/) ・ [離散化ギャップ](/explanation/results/discretization-gap/) |
+| RDDLGN | 文字列を読み込み、**別の文字列に変換して出力する**(コピー/反転/整列/翻訳)。attention を持たない再帰型 | `griffith_logic/models/rddlgn.py` | data-free 蒸留 char-LM で tiny_shakespeare BPC **2.71**(教師 2.20) | 翻訳では hard 崩壊(soft BPC 2.857 に対し hard ≈14)。容量を増やすと逆にギャップが拡大する | — | [チュートリアル](/tutorials/rddlgn-seq2seq/) ・ [API](/reference/api/seq2seq/) |
+| DLGNAttentionSeq2Seq / Translator | 同じく文字列→文字列の変換。ただし**出力の各位置が入力のどこを見るか**(attention)を回路で持つ | `griffith_logic/models/attention/` | copy(seq_len=16)hard acc **25.77%**(soft 71.66%) | hard の絶対値が実用水準に遠い。結論は copy 1タスクのみで実翻訳へ未外挿 | **S2** | [API](/reference/api/attention/) ・ [ベンチマーク](/reference/benchmarks/) |
+| Boolean / MultiQuery / Pointer / Positional attention | 「**鍵に対応する値を思い出す**」「2本同時に思い出す」「**位置番号で引く**」「**並べ替える**」の4課題を解く、attention の最小実験 | `griffith_logic/models/attention/` | 4タスクで attention 整列精度 soft/hard とも **100%** | attention は即 100% になるが value デコードが上限(Task2 で 94.6%)。系列全体一致は 79.8% まで落ちる | **S2** | [チュートリアル](/tutorials/attention-tour/) ・ [API](/reference/api/attention/) |
+| LogicReservoir | **凍結したランダム回路**に系列を流し、読み出しだけ学習して「数ステップ前のビットを答える」「パリティを取る」 | `griffith_logic/models/logic_reservoir.py` | 遅延ビット再生を readout 学習のみで hard acc **1.00**(全seed) | parity は k=3 で崩れ k=4 でほぼ chance。sMNIST 本走が未実施 | **撤回** | [チュートリアル](/tutorials/logic-reservoir/) ・ [ベンチマーク](/reference/benchmarks/) |
+| LogicLSTMCell / LogicGRUCell | **系列の最初のビットを8ステップ後に思い出す**(記憶が要る系列課題)。忘却ゲート=MUX という同型性の検証 | `griffith_logic/blocks/recurrent.py` | 遅延コピー(T=8)で全seed ≤200step に hard acc **1.00**(Elman 型は 800step でも ≈0.86) | 実タスク(翻訳・char-LM)への差し替え評価が未実施。トイのみ | **S1** | [チュートリアル](/tutorials/logic-lstm/) ・ [ベンチマーク](/reference/benchmarks/) |
+| RDDLGNCharLM | 次の1文字を予測する。ただし**正解データを使わず、既存モデルの出力だけから学ぶ**(data-free 蒸留) | `experiments/train_rddlgn_charlm.py` | char-LM hard BPC **3.62**(gumbel_st+anneal、data-free KD、**単一seed**) | 別レポートとの絶対値の乖離が大きく、頑健なのは序列であって絶対値ではない。教師 2.20 には未達 | — | [離散化ギャップ](/explanation/results/discretization-gap/) |
+
+<details>
+<summary>入力 → 出力 と データセット(系列・言語)</summary>
+
+- **LogicGPT** — 入力: 文字トークンID列 `(B,S)` → 出力: 各位置の次文字ロジット `(B,S,65)` / データセット: **Tiny Shakespeare**(文字単位、語彙65)
+- **LogicLadderGPT** — 入力: 文字トークンID `(B,T)` → 出力: `(B,T,65)`。埋め込みと LM ヘッドは浮動小数のまま固定 / データセット: **Tiny Shakespeare**
+- **RDDLGN** — 入力: トークンID列 `(B, seq_len)` → エンコーダが固定長の文脈ビット列(実測 384bit)に畳む → 出力: `(B, seq_len, vocab)` / データセット: 合成タスク **copy / reverse / sort** と **WMT14 En→De**
+- **DLGNAttentionSeq2Seq / Translator** — 入力: ビット列またはトークンID列 → XNOR-popcount 類似度の cross-attention → 出力: `(B, seq_len, クラス数または語彙)` / データセット: 合成 **copy / reverse / sort** と **WMT14**
+- **Boolean / MultiQuery / Pointer / Positional attention** — 入力: それぞれ 36 / 40 / 12 / 18 ビットのビット列 → 出力: 16クラス(Boolean・Positional)、`(B,2,16)`(MultiQuery)、4ステップのポインタ系列(Pointer) / データセット: **その場生成の合成データ**(実データではない)
+- **LogicReservoir** — 入力: 論理値の系列 `(B,T,input_size)` → 凍結した幅512の回路の状態 → 出力: 読み出しのクラスロジット / データセット: 合成の **parity** と **delay-d 再生**
+- **LogicLSTMCell / LogicGRUCell** — 入力: ランダムビット列 `(N,8,1)` → 出力: 系列の最初のビット / データセット: 合成の **遅延コピー(T=8)**
+- **RDDLGNCharLM** — 入力: 文字トークンID の窓(語彙65) → 出力: 次文字のロジット / データセット: **Tiny Shakespeare**(教師は公開 nanoGPT。正解ラベルを使わない data-free 蒸留)
+
+</details>
+
+## 3. 生成
+
+| モデル | 解くタスク | 実装場所 | 代表精度 | 主要課題 | 世界初 | リンク |
+|---|---|---|---|---|---|---|
+| LogicBinaryDiffusion | **ノイズだらけの白黒画像から少しずつノイズを取り除いて画像を作る**(離散拡散)。ノイズ付加は XOR | `griffith_logic/models/logic_diffusion.py` | binary MNIST acc@t1 **0.886**(4ep、**単一run**) | 素朴な再ノイズ方式では生成が崩壊し、XOR 版祖先サンプリングに設計変更して成立。生成品質の定量評価が未実施 | **S1** | [チュートリアル](/tutorials/logic-diffusion/) ・ [ベンチマーク](/reference/benchmarks/) |
+| LogicVAE | **画像を数十ビットに圧縮し、そのビットから元の画像を復元・生成する**(潜在が Bernoulli ビット列の VAE) | `griffith_logic/models/logic_vae.py` | binary MNIST 再構成 **193.6 nat/枚**(30ep、**単一run**、posterior collapse なし) | 193.6 nat の良し悪しを判断できる外部ベースラインがライブラリ内に無い | **S1** | [チュートリアル](/tutorials/logic-vae/) ・ [ベンチマーク](/reference/benchmarks/) |
+| LogicGAN | **乱数のビット列から白黒パターン画像を作る**。本物か偽物かを見分ける回路と競わせて学習する | `griffith_logic/models/logic_gan.py` | **数値なし(研究課題)**。構造契約とダイナミクススモークまで | 未調整では発散する。安定化後も late D 精度 0.78〜0.874(理想0.5)でモード崩壊が残る | **S1** | [チュートリアル](/tutorials/logic-gan/) |
+| LogicWaveNet | **過去のトークンだけを見て次のトークンを予測する**(音声向けの因果 dilated 畳み込み構造) | `griffith_logic/models/logic_wavenet.py` | 周期パターンで hard acc **100%**(**本走未実施**) | 実音声データでの本走がなく、トイのみ | **🟡** | [チュートリアル](/tutorials/logic-wavenet/) |
+| LutAutoencoder | **画像を狭いボトルネックに圧縮して元通りに復元する**(オートエンコーダ) | `experiments/train_autoencoder_cnn.py` | MNIST test MSE(hard)**0.0863**(30,784ゲート、epoch 63) | hard は soft(0.0438)の約2倍の誤差。非論理ベースラインがライブラリ内に未整備 | — | [ベンチマーク](/reference/benchmarks/) |
+
+<details>
+<summary>入力 → 出力 と データセット(生成)</summary>
+
+- **LogicBinaryDiffusion** — 入力: 時刻 t のノイズ画像 `x_t` と時刻埋め込み → 出力: 元画像 `x_0` の予測 `(B,C,H,W)` / データセット: **二値化 MNIST**(チュートリアルは 8×8 に縮小)
+- **LogicVAE** — 入力: 画像 `(B,C,H,W)` → 潜在ビット `z ∈ {0,1}^64`(実装既定。チュートリアル縮小版は 96bit) → 出力: 画素ロジット / データセット: **binarized MNIST**(VAE-1 実験では Fashion-MNIST も)
+- **LogicGAN** — 入力: 乱数ビット列 `(B, noise_bits)` → 出力: 白黒画像 `(B,C,H,W)`。判別器は画像 → real/fake ロジット / データセット: **8×8 の二値パターン4種**(上半分/下半分/左半分/右半分)の合成データ
+- **LogicWaveNet** — 入力: トークンID列 `(B,T)` → 因果 dilated 畳み込み → 出力: `(B,T,語彙)` / データセット: **周期5のビット列**(系列長60、語彙2)の合成トイ
+- **LutAutoencoder** — 入力: MNIST 画像 → ボトルネック(本走 256次元) → 出力: 同サイズの再構成画像 / データセット: **MNIST**
+
+</details>
+
+## 4. 検出・密予測
+
+| モデル | 解くタスク | 実装場所 | 代表精度 | 主要課題 | 世界初 | リンク |
+|---|---|---|---|---|---|---|
+| CenterNetLUT | 画像の中の**どこに何があるか**を箱で当てる(物体検出)。数字の中心・大きさ・種類を出す | `experiments/detection_model.py` | Multi-MNIST 検出 mAP(hard)**0.5425**(epoch 78、13,944 params) | 訓練後期に崩壊し 0.005〜0.54 で乱高下。soft loss は下がるが hard 性能が直接最適化されない。**この mAP は画像スコープのバグ修正前の指標で再計測待ち** | **S2** | [チュートリアル](/tutorials/detection/) ・ [ベンチマーク](/reference/benchmarks/) ・ [離散化ギャップ](/explanation/results/discretization-gap/) |
+| CenterNetHardST | 同じ物体検出。ゲートを**学習中から確定させる**(Hard-ST)版で、離散化ギャップへの対処腕 | `experiments/detection_model_hard_st.py` | 独立の代表数値は**未整理**(hard-ST 版の対処腕) | 上記の離散化ギャップへの対処腕という位置づけ | **S2** | [離散化ギャップ](/explanation/results/discretization-gap/) |
+| YoloLutModel | 同じ物体検出を、**YOLO 流のヘッド**(クラス・物体らしさ・座標)で解く | `experiments/yolo_lut_model.py` | **本走未実施**(エンコード/デコード往復 IoU > 0.8) | 往復 IoU は実装健全性の検証であって検出性能ではない。**精度を載せられない** | **S2** | [ベンチマーク](/reference/benchmarks/) |
+| LogicUNet | 画像の**画素ひとつひとつを前景/背景に塗り分ける**(領域分割)。skip 接続の効果検証を兼ねる | `griffith_logic/models/logic_unet.py` | フル MNIST マスク IoU **0.373**(4ep、**要較正**。8×8 トイでは 0.875) | トイからスケールすると形が粗くなる。skip 有 > 無 は5シードで実証済み | **🟡** | [チュートリアル](/tutorials/logic-unet/) ・ [ベンチマーク](/reference/benchmarks/) |
+
+<details>
+<summary>入力 → 出力 と データセット(検出・密予測)</summary>
+
+- **CenterNetLUT** — 入力: 96×96 の合成画像を3閾値で二値化した `(B,3,96,96)` → 出力: ストライド4(24×24)の3ヘッド ― `hm`(10クラスの中心ヒートマップ)・`size`(幅と高さ)・`off`(サブピクセル補正) / データセット: 合成 **Multi-MNIST**(MNIST の数字を重ならないよう1〜3個ランダム配置。train 10,000 / test 2,000)
+- **CenterNetHardST** — 入出力の契約は CenterNetLUT と同一(`LutConv2d` を Hard-ST 版に置換しただけ) / データセット: 同じ合成 **Multi-MNIST**
+- **YoloLutModel** — 入力: `(B,C,H,W)` → 出力: `cls`(クラス)・`obj`(物体らしさ)・`reg`(dx,dy,w,h を各 K ビン)の3ヘッド / データセット: 合成 **Multi-MNIST**
+- **LogicUNet** — 入力: 画像 `(B,C,H,W)` → 出力: 画素ごとのロジット `(B, out_channels, H, W)` / データセット: **mnist-mask**(MNIST 由来のマスク)と **pet64**。チュートリアルはノイズ入り MNIST 20×20 のマスク復元
+
+</details>
+
+## 5. NLP
+
+| モデル | 解くタスク | 実装場所 | 代表精度 | 主要課題 | 世界初 | リンク |
+|---|---|---|---|---|---|---|
+| TextCNNModel(2値) | 日本語の投稿文を読んで、**ポジティブかネガティブか**を当てる(感情極性2値分類) | `experiments/train_textcnn.py` | WRIME 感情極性2値 hard accuracy **82%**(4時間訓練) | hard/soft の切替で通常2〜5%の離散化ギャップ。日本語1データセットのみ | **S2** | [チュートリアル](/tutorials/textcnn/) ・ [ベンチマーク](/reference/benchmarks/) |
+| TextCNNModel(8感情) | 同じ投稿文について、**喜び・悲しみなど8つの感情がそれぞれ有るか無いか**を当てる(マルチラベル) | `experiments/train_textcnn_emotion.py` | WRIME 8感情 F1 **0.367**(Accuracy 83.4%、約208万パラメータ) | 多ラベル・不均衡設定で accuracy が高く出るだけで検出力が不足。**Accuracy 単独掲載は誤解を招く** | **S2** | [ベンチマーク](/reference/benchmarks/) |
+
+<details>
+<summary>入力 → 出力 と データセット(NLP)</summary>
+
+- **TextCNNModel(2値)** — 入力: トークンID列 `(B, seq_len)`(語彙 8,000) → 出力: 2クラスのロジット / データセット: **WRIME**(日本語 SNS 感情分析)
+- **TextCNNModel(8感情)** — 入力: 同上 → 出力: `(B,8,2)` = 8感情それぞれの陽性/陰性 / データセット: **WRIME ver1**(43,200件、Avg. Readers アノテーション)
+
+</details>
+
+## 6. 基盤・部品
+
+| モデル | 解くタスク | 実装場所 | 代表精度 | 主要課題 | 世界初 | リンク |
+|---|---|---|---|---|---|---|
+| DWNClassifier | 実数の特徴を**温度計符号でビットに直してから LUT で分類する**。配線そのものを学習できるかの比較土台 | `griffith_logic/models/dwn.py` | 配線4腕比較で learnable が **100% 到達**、学習後の配線 SAT 率 1.00 | dense 路線の学習可能配線は文献天井が低く、高精度帯は Conv 路線が本線 | — | [チュートリアル](/tutorials/dwn/) ・ [API](/reference/api/dwn/) |
+| 変換系 student(加算木 lowering) | **学習済みの浮動小数 MLP を、同じ判定をする論理回路へ厳密に置き換える**(変換で精度が保てるかの検証) | `experiments/convert_*.py` | MNIST hard acc **0.9558**(bits=4、厳密 lowering、417,930 LUT出力/61層。teacher 0.9747) | teacher−2% 以内を初めて達成した勝ちレシピだが、回路規模が native DLGN(6〜8kゲート)の50〜70倍 | — | [アーキ横断](/explanation/results/architecture-survey/) |
+| 変換系 student(native 変換) | **学習済みモデルの知識を、ゼロから組んだ DLGN へ蒸留で移せるか**を試す | `experiments/distill_layerwise_native_mnist.py` ほか | 3経路すべて **スクラッチ未満**(scratch 0.9088 に対し KD 0.9100 / 転写初期化 0.68 / 層別二値蒸留 0.8871) | 密な算術 MLP と疎な離散論理は異質すぎて、転写すべき知識が乏しい。「無い容量」は teacher の正確さでは捏造できない | — | [アーキ横断](/explanation/results/architecture-survey/) |
+
+<details>
+<summary>入力 → 出力 と データセット(基盤・部品)</summary>
+
+- **DWNClassifier** — 入力: 実数特徴 `(B, in_features)` を thermometer でビット化(MNIST 20×20 なら 400画素 × 3bit = 1,200bit) → 出力: クラスロジット / データセット: **MNIST**。ただし表の「配線4腕比較」は MNIST ではなく**トイ論理関数**(xor3・parity3n など)での比較である
+- **変換系 student(加算木 lowering)** — 入力: MNIST 画像。枝刈り + int4 量子化した MLP を popcount 加算木で LUT 回路へ厳密変換 → 出力: クラスの argmax / データセット: **MNIST**(Fashion-MNIST へ転移して 0.8196)
+- **変換系 student(native 変換)** — 入力: MNIST 画像。教師の隠れ二値活性(300bit / 100bit)を層別の教師信号にする → 出力: 10クラス / データセット: **MNIST**
+
+</details>
+
+## 7. 実験ブランチ系
+
+本流に入る前の実験ブランチで走らせた系統。**11系統・81構成**の詳細(構成バリエーション表・
+負の結果の理由・wandb group)は [実験ブランチのモデル群](/explanation/results/experimental-models/) にある。
+
+| 系統 | 解くタスク | 代表モデル | 代表精度 | 一言 | 世界初 |
+|---|---|---|---|---|---|
+| 純DLGN / 入力バイパス | 画像分類(MNIST 20×20) | 純DLGN k1000×4層(4,000ゲート) | MNIST 20×20 hard **0.8994** | 固定配線の工夫は等予算プレーン DLGN を一度も超えなかった | — |
+| ハイブリッド(前段NN/CNN + 後段DLGN) | 画像分類(CIFAR-10) | HYBRID-2(CNN+DLGN 拡散) | CIFAR-10 hard **0.7864** | CNN+MLP 対照に +4.39pt。二値化界面のコストは −0.01pt | — |
+| 後段スケール | 画像分類(CIFAR-10) | 後段 61M ゲート | CIFAR-10 hard 0.7808(100kゲート時が最良) | 逆スケーリング。前段CNNの土俵では後段は約1,000ゲートで飽和 | — |
+| 出力層NN(逆ハイブリッド) | 画像分類(MNIST 20×20) | sandwich(両端NN) | MNIST 20×20 hard **0.9731** | `GroupSum` 読み出し制約の解除だけで +7.5pt | — |
+| LUT6 vs LUT2(パラメータ化) | 画像分類(MNIST 20×20) | 2,000 LUT6 independent(1層) | MNIST 20×20 hard **0.95040**(seed3本平均) | 真因は softmax の二重 simplex(勾配が 1/446) | — |
+| 深層拡散(形状×バイパス×配線) | 画像分類(MNIST 20×20) | const + 生入力/界面バイパス | MNIST 20×20 hard **0.9838** | 等予算4,000ゲートで論文構成(純DLGN)比 +8.82pt。天井は 0.983 | — |
+| 市松混成conv | 画像分類(CIFAR-10) | cyc9-phase(9ブロック) | CIFAR-10 hard **0.8512** | ハイブリッド系の新記録。GPU 演算半分で全CNNと同点 | — |
+| Transformer内蔵 / ReZero | 次の1文字の予測(shakespeare-char) | LUT2 softmax + rezero | shakespeare-char val ppl **5.37** | 効いたのは residual でも LayerNorm でもなく α の zero-init | — |
+| AP法(Akiho Propagation、BP-free) | 画像分類(MNIST 20×20) | ap1-ap-d2 / ap1-bp-d2 | MNIST 20×20 hard **0.8403**(BP 0.9150) | AP は BP に一貫して −6〜8pt。OR 残差のみ AP 限定で壊滅(−42.7pt) | — |
+| タスク拡張(U-Net) | 画素ごとの塗り分け=領域分割(mnist-mask) | u1-seg-mnist(skip あり) | mnist-mask best IoU **0.8203** | デコーダ+skip は密予測に +16.24pt、分類には −5〜12pt と符号が反転 | **🟡** |
+| タスク拡張(VAE) | 画像の圧縮・復元・生成(binarized MNIST) | v1-logic-n6(LUT6+indep+lr増) | binarized MNIST test ELBO **142.85**(seed3本) | 潜在の二値化は +3.5 nat と安く、ネットワークの論理化が +38〜39.75 nat と高い | **S1** |
+| タスク拡張(DenseNet) | 画像分類(MNIST) | d1-mnist-pyr / d1-mnist-dense | MNIST hard **0.9679** / 0.9647(plain 0.7833) | dense 接続は +18.1pt と本物だが、等予算ではピラミッド型に届かない | **S3** |
+| FPGAゲート予算・電力 | (モデルではなく、回路規模と電力の見積り) | (Web調査。実測ではない) | 文献値 FPGN-6-L は 434k LUT で CIFAR-10 76.72% | ゲートを増やす前に表現(6-LUT化)を変えるほうが安い | — |
+
+:::note[実験ブランチ系の数値について]
+上表は各実験ブランチの進捗記録と wandb からの転記であり、**大半が seed 1本**である。
+等ゲート予算の比較は等パラメータ比較ではなく、FPGA の数値はすべて理論値(Vivado 合成による実測は未実施)。
+前段に浮動小数 NN を含むハイブリッド系は、ネットワーク全体が論理ゲートである文献と
+**ゲート数だけを横並びにした比較が成立しない**。
+:::
+
+## 次に読む
+
+- [実験ブランチのモデル群](/explanation/results/experimental-models/) — 上表7節の詳細と、負の結果の理由
+- [「世界初」主張の監査](/explanation/results/world-firsts/) — 上表の世界初バッジの根拠
+- [アーキテクチャ横断の到達点](/explanation/results/architecture-survey/) — 達成済み/未達の切り分け
+- [ベンチマーク一覧](/reference/benchmarks/) — 数値の単一情報源(条件・環境つき)
+- [チュートリアル一覧](/tutorials/) — 手元で追試できる縮小版
+
+{/*
+メンテナンス方針: このページは手書きの索引である。掲載モデルが60を超えたら、
+実装(models/ と experiments/)とベンチマーク表から機械生成する方式への移行を再検討すること。
+「解くタスク」列と折りたたみの入出力・データセットは、実装(models/ と experiments/)・
+tutorials/ ・ reference/benchmarks.mdx を根拠に書いている。モデルを追加・改修したら
+両方を同時に更新すること。
+*/}

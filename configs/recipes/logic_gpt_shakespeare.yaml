@@ -1,0 +1,103 @@
+# LogicGPT Tiny Shakespeare レシピ(D1: 自己回帰言語モデルの論理ゲート化)
+#
+# --variant で L0(fp/fp 基準)と L3-C(射影ゲート化+MUX選択器+論理FFN 本命)を切替える。
+# train.* は両variant共通。context_len は seq_len(最大コンテキスト長)を兼ねる。
+# 実験 experiments/attention_ladder/configs/{l0,l3c}_shakespeare.yaml を昇格したもの。
+
+default_variant: L0
+
+train:
+  batch_size: 64
+  context_len: 64
+  lr: 3.0e-4
+  weight_decay: 0.0
+  max_steps: 20000
+  eval_freq: 500          # 何ステップごとにval lossを測るか
+  eval_batches: null      # null=全val評価(ladderプロトコル準拠。部分評価はスライス偏りで比較不能)
+  # 選択器の温度アニーリング(L3-C系のみ有効。fp/softmaxはno-op)
+  temp_start: 2.0
+  temp_end: 0.5
+  # 選択器の補助損失(aux_loss)への重み(L3-C系のみ効く)
+  aux_lambda: 0.01
+
+variants:
+  # L0: 既存MHA + FP FFN(基準)
+  L0:
+    model:
+      d_model: 128
+      n_heads: 4
+      n_layers: 2
+      mlp_ratio: 2
+      attention: fp
+      ffn: fp
+      dropout: 0.0
+
+  # L3-C(本命): 射影ゲート化 + XNOR-popcountスコア + MUX選択器(mux_gumbel) + 論理FFN
+  L3-C:
+    model:
+      d_model: 128
+      n_heads: 4
+      n_layers: 2
+      mlp_ratio: 2
+      attention: logic_proj
+      ffn: logic
+      score: xnor_popcount
+      norm: mux_gumbel
+      qk_bits: 128
+      v_bits: 128
+      n_inputs: 2
+      parameterization: warp
+      proj_depth: 1
+      tau: 1.0
+      dropout: 0.0
+
+  # L3-C-gumbel: L3-C の射影LutLayerに Mind the Gap (arXiv:2506.07500) の
+  # Gumbelゲート選択ノイズを導入し、離散化ギャップ(soft/hard差 0.29)の縮小を狙う。
+  # L3-C との差分は射影の parameterization と gumbel_noise のみ:
+  #   - parameterization: warp → softmax に変更。
+  #     根拠: Mind the Gap のGumbelノイズは「16ゲート上のsoftmax選択」ロジットへの
+  #     注入として定義される(π_i=softmax((w_i+g_i)/τ))。warpはWH係数θ→単一logit→
+  #     sigmoid構造でこの式が写像できず LutLayer が NotImplementedError を投げるため、
+  #     n_inputs=2 で difflogic互換の16ゲートsoftmaxになる softmax を採用する。
+  #   - gumbel_noise: true / gumbel_tau: 1.0(従来softmax τ=1 と整合)。
+  # FFN(ffn: logic)は warp 固定のまま(gumbel対象外)。norm/score/選択器は L3-C と同一。
+  L3-C-gumbel:
+    model:
+      d_model: 128
+      n_heads: 4
+      n_layers: 2
+      mlp_ratio: 2
+      attention: logic_proj
+      ffn: logic
+      score: xnor_popcount
+      norm: mux_gumbel
+      qk_bits: 128
+      v_bits: 128
+      n_inputs: 2
+      parameterization: softmax
+      gumbel_noise: true
+      gumbel_tau: 1.0
+      proj_depth: 1
+      tau: 1.0
+      dropout: 0.0
+
+  # L3-C-softmax(アブレーション腕): L3-C-gumbel から gumbel_noise だけを
+  # 切った構成。warp→softmax の寄与と Gumbelノイズの寄与を分離するための対照。
+  L3-C-softmax:
+    model:
+      d_model: 128
+      n_heads: 4
+      n_layers: 2
+      mlp_ratio: 2
+      attention: logic_proj
+      ffn: logic
+      score: xnor_popcount
+      norm: mux_gumbel
+      qk_bits: 128
+      v_bits: 128
+      n_inputs: 2
+      parameterization: softmax
+      gumbel_noise: false
+      proj_depth: 1
+      tau: 1.0
+      dropout: 0.0

@@ -1,0 +1,484 @@
+---
+title: 'Troubleshooting'
+description: 'An index you can look up by the error message you actually saw. Common snags in setup, testing, training, HDL, the editor, and deploy, each laid out as symptom → cause → fix.'
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+This page is built for **searching the message you actually got**. Every heading is the literal string
+that appears on screen, and every entry follows the same **symptom → cause → fix** order. Paste part of
+the error into your browser's find bar (Cmd/Ctrl+F) to jump straight to it.
+
+:::note[Check these first]
+Most snags come down to one of three things.
+
+1. **Missing extras** — did you run `uv sync --extra dev --extra cpu`?
+2. **Are you looking at soft or hard accuracy?** — only hard reflects real circuit performance ([Reading training curves](/en/guides/training-curves/))
+3. **The parameterization / fan-in combination** — are you using `softmax` with N≥4? ([Choosing a parameterization](/en/guides/parameterization/))
+:::
+
+## Setup and environment
+
+### `ModuleNotFoundError: No module named 'torch'`
+
+**Symptom** — it fails right at `import griffith_logic` or `uv run python examples/01_xor.py`.
+
+**Cause** — `torch` / `torchvision` resolve to different indexes per platform, so they are **not part of this
+package's core dependencies**. If you skip the extras, or run only `pip install -e .`, torch never gets installed.
+
+**Fix** — sync with the extras spelled out.
+
+```bash
+uv sync --extra dev --extra cpu     # Mac / Linux CPU
+uv sync --extra dev --extra cu128   # Linux CUDA(12.8)
+```
+
+If you use pip, install torch first from the [official index](https://pytorch.org/get-started/locally/),
+then run `pip install -e .`. See [Installation](/en/getting-started/installation/) for details.
+Note that the `editor` extra alone does not pull in torch, so it must be combined with `cpu` or `cu128`.
+
+### `uv sync` fails to resolve when `cpu` and `cu128` are both specified
+
+**Symptom** — passing both `--extra cpu --extra cu128` stops with a dependency resolution error.
+
+**Cause** — `[tool.uv] conflicts` in `pyproject.toml` declares these two as
+[conflicting extras](https://docs.astral.sh/uv/concepts/projects/dependencies/#conflicting-dependencies),
+so **only one of them can be selected**.
+
+**Fix** — pick the one that matches your environment: `cpu` for Mac / CI, `cu128` for GPU training machines.
+Other extras (`dev` / `editor` / `cloud` …) can be combined freely.
+Re-running `uv sync` with extras dropped can break the venv, so it is safest to **always pass the same full set of extras**.
+
+### `[magicdelta CUDA] CUDA未対応: Pythonフォールバックを使用`
+
+**Symptom** — this line appears on stdout when training starts.
+
+**Cause** — `griffith_logic/cuda/__init__.py` checks `torch.cuda.is_available()` at startup and, if false,
+skips loading the CUDA kernels and switches to the **Python fallback implementation**.
+On Mac (MPS) or CPU environments this message is **normal**. If it shows up on a CUDA machine, it almost
+always means torch itself is a CPU build (i.e. you synced with `--extra cpu`).
+
+**Fix** — this is not an error, so ignore it on Mac / CPU. If you expect GPU speed and still see it, reinstall
+with `uv sync --extra dev --extra cu128` and confirm that `torch.cuda.is_available()` returns `True`.
+
+### `[magicdelta CUDA] コンパイル失敗 — Pythonフォールバック: ...`
+
+**Symptom** — CUDA works, but the kernel's JIT compilation alone fails and prints the message above.
+
+**Cause** — the JIT build via `torch.utils.cpp_extension.load` failed (missing nvcc or build toolchain,
+no writable cache directory, and so on). The original exception message is appended at the end of the line.
+
+**Fix** — that trailing exception text is the primary evidence, so read it first. The fallback is active, so
+**training still runs** (just slower). If you are not in a hurry, it is fine to move on and verify behavior first.
+
+:::tip[You will never pick up a stale binary]
+The extension name embeds a SHA-256 hash of the source contents. Changing the source changes the name, so
+recompilation triggers correctly even on mounts that do not preserve timestamps (Modal, etc.).
+:::
+
+## Tests "don't run"
+
+### `4 passed, 20 deselected` — HDL tests don't run even though I selected them
+
+**Symptom** — you run `uv run pytest tests/hdl/ -q`, but nearly every test is deselected.
+
+**Cause** — the default `addopts` in `pyproject.toml` is
+`-m 'not slow and not paper and not hdl and not hdl_vhdl'`, so **heavy markers are excluded by default**.
+Specifying a path does not lift the marker-based exclusion.
+
+**Fix** — select the marker explicitly.
+
+```bash
+uv run pytest -m hdl -q        # Verilog equivalence
+uv run pytest -m hdl_vhdl -q   # VHDL equivalence
+make hdl                       # = pytest -m "hdl or hdl_vhdl"
+uv run pytest -m paper -q      # paper reproduction (takes minutes)
+make test-all                  # include slow (hdl / paper still excluded)
+```
+
+### `SKIPPED ... iverilog未導入` / `SKIPPED ... ghdl未導入`
+
+**Symptom** — even with `-m hdl` / `-m hdl_vhdl`, everything is skipped
+(add `-rs` and you get reasons like `SKIPPED [5] tests/hdl/test_vhdl_equivalence.py:36: ghdl未導入`).
+
+**Cause** — HDL equivalence tests invoke external simulators. When `iverilog_available()` /
+`ghdl_available()` is false, `pytest.mark.skipif` skips them automatically
+(**by design, to avoid breaking your environment** — this is not a failure).
+Note that `iverilog_available()` requires **both `iverilog` and `vvp`** to be on PATH.
+If you install only `iverilog` and lack `vvp`, the tests stay skipped.
+
+**Fix** — the Verilog side is easy to install.
+
+```bash
+brew install icarus-verilog        # macOS
+sudo apt-get install -y iverilog   # Debian / Ubuntu
+```
+
+VHDL (ghdl) is a different story. **The Homebrew build of ghdl on macOS is broken and has been measured
+to fail to build**, so the official practice is not to attempt a local install and to verify via the CI /
+container path instead. Having zero `hdl_vhdl` tests run locally is **expected**
+([HDL export](/en/guides/hdl-export/)).
+
+### `AssertionError: ...: 非有限値を検出 (NaN=..., inf=..., shape=...)`
+
+**Symptom** — a test for your own layer fails on this assertion.
+
+**Cause** — a shared helper checks every forward / backward output for NaN / inf. Saturated initialization,
+division by zero (τ=0, for example), or custom functions with logs and divisions are the usual culprits.
+
+**Fix** — first get `torch.autograd.gradcheck` passing in float64, then compare against the naive reference
+implementation in `core/reference.py` at `1e-10`. Tolerance constants live in `tests/conftest.py`, so
+**never write or loosen thresholds inside individual tests**
+([Testing](/en/contributing/testing/)).
+
+## Training isn't going as expected
+
+### Only hard accuracy is terrible (soft 0.803 → hard 0.211)
+
+**Symptom** — `test_acc(soft)` is high but `test_acc` (hard) collapses. Burned to HDL, the model is useless.
+
+**Cause** — the **discretization gap**. The continuous relaxation is earning its accuracy with truth table
+entries clustered around 0.5, so the moment you round, "which gate is this?" becomes undetermined and it falls apart.
+The short recipe in the [BinaryBrain-compatible API](/en/tutorials/binarybrain/) is a concrete example: with the
+continuous truth table, eval acc is **0.803**, but rounding the entries drops it to **0.211**
+(recalibrating BatchNorm statistics only gets you to 0.632).
+
+**Fix** — there are four moves.
+
+1. **Train for more epochs** — in healthy convergence the gap shrinks as training progresses
+2. **Change the parameterization** — `warp` has essentially zero discretization gap (measured **−0.06pp** on MNIST N=2; hard beats soft)
+3. **Switch selection to `hard_st`** — make training = inference so the gap is structurally 0
+4. **Push inputs toward 0/1** — see the "bilinear interpolation" entry below
+
+For how to diagnose, see [Reading training curves](/en/guides/training-curves/); for picking a method, see
+[Choosing a parameterization](/en/guides/parameterization/); for a gap-free configuration in practice, see [DWN](/en/tutorials/dwn/).
+
+:::caution[When you're using learned wiring]
+With learned wiring, soft accuracy can look fine while **hard accuracy alone collapses**.
+The standard practice is to **learn wiring only in the first layer and keep the rest fixed**
+(this is also the DWN paper's own recommendation).
+:::
+
+### soft keeps improving but hard plateaus around 94% (`softmax` with N≥4)
+
+**Symptom** — you raised fan-in to 4 or 6, yet hard accuracy is lower than an N=2 configuration,
+and more epochs don't help.
+
+**Cause** — a **structural loss of expressivity** (not vanishing gradients). With N≥4, `softmax` is not a
+16-gate table but a simplex over $2^N$ entries (summing to 1), so discretization (probability > 0.5) can raise
+at most one bit — meaning the only hard tables you can build are **a single minterm or constant FALSE**.
+Everyday functions like pass-through, OR, and XOR simply cannot be expressed.
+In measurements on MNIST with 6 layers and 50 epochs, softmax N=4 reached only **94.54%** hard accuracy with a
+1.12pp gap, losing to warp N=4 under the same conditions (**95.50%** / 0.14pp). In that same experiment, the epoch
+at which test_acc reached 95% was 5 for softmax N=2 and 9 for warp N=4, while **softmax N=4 never got there at all**.
+
+**Fix** — use **`softmax` for N=2 and `independent` (or `warp`) for N≥4**.
+Missing expressivity cannot be made up with more training.
+
+```bash
+uv run griffith train configs/recipes/dlgn_mnist_quick.yaml \
+    model.n_inputs=6 model.parameterization=independent optim.lr=0.3
+```
+
+### Loss doesn't move at all after switching to `independent`
+
+**Symptom** — neither loss nor accuracy budges from its initial value. In one measurement, 10 epochs left
+soft accuracy at 0.1217 → 0.1217, unchanged even in the first digit.
+
+**Cause** — `independent` uses a per-entry sigmoid, and when a somewhat saturated initialization meets deep
+serial composition, **gradients decay rapidly**. Measured gradient norms dropped to around $10^{-5}$ across all
+layers, and learning never started at the default lr=0.02.
+
+**Fix** — **raise the learning rate by an order of magnitude first** to isolate the cause (0.01 → 0.1–0.3).
+Learning has been confirmed to progress at `lr ≥ 0.3`. If a higher learning rate fixes it, gradient decay is confirmed as the cause.
+
+### GroupSum's τ is too small, softmax saturates, and training stalls
+
+**Symptom** — loss never fully comes down. Logits saturate, softmax pins to nearly one-hot, gradients thin out,
+and accuracy doesn't move.
+
+**Cause** — `GroupSum(k, tau)` just sums the final layer's outputs per class and divides by τ, but
+**τ is the logit scale itself**. The **constructor default is `tau=1.0`**, so if you forget to specify it,
+the group sum becomes the logit directly and saturates more as class count and gate count grow.
+In practice there is a recorded case where τ=1.0 on a terminal `group_sum` caused softmax saturation and stalled
+training (raising it to τ=4.0 restored hard acc 100% across all parameterizations). Conversely, too large a τ
+squashes the logits and thins the gradients.
+
+$$
+\text{logit}_c = \frac{1}{\tau}\sum_{i \in \text{group}_c} y_i
+$$
+
+**Fix** — **always set τ explicitly**. Start around 10 for MNIST-class tasks (measured with k=8000, 6 layers,
+MNIST: **a fixed τ=10 is about 1.0pt better** than the rule of thumb $\tau=\sqrt{k/C}\approx 28.3$). Use around
+100 for CIFAR-class tasks. Reference ranges are in [Running training](/en/guides/training/).
+
+```python
+GroupSum(k=10, tau=10.0)   # do not leave tau at its default of 1.0
+```
+
+### `ニューロン数(...)はクラス数(...)で割り切れる必要があります`
+
+**Symptom** — model construction stops with this exception.
+
+**Cause** — `GroupSum` splits the final layer's outputs **evenly across the classes** before summing.
+If the gate count $k$ is not divisible by the class count, the split is impossible.
+
+**Fix** — make the final layer's output width a multiple of the class count (2000 / 8000 / 16000 for MNIST's 10 classes, say).
+
+### `n_inputs は 2, 4, 6 のいずれか: 3`
+
+**Symptom** — construction of `LutLayer` fails.
+
+**Cause** — only fan-in **2 / 4 / 6** is supported (corresponding to difflogic compatibility / LUT4 / the LUT6 of an FPGA, respectively).
+
+**Fix** — choose 2, 4, or 6. For how to choose, see [Choosing a parameterization](/en/guides/parameterization/).
+
+### `gumbel_noise は parameterization='softmax' のみ対応です`
+
+**Symptom** — combining `gumbel_noise=True` with `independent` or similar fails.
+
+**Cause** — Gumbel smoothing operates on a softmax distribution, so it is exclusive to the `softmax`
+parameterization. It also cannot be combined with `hard_st`. Likewise, `selection` supports only
+`softmax` / `warp`; anything else produces `...はsoftmax/warpパラメータ化のみ対応: ...`.
+
+**Fix** — if you want Gumbel to close the gap, use `softmax` (N=2), or `warp` (N=4/6), which applies Gumbel
+smoothing to Walsh–Hadamard coefficients.
+
+### Inputs are downscaled with `Resize` and hard accuracy alone is 2pt lower
+
+**Symptom** — soft accuracy nearly matches the reference implementation (0.5% apart), yet hard accuracy is 2.1% lower.
+
+**Cause** — **bilinear interpolation**. DLGN assumes inputs are close to 0/1.
+`torchvision.transforms.Resize((20, 20))` generates a flood of intermediate values like 0.25 / 0.75, which shrinks
+the output differences between gates, weakens the learning signal, and no amount of `round()` at evaluation time
+brings the lost information back. Chasing the accuracy gap against difflogic (test 96.6% vs 97.4%), this turned
+out to be the **primary cause**.
+
+**Fix** — downscale with **cropping (border removal)** rather than interpolation.
+
+```python
+# BAD: interpolation produces a flood of intermediate values
+transforms.Compose([transforms.Resize((20, 20)), transforms.ToTensor()])
+
+# GOOD: preserves pixel values and spatial relationships
+transforms.Compose([transforms.ToTensor(), MNISTRemoveBorderTransform()])
+```
+
+After the fix, the gap against difflogic narrowed to 0.1–0.2% (within seed variation).
+When adding a new dataset, always check that **the input value histogram is concentrated at 0/1**.
+By method: crop ◎ / nearest neighbor △ / bilinear ✗ / bicubic ✗.
+
+## HDL export
+
+### `NotImplementedError: conv1: conv2dノードはHDL直接生成不可。export/lowering.lower_to_primitives(graph) を先に適用すること`
+
+**Symptom** — trying to emit Verilog / VHDL for a model containing convolutions stops with this exception
+(the VHDL side prints the same text).
+
+**Cause** — the HDL generator **explicitly rejects** native nodes such as `conv2d` and `or_pool2d`.
+They cannot become circuits until they are expanded into logic primitives.
+
+**Fix** — run lowering first. `examples/05` shows this in practice.
+
+```python
+from griffith_logic.export.lowering import lower_to_primitives
+
+graph = lower_to_primitives(graph)   # conv2d / or_pool2d → a sequence of lut_layer
+```
+
+### `NotImplementedError: HDL未対応ノード型: <型名>`
+
+**Symptom** — even after lowering, generation stops on a particular node type.
+
+**Cause** — the IR still contains something that **cannot be expressed as a boolean circuit**, such as a node that returns real values.
+
+**Fix** — move that layer to the logic side, or **cut and export before it**.
+`validate(graph, target='hdl')` warns about this ahead of time, so it is worth checking before generating
+([Working with the IR](/en/guides/ir/) / [HDL export](/en/guides/hdl-export/)).
+
+### HDL output doesn't match PyTorch
+
+**Symptom** — of the three-way equivalence (PyTorch hard eval ⇔ IR simulate ⇔ HDL simulation),
+only the comparison against PyTorch disagrees.
+
+**Cause** — you are comparing against the **soft (training-time) output**. HDL is a discrete circuit, so the
+thing to compare against is the hard eval under `model.eval()`.
+
+**Fix** — call `model.eval()` before comparing.
+Note that equivalence guarantees **bit-level agreement between the IR and real hardware**; it does
+**not guarantee that the continuous-valued training model and the discrete circuit have the same accuracy**.
+Always check hard eval accuracy before burning ([Burning to an FPGA](/en/guides/fpga/)).
+
+## Visual editor
+
+### `INFO: connection rejected (400 Bad Request)` — training charts stay at step 0 and never update
+
+**Symptom** — the acc / loss charts don't move from step 0 during training, while
+**REST-driven UI such as the session table and RUN history updates normally**.
+The backend log keeps printing `connection rejected (400 Bad Request)` about once a second and
+`connection open` never appears. On the vite side you see `ws proxy error: write EPIPE`.
+**Everything works in an incognito window.**
+
+**Cause** — **localhost cookie pollution × the WebSocket handshake line-length limit**. Cookies are sent per host
+without distinguishing ports, so the **huge auth cookie of another project** you develop on the same localhost also
+rides along on the editor's WS handshake. The `websockets` handshake parser has an **8192-byte per-line limit**
+(`MAX_LINE_LENGTH`), and exceeding it yields `SecurityError: line too long` → rejected with 400 (reproduced with
+curl carrying a 9KB cookie). The REST side uses a different parser with a much larger line limit, so it shows no
+symptoms — and that asymmetry is what makes this hard to isolate.
+
+**Fix** — the codebase already strips the Cookie header in vite's `/ws` proxy
+(safe, because the training WS does not use cookies; there is an E2E regression test). If it still happens, check:
+
+- DevTools → Network → WS, and look at the **total Cookie size** in the request headers
+- Temporarily raise `WEBSOCKETS_MAX_LINE_LENGTH` to isolate the cause
+- Direct connections that bypass the proxy (`VITE_EDITOR_WS_BASE_URL`) are not protected. If you're on localhost, go back through the proxy
+
+:::caution["Incognito fixes it" does not mean extensions are the cause]
+An incognito window changes two things at once: **extensions are disabled and cookies are empty**.
+That's not evidence for either one alone, so keep both candidates alive and settle it with real DevTools observations.
+Also, uvicorn's WS status lets you isolate the layer:
+**400 = malformed handshake (before reaching the app) / 403 = route mismatch / a close code after accept (4004 etc.) = application layer**.
+:::
+
+## Devices (CUDA / MPS)
+
+### Training runs on an unintended device
+
+**Symptom** — MPS is used when you wanted CPU, or vice versa.
+
+**Cause** — devices are **auto-detected in the order `cuda` → `mps` → `cpu`**.
+
+**Fix** — the CLI and experiment scripts accept a device setting, so state it explicitly.
+
+```bash
+uv run griffith train configs/recipes/dlgn_mnist_quick.yaml run.device=cpu
+```
+
+### MPS is orders of magnitude slower than a CUDA machine
+
+**Symptom** — larger configurations are extremely slow on Apple Silicon.
+
+**Cause** — **on MPS the CUDA kernels are not used and the Python implementation runs instead**.
+On top of that, raising fan-in grows the basis count as $2^N$ (N=2 is 4 bases, N=6 is 64 bases — roughly 16×), so
+**N=6 configurations are impractical on local MPS**.
+
+**Fix** — keep local MPS to smoke tests on the order of 10k gates, and use
+[cloud GPUs](/en/guides/cloud-gpu/) when you need scale. If you must run on MPS, drop fan-in to 2.
+
+### Processing hangs on MPS and never returns
+
+**Symptom** — conversion / recover-related processing stalls on MPS.
+
+**Cause** — recorded as a **known unresolved issue** (priority P2).
+
+**Fix** — the current workaround is to **fall back to CPU for that processing only**.
+
+### Setting a random seed on MPS doesn't reproduce results
+
+**Symptom** — you fix the seed on a Mac (MPS) but generated results still differ.
+
+**Cause** — `torch.Generator(device='mps')` is unavailable, so seeded generation is implemented with
+**the generator kept on the CPU side**. Random sequences not matching across devices is by design.
+
+**Fix** — do strict reproducibility comparisons **on the same device**. You cannot compare CPU results against
+MPS / CUDA results bit for bit. If you want to check circuit-level agreement, compare hard eval against IR simulate.
+
+## Deploy
+
+Snags you tend to hit with the deploy kit (bundle → C / CUDA / Metal / Web, ESP32, iPhone).
+Each target's page has a more detailed table, so this section just helps you find the entry point from the symptom.
+
+### ``region `dram0_0_seg' overflowed by ... bytes`` — the ESP32 build stops on DRAM overflow
+
+**Symptom** — `idf.py build` fails at the final link with ``ld: region `dram0_0_seg' overflowed by N bytes``.
+
+**Cause** — the work area `MDL_CTX_BYTES` (a macro in `model.h`) plus the input expansion buffer does not fit in the plain ESP32's static DRAM (180,736 B).
+Face detection (a 128px convolutional model) needs 1,544,000 B for `MDL_CTX_BYTES` alone, so it does not fit on an ESP32 without PSRAM.
+Activity recognition and MNIST do fit, but flattening with `--dense-flat` (default `auto`) grows `MDL_CTX_BYTES` by the signal table.
+
+**Fix** — first check that `-DMDL_NO_DEFAULT_CTX` is in effect (that you are not allocating the same area twice).
+If flattening caused the overflow, regenerate with `gen_model.py --dense-flat off`. If it is still too big, use a smaller model.
+See [Run on ESP32](/en/guides/deploy-esp32/#why-face-detection-does-not-fit) and the troubleshooting table on the same page.
+
+### `C ⇔ simulate が一致しない` — the generated C's scores disagree with `ir/simulate.py`
+
+**Symptom** — `griffith deploy verify-c` fails with `C ⇔ simulate が一致しない(サンプル..、経路=..)` ("C and simulate disagree"). Or the `SAMPLE` lines / `score_hash` from a device or simulator differ from the host's.
+
+**Cause** — most often a mixed-up artifact: a `model/` and `samples.h` from different bundles, a stale generated output reused, or `--dense-flat` not matched between host and device.
+A genuine circuit mismatch is what `verify-c` detects through its exact integer comparison.
+
+**Fix** — regenerate from the same bundle with the same `--dense-flat`. Raise `-n` of `verify-c` to see whether it reproduces.
+The procedure for comparing the device's results with the host's `SAMPLE` lines (`pred` / `exp` / `h`) is in [Run on ESP32](/en/guides/deploy-esp32/#3-capture-the-log) and
+[Deploy Kit Quickstart](/en/guides/deploy-quickstart/).
+
+### `runtime/web/dist` is missing — `codegen-web` fails
+
+**Symptom** — `griffith deploy codegen-web` stops with ``runtime/web/dist が無い。先に `make web-runtime` `` ("runtime/web/dist is missing; run `make web-runtime` first").
+
+**Cause** — the built artifacts of the Web runtime (written in TypeScript), `runtime/web/dist`, do not exist. A fresh clone does not have them.
+
+**Fix** — run `make web-runtime` at the repository root, then retry `codegen-web` (Node.js is required).
+For the procedure, see [Run in the Web browser](/en/guides/deploy-web/).
+
+### `dense-flat(off): 不採用` — CUDA / Metal do not flatten by default
+
+**Symptom** — with the same bundle, `codegen-c` / `codegen-web` print `dense-flat(auto): 採用` ("adopted") and flatten,
+but `codegen-cuda` / `codegen-metal` / `verify-metal` print `dense-flat(off): 不採用 — off 指定(従来経路)` ("not adopted: off was given, conventional path") and do not.
+
+**Cause** — the flat netlist `lut_flat` runs on all of C / CUDA / Metal / Web, but **the default differs by target**.
+C (`codegen-c` / `verify-c`) flattens by default (`auto`) when the reduction is 25% or more, and Web (`codegen-web` / `verify-web`) always does when there is a chain of 2-input `lut_layer`s.
+For CUDA / Metal the default is `off` (opt-in), because on Metal a large model run at batch 128 or more got slower when flattened (0.47-0.71x).
+
+**Fix** — to try flattening on the GPU, pass `--dense-flat auto` (adopted at a 25% or larger reduction) or `--dense-flat on`, and compare the speed against the default (off) before choosing.
+A bundle with `lut_flat` baked in by `bundle --dense-flat` runs as a flattened netlist on every target.
+The conditions and measurements are in [Run on GPU (CUDA / Metal)](/en/guides/deploy-gpu/) and [Compression and Optimizations](/en/reference/deploy-optimizations/).
+
+### `duplicate symbol` — linking fails when you put several models in an iPhone app
+
+**Symptom** — at Xcode link time, `duplicate symbol` appears for names such as `mdl_infer_ctx`.
+
+**Cause** — the `model.c` files of several models are linked directly into the same app, and every model exposes symbols of the same names.
+
+**Fix** — bring the models in again with `examples/31_deploy_ios/gen_model.py`. It makes a `<name>_unit.c` per model (a unity wrapper plus `#define` symbol renaming),
+so each is a separate translation unit and links without collisions. For other symptoms, such as signing and `Untrusted Developer`, see the table in [Run on iPhone](/en/guides/deploy-ios/#troubleshooting).
+
+### `implicit declaration of function 'clock_gettime'` — the `-std=c99` host build fails on Linux
+
+**Symptom** — building the ESP32 demo's `main.c` for the host with `cc -std=c99 -O2 -DHOST_BUILD ...` gives an error on Linux (glibc)
+that `clock_gettime` or `CLOCK_MONOTONIC` is undeclared.
+
+**Cause** — under `-std=c99`, glibc hides POSIX functions and constants. This does not happen on macOS.
+
+**Fix** — the current `examples/30_deploy_esp32/main/main.c` defines `_POSIX_C_SOURCE 199309L` itself for host builds, so this does not occur.
+If you are on an old `main.c`, or your own driver hits the same error, add `#define _POSIX_C_SOURCE 199309L` before the `#include`s, or pass `-D_POSIX_C_SOURCE=199309L`.
+
+### `idf.py: command not found` / `Cannot import module "click"` — the ESP-IDF environment is not active
+
+**Symptom** — `idf.py` is not found, or `idf.py` dies with `Cannot import module "click"`.
+
+**Cause** — ESP-IDF's environment is not active in that shell (`export.sh` is needed per shell). The `click` error appears when `python3` is a different version from the IDF venv's.
+
+**Fix** — run `. ~/esp/esp-idf/export.sh` before using `idf.py`. For the `click` error, put the IDF venv's `bin` at the front of `PATH` and then run `export.sh`
+(details are in the troubleshooting table of `examples/30_deploy_esp32/README.md`).
+
+### `Permission denied: '/dev/ttyUSB0'` / `Failed to connect` — cannot write to the serial port
+
+**Symptom** — `idf.py flash` or `scripts/esp32_capture.py` cannot open the port, or cannot connect to the ESP32.
+
+**Cause** — on Linux, your user is not in the group that owns the serial port (often `dialout`).
+Other common causes are another process holding the port (such as `idf.py monitor`), a wrong port name, or a charge-only cable with no data lines.
+
+**Fix** — on Linux, run `sudo usermod -aG dialout $USER` and log in again.
+The port name is `/dev/cu.usbserial-*` on macOS and something like `/dev/ttyUSB0` on Linux. Check that no other process holds the port, and check the cable.
+On some boards you have to hold the BOOT button while starting the flash. The rest is in the table in [Run on ESP32](/en/guides/deploy-esp32/#troubleshooting).
+
+## If that still didn't solve it
+
+<CardGrid>
+  <LinkCard title="Reading training curves" href="/en/guides/training-curves/" description="Use the soft-vs-hard difference to distinguish discretization gap, overfitting, and collapse." />
+  <LinkCard title="Choosing a parameterization" href="/en/guides/parameterization/" description="softmax for N=2, independent for N≥4. Missing expressivity can't be trained away." />
+  <LinkCard title="Running training" href="/en/guides/training/" description="Reference ranges for learning rate, τ, gate count, and depth, plus runtimes by scale." />
+  <LinkCard title="FAQ" href="/en/explanation/faq/" description="What 'no GPU required' means, how this differs from difflogic, and which tasks fit or don't." />
+</CardGrid>
+
+{/* i18n:source=guides/troubleshooting.mdx hash=f5e2c1efaef2 */}

@@ -1,0 +1,329 @@
+[project]
+name = "griffith-logic"
+version = "0.1.0"
+description = "A differentiable logic gate ML framework with N-input LUT support"
+readme = "README.md"
+requires-python = ">=3.11"
+# SPDX式。
+license = "Apache-2.0"
+# ライセンス関連ファイル(LICENSE/NOTICE/THIRD_PARTY_NOTICES.md/LICENSES/)を
+# wheel/sdistに同梱する。globで指定しているのでファイルを足しても列挙不要
+# (globはマッチ0件でもビルドを落とさない)
+license-files = ["LICENSE*", "NOTICE*", "THIRD_PARTY_NOTICES.md", "LICENSES/*"]
+authors = [{ name = "Masato Akiho" }]
+keywords = [
+    "differentiable-logic",
+    "logic-gate-network",
+    "lut",
+    "neural-network",
+    "pytorch",
+    "fpga",
+    "hdl",
+    "verilog",
+    "edge-ai",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy",
+    "tqdm",
+    # 0.25系はWindowsでwandb-coreサービスが起動せずwandb.initが無限ハング
+    # (実測、0.24.0/0.19.11は正常。LUT パック較正レポート)
+    "wandb<0.32",
+    # torchはコア依存。pip install griffith-logic だけで
+    # import griffith_logic が動く必要があるため。
+    # 下限を2.8.0に据え置く理由(>=2.13.0への引き上げを検討・見送り):
+    # download.pytorch.org/whl/cu128 が提供する torch の最新が 2.11.0 であり、
+    # >=2.13.0 にすると cu128 extra(下記 tool.uv.sources)が解決できなくなる。
+    # CUDA index を cu129/cu130 へ更新する時に併せて見直すこと。
+    # ninja(CUDAカーネルJIT)は cuda extra へ移した。
+    "torch>=2.8.0",
+    # 設定管理: 軽量・標準的なためコア依存に含める
+    "pydantic>=2",
+    "pyyaml",
+]
+
+[project.urls]
+Homepage = "https://github.com/tsukushi-gate/Griffith"
+Documentation = "https://tsukushi-gate.github.io/Griffith/"
+Repository = "https://github.com/tsukushi-gate/Griffith"
+Issues = "https://github.com/tsukushi-gate/Griffith/issues"
+Changelog = "https://github.com/tsukushi-gate/Griffith/blob/main/CHANGELOG.md"
+
+# 統一CLI
+[project.scripts]
+griffith = "griffith_logic.cli:main"
+# md は旧名の後方互換エイリアス(既存スクリプト・実験ブランチ互換)
+md = "griffith_logic.cli:main"
+
+# torchはcpu/cu128のconflicting extrasで選択する:
+#   Mac:        uv sync --extra cpu --extra dev   (PyPI=MPS版)
+#   Linux CPU:  uv sync --extra cpu --extra dev   (cpu index=軽量。CI用)
+#   Linux GPU:  uv sync --extra cu128 --extra dev (cu128 index。Modal/RTX)
+[project.optional-dependencies]
+cpu = [
+    "torch>=2.8.0",
+    "torchvision>=0.23.0",
+    "timm>=1.0.19",
+]
+cu128 = [
+    "torch>=2.8.0",
+    "torchvision>=0.23.0",
+    "timm>=1.0.19",
+]
+# CUDAカーネルのJITビルド(torch.utils.cpp_extension.load)に必要。
+# CPU環境では不要なためコア依存から外した。
+cuda = [
+    "ninja>=1.13.0",
+]
+dev = [
+    "pytest",
+    "httpx",
+    "hypothesis>=6.100",
+    "pytest-cov>=5.0",
+    # 型チェック: core/encodingのみ厳格化する段階導入
+    "mypy>=1.10",
+]
+wmt = [
+    "datasets",
+    "sacrebleu",
+]
+sentiment = [
+    "datasets",
+    "fugashi",
+    "pandas",
+    "unidic-lite",
+]
+visualizer = [
+    "websockets>=13.0",
+]
+# 実験結果の図生成(experiments/mono_figures.py 等)。matplotlibは重いため任意extra。
+figures = [
+    "matplotlib>=3.8",
+    # CVE対応で下限を引き上げ
+    "pillow>=12.3.0",
+]
+# SAT容量判定器(analysis/sat_capacity): Boolean matching→SATによる表現可能性証明
+sat = [
+    "python-sat>=1.8",
+]
+editor = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    # DATASETタブのCSV/画像zip取込のmultipartアップロードに必要
+    "python-multipart>=0.0.9",
+]
+# FPGA実装支援ツール(tools/mdl-fpga)の実機UART検証+対話シミュレーション用
+fpga = [
+    "pyserial>=3.5",
+    # ビューアの対話RTLシム(iverilog内でPythonを駆動。素のWindowsで動作実証済み)
+    "cocotb>=2.0",
+    # ビューアサーバ(editor extraと同系だがツール単体で完結させるため重複宣言)
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    # ビューアの image レンダラ(bit列→PNG data URL)用
+    "pillow>=10.0",
+]
+# 事前学習モデル変換(Track D)のteacher読込用: onnx/HF形式の変換元・蒸留teacher
+teachers = [
+    "onnxruntime",
+    # onnxruntime.quantization / tools が要求する(比較相手のONNXを
+    # int8化・.ort化して**公平な条件で測る**ために使う)
+    "onnx",
+    "huggingface-hub",
+    "safetensors",
+]
+# テキスト蒸留のteacher読込用: HF transformers系教師+SST-2等のデータセット
+# sentencepiece/sacremoses は MarianMT(opus-mt翻訳teacher)のtokenizerに必須。
+text = [
+    "transformers>=4.44",
+    "datasets",
+    "sentencepiece",
+    "sacremoses",
+    # BitNet等の量子化モデルロードにtransformersが要求(quantizer_bitnet)
+    "accelerate",
+]
+cloud = [
+    "modal>=1.1",
+    # RunPod Secure Cloud実行(griffith launch --backend runpod)。modalと同居
+    "runpod>=1.7",
+    # wandbレポート自動生成(griffith report)。未導入時はmarkdownへフォールバック
+    "wandb-workspaces",
+]
+
+# ドキュメントサイト(DOCS-1): 公開APIリファレンスの自動生成に使う。
+# griffeは静的解析のみでtorchを必要としないため、
+#   uv run --no-project --with griffe python scripts/gen_api_docs.py
+# のように隔離環境で実行してもよい(docs-siteのnpm scriptはこちらを使う)。
+[dependency-groups]
+docs = [
+    "griffe>=1.0",
+    # チュートリアルのnotebook化(jupytextでpy↔ipynb変換、nbconvertで実行・HTML化)
+    "jupytext>=1.16",
+    "nbconvert>=7.16",
+    "ipykernel>=6.29",
+    # notebooks/*.ipynb をローカルで開いて実行する用(uv run --group docs jupyter lab notebooks/)
+    "jupyterlab>=4.0",
+]
+
+# --- uv: PyTorch conflicting extras(cpu / cu128) ---
+# Mac(cpu extra)はマーカー非該当でPyPI(MPS版)、Linux(cpu extra)は
+# 軽量なcpu index(CI高速化)、cu128 extraはCUDA 12.8版
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv]
+conflicts = [
+    [{ extra = "cpu" }, { extra = "cu128" }],
+]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", extra = "cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+    { index = "pytorch-cu128", extra = "cu128" },
+]
+torchvision = [
+    { index = "pytorch-cpu", extra = "cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+    { index = "pytorch-cu128", extra = "cu128" },
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# 外部原本の保全置き場(AST解析のみで実行しない。原本まま保持のためlint対象外)
+extend-exclude = ["references/tang-nano-20k/litex-boards"]
+
+[tool.ruff.lint]
+# 最小ゲート(E9,F63,F7,F82)からE,F全体+I(import整列)+B(バグ疑い)+UP+Wへ拡大
+select = ["E", "F", "I", "B", "UP", "W"]
+# E741: 数理コードの数式由来インデックス(l等)を許容
+ignore = ["E741"]
+
+[tool.ruff.lint.per-file-ignores]
+# 再エクスポート用__init__は未使用import警告を除外
+"**/__init__.py" = ["F401"]
+# 実験スクリプト・テストは様式系を緩和(数理コードの可読性優先)。
+# F401(実験スクリプトの未使用import)は副作用importの可能性があるため機械削除しない。
+# B904/B905(例外連鎖・zip strict)は挙動が絡むため機械修正せず第2段で個別対応
+"experiments/*" = ["E402", "E501", "F401", "F841", "B007", "B904", "B905"]
+"tests/*" = ["E501", "E731", "F841", "B007", "B904", "B905"]
+# 旧名シムのテストは import 順の並べ替えを禁止する(griffith_logic を先に import させて
+# シム経由でないことを示す意図があり、ruff の版によって I001 の期待順が割れるため)
+"tests/test_legacy_alias.py" = ["I001"]
+"examples/*" = ["B007"]
+# notebooks/*.ipynb は examples/*.py からの生成物。正本(examples)と同じ緩和を適用する
+"notebooks/*" = ["B007"]
+# tools/は並行作業中(編集禁止)のため現行違反のみ除外(第2段で解消)
+"tools/*" = [
+    "E402", "E501", "I001", "UP035",
+    "F401", "F541", "F601", "F841",
+    "B904", "B905",
+]
+
+# --- mypy段階導入: 全体は緩く、core/encodingのみ厳格化 ---
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["griffith_logic.core.*", "griffith_logic.encoding.*"]
+ignore_errors = false
+check_untyped_defs = true
+
+# --- docstring網羅率(DOCS-1): ratchet運用 ---
+# 公開APIリファレンス(griffe生成)の品質はdocstringの有無に直結するため、
+# interrogateで網羅率を計測し下限を段階的に引き上げる(下げるのは禁止)。
+# 実行はCIと同じく隔離環境で:
+#   uv run --no-project --with "interrogate==1.7.0" interrogate griffith_logic
+# 初期較正: 下記ignore設定での実測76.6% → fail-under=74.6(実測-2ptで開始)
+[tool.interrogate]
+fail-under = 74.6
+# __init__/dunder/内部ヘルパはdocstring必須にしない(公開APIの網羅を測る目的)
+ignore-init-method = true
+ignore-magic = true
+ignore-nested-functions = true
+ignore-property-decorators = true
+# CUDAカーネルのJITラッパはビルド環境依存で解析不安定なため除外
+exclude = ["griffith_logic/cuda"]
+verbose = 1
+quiet = false
+color = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# リポジトリルートをsys.pathへ(旧名シム magicdelta_logic はwheelに入れないため、
+# インストール済みパッケージではなくソースツリーから解決する)
+pythonpath = ["."]
+# 既定は高速スイート(重いテストはマーカーで明示実行: pytest -m paper 等)
+addopts = "-m 'not slow and not paper and not hdl and not hdl_vhdl and not abc'"
+markers = [
+    "slow: 実行に時間がかかるテスト",
+    "cuda: CUDA GPUが必要なテスト(非対応環境では自動skip)",
+    "paper: 論文再現テスト(分単位、夜間/Modal実行)",
+    "hdl: HDLシミュレータ(iverilog等)が必要なテスト",
+    "hdl_vhdl: GHDLが必要なVHDLテスト",
+    "abc: ABC(論理合成ツール)が必要なテスト(未導入環境では自動skip)",
+    "learning: 学習ループを実行して収束/精度を主張するテスト(AIの実行)。CIでは実行しない(ローカルmake testでは実行)",
+]
+
+# カバレッジ: 通常実行を遅くしないためaddoptsには--covを入れない。
+# 計測時に明示指定する:
+#   uv run pytest --cov=griffith_logic --cov-report=term
+[tool.coverage.run]
+source = ["griffith_logic"]
+omit = ["griffith_logic/cuda/*"]
+
+[tool.coverage.report]
+precision = 1
+
+# パッケージは明示列挙する。
+# 自動検出(packages.find)に任せると設定次第でトップレベル0件の空wheelができる
+# 事故があったため、wheelに入れる対象をここで固定する。
+# 旧名シム magicdelta_logic は意図的に含めない(私有・配布物には入れない)。
+# 新しいサブパッケージを追加したらこの一覧にも足すこと
+# (tests/test_package_standalone.py が列挙漏れを検出して失敗する)。
+[tool.setuptools]
+packages = [
+    "griffith_logic",
+    "griffith_logic.analysis",
+    "griffith_logic.blocks",
+    "griffith_logic.convert",
+    "griffith_logic.core",
+    "griffith_logic.cuda",
+    "griffith_logic.datasets",
+    "griffith_logic.deploy",
+    "griffith_logic.encoding",
+    "griffith_logic.export",
+    "griffith_logic.hybrid",
+    "griffith_logic.ir",
+    "griffith_logic.layers",
+    "griffith_logic.models",
+    "griffith_logic.models.attention",
+    "griffith_logic.regularization",
+    "griffith_logic.training",
+    "griffith_logic.training.rules",
+]
+
+[tool.setuptools.package-data]
+# CUDAカーネルはJITコンパイルされるためソースをwheelに同梱する
+griffith_logic = ["cuda/*.cu", "cuda/*.cpp"]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DLGN 検出ベンチ — CenterNet-LUT vs ORT Web(CNN teacher)</title>
+  <style>
+    :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+    body { margin: 0 auto; max-width: 900px; padding: 16px; line-height: 1.5; }
+    h1 { font-size: 1.3rem; }
+    .muted { opacity: 0.65; font-size: 0.85em; }
+    nav a { margin-right: 14px; }
+    #status { font-family: ui-monospace, monospace; font-size: 0.85rem; min-height: 1.4em; margin: 8px 0; }
+    #out { font-family: ui-monospace, monospace; font-size: 0.78rem; white-space: pre-wrap;
+      border: 1px solid color-mix(in srgb, currentColor 20%, transparent); padding: 10px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <nav><a href="/">ベンチ</a><a href="/convbench.html">segベンチ</a><a href="/detbench.html">検出ベンチ</a><a href="/segbackends.html">segバックエンド行列</a><a href="/detbackends.html">検出バックエンド行列</a><a href="/seg.html">segデモ</a><a href="/detmono.html">モノクロ数字検出デモ</a><a href="/det.html">カラー数字検出デモ</a><a href="/detreal.html">実物体検出デモ</a><a href="/detface.html">顔検出デモ</a><a href="/webcam.html">webcamデモ</a></nav>
+  <h1>物体検出 ベンチ(CenterNet-LUT vs ORT Web)</h1>
+  <!-- 数値は data-meta(ロード済みモデルJSON)/ data-ref(参照値)由来。
+       以前は hard mAP が直値で書かれていたが、配信中のモデルの実値と食い違っていた。 -->
+  <p class="muted">
+    同一 <span data-meta="inputRes">—</span> 入力・同一 thermometer 前処理・同一 CenterNet decode で、
+    DLGN(packed/irflat, CenterNetLUT <b data-meta="kLabel">—</b>、
+    <b data-meta="accuracy">—</b>、<span data-meta="gatesReduced">—</span> ゲート(簡約後・実行実体))と
+    ONNX Runtime Web(CenterNetCNN teacher、<b data-ref="det_color_teacher.accuracy">—</b>、
+    <span data-ref="det_color_teacher.params">—</span>)の
+    配信サイズ / コールド起動 / スループット(imgs/s)を比較する。
+  </p>
+  <div id="status">計測中…</div>
+  <pre id="out"></pre>
+  <script type="module" src="/src/detbench_main.ts"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+name: Bug report
+description: Report something that does not work as documented.
+title: "[Bug] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report.
+
+        **Do not report security vulnerabilities here.** See [SECURITY.md](../blob/main/SECURITY.md).
+
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Preflight
+      options:
+        - label: I searched existing issues and did not find a duplicate.
+          required: true
+        - label: I am using a supported version (see SECURITY.md).
+          required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: A clear description of the bug and what you expected instead.
+      placeholder: |
+        Expected: ...
+        Actual: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproducible example
+      description: >-
+        The smallest self-contained script that reproduces the problem.
+        Please include the imports and the data shapes.
+      render: python
+      placeholder: |
+        import griffith_logic as gl
+        import torch
+
+        model = gl.LogicLayer(in_dim=8, out_dim=8)
+        ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Full traceback or error output
+      render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: version
+    attributes:
+      label: Griffith version
+      description: "Output of `griffith --version`."
+      render: text
+      placeholder: |
+        $ griffith --version
+        griffith 0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "e.g. Ubuntu 24.04 / macOS 15.3 (Apple Silicon) / Windows 11 + WSL2"
+    validations:
+      required: true
+
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "e.g. 3.12.7"
+    validations:
+      required: true
+
+  - type: textarea
+    id: torch
+    attributes:
+      label: PyTorch / CUDA version
+      description: >-
+        Output of
+        `python -c "import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available())"`.
+        If you use CPU or MPS only, please say so.
+      render: text
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area is affected?
+      multiple: true
+      options:
+        - Core / autograd
+        - Layers and models
+        - Training
+        - IR (build / simulate / validate)
+        - Export (Verilog / VHDL / lowering)
+        - CUDA kernels
+        - Datasets
+        - Visual editor
+        - CLI
+        - Documentation
+        - Other / not sure
+    validations:
+      required: false
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Logs, screenshots, workarounds, related issues.
+    validations:
+      required: false

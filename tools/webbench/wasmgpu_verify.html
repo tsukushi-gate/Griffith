@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DLGN wasm/webgpu 整数一致検証</title>
+  <style>
+    :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+    body { margin: 0 auto; max-width: 900px; padding: 16px; line-height: 1.6; }
+    h1 { font-size: 1.2rem; }
+    .muted { opacity: 0.7; font-size: 0.85em; }
+    #status { font-family: ui-monospace, monospace; font-size: 0.85rem; white-space: pre-wrap; }
+    .ok { color: #0a7d38; font-weight: 700; }
+    .err { color: #c0392b; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <nav class="muted"><a href="/">ベンチ</a></nav>
+  <h1>DLGN packed-wasm / packed-webgpu 整数一致検証</h1>
+  <p class="muted">
+    実 seg(SegConvDLGN k32)/ det(CenterNetLUT k256)モデルを js(packed純JS)/wasm(packed-wasm)/
+    webgpu(packed-webgpu)の3エンジンで実行し、全画素・全チャネルのスコアが整数完全一致するかを
+    ブラウザ上で検証する(node/vitestはWebGPUを実行できないため、packed-webgpuの正しさ確認は
+    ここが正式な経路)。
+  </p>
+  <div id="status">検証中…</div>
+  <script type="module" src="/src/wasmgpu_verify_main.ts"></script>
+</body>
+</html>

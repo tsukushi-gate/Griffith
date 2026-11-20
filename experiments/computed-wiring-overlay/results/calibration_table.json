@@ -1,0 +1,242 @@
+{
+  "generated_at": "2026-09-11T01:20:05.541499+09:00",
+  "anchors_source": "非公開の主張台帳(承認済み)",
+  "n_runs": 14,
+  "verdicts": [
+    {
+      "anchor": "C3",
+      "claim": "配線を層ごとの幾何級数シフト(rot)で計算しても、固定ランダム配線と同等以上の精度になる",
+      "metric": "hard_acc",
+      "metric_note": "最終エポックの離散テスト精度(先行実験 train_sweep.py は final のみ。best は使わない)",
+      "tolerance_pt": 0.5,
+      "arms": [
+        {
+          "recipe": "cwo_mnist_48k_p0",
+          "seeds": [
+            0,
+            1
+          ],
+          "values": [
+            0.9393999773263931,
+            0.9415999764204025
+          ],
+          "mean": 0.9404999768733978,
+          "smoke": false,
+          "wall_clock_s": [
+            170.57149457931519,
+            158.88354587554932
+          ],
+          "library_commit": "b2dc0941cc3ef7ad76349b8662c27d7b699806f2",
+          "arm": "P0",
+          "label": "固定ランダム配線(無制約乱択)",
+          "original": [
+            0.9398,
+            0.9408
+          ],
+          "original_mean": 0.9402999999999999,
+          "delta_pt": 0.019997687339790016,
+          "within_tolerance": true
+        },
+        {
+          "recipe": "cwo_mnist_48k_p1",
+          "seeds": [
+            0,
+            1
+          ],
+          "values": [
+            0.9469999784231186,
+            0.9502999800443649
+          ],
+          "mean": 0.9486499792337417,
+          "smoke": false,
+          "wall_clock_s": [
+            161.0792088508606,
+            159.64136838912964
+          ],
+          "library_commit": "b2dc0941cc3ef7ad76349b8662c27d7b699806f2",
+          "arm": "P1",
+          "label": "rot 幾何級数",
+          "original": [
+            0.9501,
+            0.9494
+          ],
+          "original_mean": 0.94975,
+          "delta_pt": -0.11000207662582584,
+          "within_tolerance": true
+        },
+        {
+          "recipe": "cwo_mnist_48k_p6",
+          "seeds": [
+            0,
+            1
+          ],
+          "values": [
+            0.9521999794244767,
+            0.9532999777793885
+          ],
+          "mean": 0.9527499786019326,
+          "smoke": false,
+          "wall_clock_s": [
+            172.9907841682434,
+            161.6086733341217
+          ],
+          "library_commit": "b2dc0941cc3ef7ad76349b8662c27d7b699806f2",
+          "arm": "P6",
+          "label": "rot + 層 0 の 2D 近傍",
+          "original": [
+            0.9519,
+            0.9545
+          ],
+          "original_mean": 0.9532,
+          "delta_pt": -0.04500213980674905,
+          "within_tolerance": true
+        },
+        {
+          "recipe": "cwo_mnist_96k_p6",
+          "seeds": [
+            0,
+            1
+          ],
+          "values": [
+            0.9532999819517136,
+            0.9546999806165695
+          ],
+          "mean": 0.9539999812841415,
+          "smoke": false,
+          "wall_clock_s": [
+            156.3484239578247,
+            159.65536451339722
+          ],
+          "library_commit": "b2dc0941cc3ef7ad76349b8662c27d7b699806f2",
+          "arm": "P6 (96K)",
+          "label": "rot + 層 0 の 2D 近傍(幅 16,000)",
+          "original": [
+            0.9527,
+            0.9527
+          ],
+          "original_mean": 0.9527,
+          "delta_pt": 0.12999812841415492,
+          "within_tolerance": true
+        }
+      ],
+      "difference_rules": [
+        {
+          "name": "P1 - P0 (48K)",
+          "positive": "cwo_mnist_48k_p1",
+          "negative": "cwo_mnist_48k_p0",
+          "comparison": "gte",
+          "min_pt": 0.4,
+          "original_pt": 0.95,
+          "rerun_pt": 0.8150002360343911,
+          "ok": true
+        }
+      ],
+      "complete": true,
+      "ok": true
+    },
+    {
+      "anchor": "C4",
+      "claim": "精度が落ちない条件はクラス受容野が入力を覆うこと(設計則 R26)",
+      "metric": "best_hard_acc",
+      "metric_note": "eval(100 ステップごと)の離散テスト精度の最大(先行実験の A_best)",
+      "tolerance_pt": 0.3,
+      "arms": [
+        {
+          "recipe": "cwo_cifar10_48k_p",
+          "seeds": [
+            0,
+            1
+          ],
+          "values": [
+            0.46359998792409896,
+            0.4669999888539314
+          ],
+          "mean": 0.4652999883890152,
+          "smoke": false,
+          "wall_clock_s": [
+            451.17168402671814,
+            434.89108753204346
+          ],
+          "library_commit": "b2dc0941cc3ef7ad76349b8662c27d7b699806f2",
+          "arm": "P",
+          "label": "置換配線(クラス受容野 99.0%)",
+          "original": [
+            0.4636,
+            0.467
+          ],
+          "original_mean": 0.46530000000000005,
+          "delta_pt": -1.161098484026013e-06,
+          "within_tolerance": true
+        },
+        {
+          "recipe": "cwo_cifar10_48k_sr2",
+          "seeds": [
+            0,
+            1
+          ],
+          "values": [
+            0.4745999863743782,
+            0.4800999876856804
+          ],
+          "mean": 0.4773499870300293,
+          "smoke": false,
+          "wall_clock_s": [
+            405.3119304180145,
+            422.7737064361572
+          ],
+          "library_commit": "b2dc0941cc3ef7ad76349b8662c27d7b699806f2",
+          "arm": "SR2",
+          "label": "受容野を満たした rot(クラス受容野 100%)",
+          "original": [
+            0.4746,
+            0.4801
+          ],
+          "original_mean": 0.47735000000000005,
+          "delta_pt": -1.296997076405404e-06,
+          "within_tolerance": true
+        },
+        {
+          "recipe": "cwo_cifar10_48k_r",
+          "seeds": [
+            0,
+            1
+          ],
+          "values": [
+            0.407799988090992,
+            0.41009998828172683
+          ],
+          "mean": 0.4089499881863594,
+          "smoke": false,
+          "wall_clock_s": [
+            404.71991086006165,
+            405.25747656822205
+          ],
+          "library_commit": "b2dc0941cc3ef7ad76349b8662c27d7b699806f2",
+          "arm": "R",
+          "label": "旧 rot(MNIST 用ずらし量、クラス受容野 30.7%)",
+          "original": [
+            0.4078,
+            0.4101
+          ],
+          "original_mean": 0.40895000000000004,
+          "delta_pt": -1.181364062130541e-06,
+          "within_tolerance": true
+        }
+      ],
+      "difference_rules": [
+        {
+          "name": "SR2 - P",
+          "positive": "cwo_cifar10_48k_sr2",
+          "negative": "cwo_cifar10_48k_p",
+          "comparison": "gt",
+          "min_pt": 0.0,
+          "original_pt": 1.205,
+          "rerun_pt": 1.2049998641014081,
+          "ok": true
+        }
+      ],
+      "complete": true,
+      "ok": true
+    }
+  ]
+}

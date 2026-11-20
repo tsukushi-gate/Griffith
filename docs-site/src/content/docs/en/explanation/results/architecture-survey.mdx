@@ -1,0 +1,171 @@
+---
+title: 'How far logic gates get, architecture by architecture'
+description: 'Image classification, language models, seq2seq, detection, generative models, text classification. What ran on logic gates alone — recorded with the achieved and the unachieved kept apart.'
+---
+
+Solving MNIST is only the starting point. This page lines up measurements of **how far an
+architecture can go on logic gates alone**, separating what works from what does not. Nothing has
+been cherry-picked to make the numbers look good: **models that are not yet calibrated, and models
+that collapsed, appear in the same tables**.
+
+A one-line index that also covers the models from the experimental branches is in the
+[Model Zoo](/en/reference/model-zoo/).
+
+:::caution[How to read these numbers]
+Unless stated otherwise, the values are **single-seed, single-configuration measurements**; seed
+variance was not taken. Metrics are reported primarily on the **hard** side (the pure Boolean
+circuit after discretization). Soft values (the continuous relaxation used during training) appear
+only so the difference is visible.
+:::
+
+## 1. Image classification
+
+| Model | Dataset | hard | Conditions / environment |
+|---|---|---|---|
+| DLGN (softmax N=2, 6 layers × 8,000) | MNIST 20×20 | **0.9784** | A10G, 200k iter, 2026-07-02 |
+| DLGN (Hard-ST selection, 6 layers × 64,000) | MNIST 28×28 | 0.9802 | RunPod GPU, 50k iter, 2026-04-15 |
+| DLGN (softmax N=2, 6 layers × 16,000) | MNIST 28×28 | 0.9774 | RTX 5090, 50ep, 2026-04-20 |
+| BinaryBrain style (raw+BN+Binarize, N=6) | MNIST | 0.9483 | 14,516 gates, 10ep, 2026-04-20 |
+| Conv-DLGN (after the `softmax16g` fix) | CIFAR-10 | 0.5808 | 0.4921 before the fix (+8.9pt), 2026-07-05 |
+| LogicMixer (a logic MLP-Mixer) | MNIST | saturates at 0.671 | 20k steps, **needs calibration** |
+| LogicResNet | MNIST | 0.113 (near chance) | 3ep, loss does decrease. **Unresolved; treated as a τ/scaling calibration problem** |
+
+CIFAR-10 falls well below the MNIST-class numbers. **As task difficulty rises, both the gate budget
+and the architecture start to matter** — that is where things stand, and it is recorded here without
+embellishment.
+
+Conv-DLGN's +8.9pt came from fixing a structural flaw in `LutConv2d` (a 4-entry simplex cannot
+express pass-through / OR / XOR, and the residual initialization was also decaying) by moving to
+`softmax16g`. It is a concrete case of **missing expressiveness in a parameterization killing
+accuracy at the architecture level**, and it matches
+[The experiment behind the parameterization rule](/en/explanation/results/parameterization-study/).
+
+## 2. Language models (autoregressive)
+
+A "ladder" measuring, step by step, how much of a Transformer can be turned into a circuit, on a
+character-level language model over Tiny Shakespeare (vocab 65, T=64, 20k steps, A10G, seed=0).
+
+| Rung | What was turned into a circuit | hard ppl |
+|---|---|---|
+| L0 | nothing (all FP; establishes the ceiling) | 4.94 |
+| L0b | FFN only | ≈7.9 |
+| L1 | + q/k/v projections as circuits | 19.24 |
+| L2 | + scores as XNOR-popcount | 19.39 |
+| L3-C | + normalization as an argmax MUX selector (attention fully circuit-ized) | 15.54 |
+| **L3-C + Gumbel** | same + Gumbel gate-selection noise | **13.31** |
+
+Two things stand out.
+
+- **The cost of circuit-ization is not monotone.** L1/L2 fall to the 19s, then L3-C — which replaces
+  normalization with a MUX — recovers to 15.5. Softmax flattening is not required, and **attention
+  works as a "learned multiplexer"**. A controlled experiment on sequential MNIST agrees: MUX
+  selection (entropy=0) matched softmax (entropy=2.7) in accuracy (0.8605 vs. 0.8606).
+- **The gap to the FP ceiling (4.94) is still wide.** hard ppl 13.31 shows a language model can run
+  as a logic circuit, but it is not level with the FP implementation.
+
+For the discretization-gap side of this, see
+[The discretization gap in practice](/en/explanation/results/discretization-gap/).
+
+## 3. Sequence models (recurrent, seq2seq)
+
+| Model | Task | Result | Conditions |
+|---|---|---|---|
+| LogicLSTM | delayed copy (T=8) | **hard acc 100% (all seeds, ≤200 steps)** | An Elman-type model under the same conditions is ≈0.86 even at 800 steps |
+| LogicReservoir (frozen random circuit) | delayed bit recall | **hard acc 100% (all seeds) from training the readout alone** | the circuit body is frozen and purely Boolean |
+| DLGNAttentionTranslator | copy (seq_len=16) | soft 71.66% / hard 25.77% | 50,000 steps, 156,032 parameters / 9,352 gates |
+| RDDLGN (reimplementation of prior work) | copy (seq_len=16) | soft 22.54% / hard 15.54% | same conditions, 180,608 parameters / 10,888 gates |
+
+**The Translator with cross-attention achieved 3.18× RDDLGN's soft accuracy and 1.66× its hard
+accuracy with 13.6% fewer parameters** (2026-04-21). That is evidence the information bottleneck of
+RDDLGN's attention-free structure was really biting. Even so, hard 25.77% is not a practical level:
+**seq2seq is currently the area most vulnerable to discretization**.
+
+On gating, tests guarantee that `LogicLSTM`'s gates discretize to `{0,1}` at eval time, collapsing
+into a strictly Boolean MUX circuit. **Gating — as MUX / AND masking — is inherently compatible with
+Boolean operations**, which is what the measurements show.
+
+## 4. Detection and dense prediction
+
+| Model | Task | hard | Environment |
+|---|---|---|---|
+| CenterNetLUT | Multi-MNIST detection (96×96, 1 object) | **mAP 0.5425** (epoch 78, **pre-fix figure, awaiting re-measurement**) | RTX 5090, 1,000ep, 11h45m, 13,944 parameters |
+| LogicUNet | 8×8 toy segmentation | IoU 0.875 | **needs calibration** |
+| LogicUNet | full MNIST masks | IoU 0.373 | **needs calibration** |
+
+CenterNetLUT peaks at epoch 78 and then becomes unstable. It is an unusual case where hard far
+exceeds soft (mAP 0.1791), and **you will miss the peak unless model selection is based on the hard
+side**.
+
+## 5. Generative models
+
+| Model | Task | Result | Conditions |
+|---|---|---|---|
+| LogicBinaryDiffusion (forward process, reverse process and denoiser all Boolean circuits) | binary MNIST | acc@t1 0.886, denoising margin +0.377 (passthrough baseline 0.499) | 4ep, **3,937** parameters total |
+| LogicVAE (binary latent, ST Bernoulli) | binary MNIST | reconstruction 193.6 nat/image, KL 0.448, active_bits 0.99 (no posterior collapse) | 30ep |
+| LutAutoencoder (`LutLayer` only) | MNIST reconstruction | Test MSE (hard) **0.0863** (best, epoch 63) / soft 0.0438 at epoch 65 | Apple M4 Pro (MPS), k=8,000, bottleneck=256, 65ep (stopped early), 30,784 gates |
+| LogicGAN | 8×8 binary patterns | diverges without tuning; stabilization measures bring it to a standoff | **research problem** (only structural-contract and dynamics smoke tests) |
+
+The diffusion model's **3,937 parameters** is a number worth noting. Because "sampling = comparator"
+and "adding noise = XOR", the generative process closes entirely within logic circuits.
+
+## 6. Text classification (real data)
+
+A LUT-based TextCNN on WRIME (sentiment analysis of Japanese social-media posts). All values are
+hard-side.
+
+| Task | Result | Comparison |
+|---|---|---|
+| binary classification | Accuracy **82%** | — |
+| 8-emotion binary classification | Accuracy **83.4%** / mean F1 **0.367** | DeBERTa-v3-base 87.0% / F1 0.630 |
+
+The 8-emotion version uses about 2.08M parameters (1/88 of DeBERTa) for −3.6pt Accuracy and −0.263
+F1. **Accuracy comes close, but F1 lags badly.** Minority classes are being dropped, and "close
+accuracy" is explicitly not "equivalent". Training took about 15 minutes on GPU.
+
+## 7. Conversion from pretrained models
+
+Can existing floating-point models be converted into logic gates (Track D)?
+
+| Route | Result |
+|---|---|
+| pruned transcription + STE fine-tune + int4 QAT + adder-tree lowering (MNIST) | **within −2% of the teacher (hard 0.9558, strict lowering)**. The circuit has 418k LUT outputs |
+| the same recipe transferred to Fashion-MNIST | 0.8196 (passes with fan-in 48 + bits 6) |
+| KD from a strong teacher (public ResNet18 on CIFAR-10, 0.9498) | **+2.3pt** over scratch for a dense DLGN |
+| native DLGN conversion from a weak teacher (MNIST) | all 3 routes **below scratch** (a negative result) |
+| KD from public DistilBERT to SST-2 sentiment classification | hard accuracy **+7.3pt** (73.4% → 80.7%, 88.4% recovery) |
+| data-free distillation from public nanoGPT to a character LM | RDDLGN actual BPC **2.71** (0.51 bit behind the teacher) |
+
+The central finding here is the scaling hypothesis: **the gap in capability between teacher and
+student is the source of distillation's gains.** Conversion from a weak teacher loses to training
+from scratch. Conversely, the fact that language-generation conversion succeeded even with no
+training data (only teacher-generated text) points to a path when the original data is unavailable
+in production.
+
+## 8. What you can reproduce on your own CPU
+
+The results above are all GPU runs, but the site's tutorials are written as scaled-down versions
+that finish **on CPU alone, in minutes**. The same phenomena reappear in miniature.
+
+| Tutorial | Measured | Time |
+|---|---|---|
+| [Train on MNIST](/en/tutorials/mnist/) | soft 0.8765 / hard 0.8670 (4,000 gates, 4,000 steps) | about 10 min |
+| [DWN (thermometer encoding)](/en/tutorials/dwn/) | test acc 0.9540, max soft–hard logit difference 0.0 | about 7 min |
+| [LSTM / GRU](/en/tutorials/logic-lstm/) | LogicLSTM / LogicGRU hard 1.0000 vs. Elman 0.5781 | about 5 min |
+| [The logic ladder](/en/tutorials/logic-ladder/) | L0 1.000 / L1 0.746 / L2 1.000 / L3-C 0.990 (hard) | about 8 min |
+| [Reservoir](/en/tutorials/logic-reservoir/) | hard 1.0000 for parity k=1,2; 0.8223 at k=3; 0.5723 at k=4 | about 5 min |
+| [Object detection](/en/tutorials/detection/) | mAP@0.5 = 0.3003 (679 gates, 500 steps) | about 7 min |
+
+A full list of measured tutorial values is in [Benchmarks](/en/reference/benchmarks/).
+
+## 9. Where things stand
+
+- **Solidly working**: image classification (MNIST class), recurrent tasks such as delayed copy,
+  simple detection settings, generative models with binary latents, text classification.
+- **Working, but short of FP**: autoregressive language models (hard ppl 13.31 against an FP ceiling
+  of 4.94), CIFAR-10-class image classification (0.5808).
+- **Unachieved / under calibration**: LogicResNet (≈chance), LogicMixer (saturates at 0.671),
+  LogicUNet (IoU 0.373 on full MNIST), LogicGAN (stabilization is a research problem).
+- **The common bottleneck is the discretization gap**, and the current state of the remedies is
+  collected in [The discretization gap in practice](/en/explanation/results/discretization-gap/).
+
+{/* i18n:source=explanation/results/architecture-survey.mdx hash=5ad30cb0bd57 */}

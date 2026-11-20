@@ -1,0 +1,330 @@
+---
+title: 'Prepare Demo Models'
+description: 'How to turn the three demo models for the deploy kit (MNIST / activity recognition UCI-HAR / face detection WIDER FACE) from trained artifacts into deploy bundles.'
+---
+
+The [Deploy Kit Quickstart](/en/guides/deploy-quickstart/) showed the flow on the smallest model, XOR.
+This page collects the procedure for setting up **three impressive demo models** for devices and browsers.
+All three end up as the same **deploy bundle (`.bundle.json`)** and can be sent to any of the C / CUDA / Metal / Web targets.
+
+:::note[Where this page fits]
+The steps for **training each model from scratch** live on the tutorial side. Here we start from
+"take the trained artifacts and make a bundle." Measured gate counts and sizes are in the [size table](#size-table) at the end
+(the MNIST row is for the bundle made in the [tutorial](/en/tutorials/deploy-mnist/)).
+:::
+
+## The three demo models
+
+| Model | The task it solves | Output shape | How to get and convert it |
+|---|---|---|---|
+| **MNIST** | Look at an image of a handwritten digit and say which digit (0 to 9) it is | 10-class scores | Train in the [tutorial](/en/tutorials/deploy-mnist/) → bundle |
+| **Activity recognition (UCI-HAR)** | From the sensor readings of a phone worn at the waist, tell which of 6 movements it is, such as walking, sitting, or lying down | 6-class scores | Fetch a trained IR → `export_webbench.py ir` → bundle |
+| **Face detection (WIDER FACE)** | Find where the faces are in a photo | A face-likelihood score map (boxes are decoded by the app) | Trained checkpoint → `export_webbench.py det-ckpt` → bundle |
+
+Specs such as input and output widths can be checked after building a bundle with `griffith deploy info`.
+
+```bash
+uv run griffith deploy info out_examples/demo_models/<name>.bundle.json --strict
+```
+
+## Fetch them all at once
+
+There is a script that fetches the activity-recognition models (three of them) and face detection, and builds the bundles in one go.
+
+:::caution[Currently for the development team only (no public distribution yet)]
+The trained models this section's script fetches (the three activity-recognition models and face detection) are currently kept **only in the development team's private wandb project**,
+and no public distribution channel (such as a GitHub Release) has been decided yet. So people outside the team cannot reproduce this section as written.
+This section will be updated once a public distribution channel is decided.
+
+Outside the team, you can try the same flow this way:
+
+- MNIST: train it and build the bundle in the [tutorial](/en/tutorials/deploy-mnist/)
+- Activity recognition: train a (smaller than on this page) teaching model in the [Activity Recognition (UCI-HAR)](/en/tutorials/har/) tutorial. If you have a trained IR, turn it into a bundle with `export_webbench.py ir` as in the "Activity recognition (UCI-HAR)" section below
+- Your own model: make a bundle with the steps in [Deploy Your Own Model](/en/guides/deploy-your-model/)
+:::
+
+```bash
+uv run python scripts/fetch_demo_models.py          # = all (har + face)
+uv run python scripts/fetch_demo_models.py har      # only the three activity-recognition models
+uv run python scripts/fetch_demo_models.py face     # only face detection (about 5 to 6 minutes)
+```
+
+The script fetches wandb Artifacts (trained IRs and the face-detection checkpoint) **read-only**.
+Authentication uses the environment variable `WANDB_API_KEY` (or `--env-file`). The source entity and project have no default,
+so pass them with `--wandb-entity` / `--wandb-project` (or the environment variables `WANDB_ENTITY` / `WANDB_PROJECT`)
+(if neither is given and something must be fetched from wandb, the script stops and says how to specify them). The main options:
+
+| Option | Meaning |
+|---|---|
+| `--wandb-entity` / `--wandb-project` | Source wandb entity / project (defaults to the environment variables `WANDB_ENTITY` / `WANDB_PROJECT`) |
+| `--out-dir` | Output directory (default `out_examples/demo_models`) |
+| `--offline` | Do not connect to wandb (works only if everything is cached) |
+| `--har-root` / `--no-download` | Where UCI-HAR lives / do not download it automatically when it is missing |
+| `--force` | Rebuild existing bundles and generated C |
+| `--no-verify-c` / `--verify-samples` | Skip the integer-match check of the generated C / change its sample count |
+| `--resynth lossless` | Force lossless resynthesis of the conv2d trees of face detection, with simulate verification. The output has the separate names `det_face_lut_k256_resynth.*` and leaves the regular version untouched (resynthesis also runs with the default `--compress fast`) |
+| `--compress {none,fast,max}` | Lossless circuit compression applied before bundling (default `fast`). Same meaning as `griffith deploy bundle --compress`, and the same for every kind of model; the result is recorded in the bundle's `about.compress`. `none` disables it, `fast` applies every reduction that finishes in seconds (sweep for dense, resynthesis for conv2d), and `max` searches deeper with extra verification (minutes on real models) |
+
+You can also name a single model (such as `har_dlgn_k2400`) as the target.
+
+The output goes to `out_examples/demo_models/` (it is in the repository's `.gitignore`, so it is not committed).
+For each model name `har_dlgn_k600` / `har_dlgn_k2400` / `har_dlgn_k6000` / `det_face_lut_k256` you get these files.
+
+| File | Contents |
+|---|---|
+| `<name>.model.json` | The model in webbench format (IR, preprocessing, labels, `readout`) |
+| `<name>.bundle.json` | The deploy bundle. This is the input on the following pages |
+| `<name>.verify_c.json` | A record of whether the generated C matched `ir/simulate.py` integer-exactly |
+| `c/<name>/` | The generated `model.c` / `model.h` and the runtime |
+| `summary.json` | A list of gate counts, sizes, `MDL_CTX_BYTES`, input widths, and accuracy for all models |
+
+In the command examples on the following pages, a bundle is written as `out_examples/demo_models/<name>.bundle.json`.
+
+Sample inputs for running on a device (with ground-truth labels and expected scores) are made by a separate script.
+
+```bash
+uv run python scripts/make_device_samples.py \
+    --bundle out_examples/demo_models/har_dlgn_k6000.bundle.json
+uv run python scripts/make_device_samples.py \
+    --bundle out_examples/demo_models/det_face_lut_k256.bundle.json --n 8
+```
+
+`--bundle` may be given several times. The input data is detected from the bundle (override with `--dataset`):
+for activity recognition it takes 50 UCI-HAR test windows, balanced across classes (change with `-n`); for face detection it picks 10 synthetic images.
+The output is `out_examples/demo_models/samples/<name>.json` (plus `<name>_samples.h` for embedding in C), and
+**the expected scores are always the integer output of the host's `ir/simulate.py`**.
+
+Samples are held as **a hex byte string** (input `i` is bit `i%8` of byte `i/8`, LSB-first),
+and the ESP32 / iPhone demos load them to check whether the device's output matches the expected scores.
+For image-input models, a sample carries `image` (u8 NCHW, 3×128×128 = 49,152 bytes as hex) instead of `bits`.
+
+## MNIST
+
+For MNIST you follow the whole flow of **training in the tutorial and bundling the result as is**.
+The procedure itself is in [Deploy MNIST](/en/tutorials/deploy-mnist/).
+
+For models with image input, the bundle's `preproc` section carries "the rule that encodes pixel values into binary channels."
+When bundling, this is compiled into **integer descriptors** (`preproc_desc`), so the device needs no floating point.
+From a bundle that has `preproc_desc`, the generated C gains `mdl_infer_image()`, which takes a u8 image directly.
+
+## Activity recognition (UCI-HAR)
+
+Activity recognition is a **dense model that takes sensor features rather than an image** (a fully connected LUT network with no conv).
+The training flow is in [Activity recognition (UCI-HAR)](/en/tutorials/har/). Here we start from an already trained IR.
+
+Running `scripts/fetch_demo_models.py har` builds three models, all the way to bundles: the 36,000-gate `har_dlgn_k6000`, the 9,600-gate middle version `har_dlgn_k2400`, and
+the 2,400-gate small version `har_dlgn_k600`.
+
+:::note[Not the same model as the tutorial's]
+What the [Activity recognition (UCI-HAR)](/en/tutorials/har/) tutorial trains is a small **teaching model** with 3 layers, 9,000 gates, and a hard accuracy of 0.885.
+The k600 / k2400 / k6000 fetched here are **separate trained models** kept on wandb (different layer counts, gate counts, and accuracy; see "Input shapes and accuracy" below),
+so they are not the tutorial's model as is.
+:::
+
+```bash
+uv run python scripts/fetch_demo_models.py har
+uv run griffith deploy verify-c out_examples/demo_models/har_dlgn_k600.bundle.json -n 8
+```
+
+The input is the raw inertial signals of UCI-HAR, 9 channels × 128 steps, turned into 4,608 bits by these rules.
+
+- Standardize with each channel's mean and standard deviation from the training data
+- Thermometer-encode per channel, using the quantiles `(i+1)/(T+1)` (`T=4`) of the standardized training data as thresholds (1 when `z > threshold`)
+- The bit order is `((ch*128) + t)*4 + thr`
+
+This preprocessing declaration goes into the bundle's `preproc` section, and the sample input bit strings are built by the same rules.
+
+If you prepared a trained IR (`*.ir.json`) yourself, pass it to `export_webbench.py ir` and it is written to
+`tools/webbench/public/models/<label>.json` **already as a bundle**. Labels are passed as a JSON array.
+
+```bash
+uv run python scripts/export_webbench.py ir path/to/har.ir.json \
+    --label har \
+    --labels '["WALKING","WALKING_UPSTAIRS","WALKING_DOWNSTAIRS","SITTING","STANDING","LAYING"]'
+```
+
+If the input is not already-binarized features and a preprocessing declaration is needed, pass it with `--preproc-json` (it defaults to `kind: raw`).
+The bundle that is written can be used for code generation as is. Only when you want `--resynth lossless` or the `.mdlb` format
+do you need to run it through `griffith deploy bundle` again (feeding a bundle in produces the same shape out).
+
+```bash
+uv run griffith deploy bundle tools/webbench/public/models/har.json -o out_examples/har.bundle.json
+```
+
+For a dense-only model, adding `--dense-batch N` to the C code generation grows **a path that packs the batch axis**.
+It raises throughput compared with the single-image path, so it is worth trying when you push a lot of inputs through at once.
+
+When the default `--dense-flat auto` flattens the model, a **32-image batch entry point, `mdl_infer_batch_packed`,** is generated automatically even without `--dense-batch` (`--dense-batch 0` suppresses it, `--dense-batch N` sets the maximum).
+Running 32 images together was faster per image than running them one at a time: 1.7 times on HAR k600, 5.9 times on k6000 and 5.4 times on MNIST (Apple M3, host C).
+Feeding it a single image is 5 to 12 times slower, so use it for batches only. For single-image latency, the existing `mdl_infer` remains the best.
+
+## Face detection (WIDER FACE)
+
+Face detection is a **CenterNet-style detection model (`CenterNetLUT`)**, a LUT network that contains convolutions.
+`scripts/fetch_demo_models.py face` builds `det_face_lut_k256.bundle.json` from the trained checkpoint on wandb
+(internally it does the same conversion as `export_webbench.py det-ckpt` below, with the equivalent of `--demo-samples 0`).
+To build from your own checkpoint (`best.pt`), use `export_webbench.py det-ckpt` directly.
+
+```bash
+uv run python scripts/export_webbench.py det-ckpt path/to/best.pt \
+    --label det_face --demo-samples 0
+```
+
+`--demo-samples 0` means **do not embed real dataset images into the bundle** (see the note below).
+Always build bundles that you publish or distribute with this setting. The face-detection samples used for the device and simulator measurements are
+not real images but **synthetic images (all 0, all 255, random, gradient, checkerboard, and a drawn face-like illustration)**, and carry no labels.
+The expected values are the host `ir/simulate.py` output, and the purpose is integer matching and latency measurement.
+
+:::caution[WIDER FACE license]
+WIDER FACE is a dataset that may be used for **non-commercial, research purposes**. **Its sample images may not be redistributed.**
+Setting `--demo-samples` to anything other than 0 embeds images from the real dataset into the bundle as base64,
+so **you must not distribute such a bundle publicly to third parties**. Demos and downloads on this site use only bundles that contain no images.
+:::
+
+### Decoding boxes is the app's job
+
+What the runtime returns is **only up to the score map**; decoding into boxes (peak extraction plus NMS) is not included.
+The information needed for decoding is in the bundle's `readout` section (`kind: "detection"`).
+
+| `readout` key | Meaning |
+|---|---|
+| `heads` | The three heads (`hm` / `size` / `off`) inside the output vector. Each carries its start position (`offset`), channel count, height, width, and scale (`scale`) |
+| `output_stride` | How much smaller the score map is than the input image |
+| `top_k` / `threshold` | How many top candidates to take, and at what minimum score |
+| `n_classes` | Number of classes |
+
+The output integer vector is the three heads concatenated, and real values are recovered as `value × scale` (`hm` is `popcount / hm_group`, in `[0,1]`).
+The decoding steps are as follows.
+
+1. Apply a **3×3 max pooling** to `hm` (the heatmap) and keep only peaks that beat their surroundings (NMS)
+2. Sort all classes and positions in descending order, and take those among the top `top_k` that exceed `threshold`
+3. From the peak position `(x, y)` and `off` (`dx`, `dy`), get the center as `(x + dx, y + dy) × output_stride`
+4. Multiply `size` (the normalized width and height) by `output_stride × map width (height)` to get the width and height in pixels
+
+The **reference implementation of these steps is `tools/webbench/src/detdecode.ts`** (ported to be bit-equivalent to the Python `decode_detections`).
+When embedding it in your own app, port it to C or Swift.
+
+## Size table
+
+The scale after bundling bears directly on where you can deploy (whether it fits in flash and RAM).
+The values are measurements transcribed from `out_examples/demo_models/summary.json` (the output of `scripts/fetch_demo_models.py`),
+except that the MNIST row comes from the run output of the [tutorial](/en/tutorials/deploy-mnist/).
+The bundle sizes are for the uncompressed bundles, from before the default compression (`--compress fast`) went in, so rebuilding may make them smaller.
+
+| Model | Gate count | Bundle size (JSON / gzip) | `MDL_CTX_BYTES` | Generated `model.c` size |
+|---|---|---|---|---|
+| MNIST (`mnist`) | 4,000 | 57,862 B / 18,864 B | 4,000 B | 40,902 B |
+| Activity recognition k600 (`har_dlgn_k600`) | 2,400 | 38,140 B / 13,918 B | 1,200 B | 25,743 B |
+| Activity recognition k2400 (`har_dlgn_k2400`) | 9,600 | 149,823 B / 51,982 B | 4,800 B | 104,824 B |
+| Activity recognition k6000 (`har_dlgn_k6000`) | 36,000 | 565,260 B / 197,524 B | 12,000 B | 400,462 B |
+| Face detection (`det_face_lut_k256`) | 2,686 after instruction-list conversion (weight-shared 14,784) | 271,122 B / 79,026 B | 1,544,000 B | 121,387 B |
+| Face detection + `--resynth lossless` (`det_face_lut_k256_resynth`) | 2,319 after instruction-list conversion (weight-shared 14,784) | 264,592 B / 75,430 B | 1,544,000 B | 112,463 B |
+
+:::tip[The Python API and the CLI differ in default compression]
+Now, the `griffith deploy bundle` / `codegen-c` CLI **applies circuit compression by default** (`--compress fast` for bundle, `--dense-flat auto` for codegen-c).
+Calling `build_bundle()` or `generate_c()` directly from Python does **not** apply these defaults (you get the uncompressed circuit).
+To get the same result, use the CLI, or call `griffith_logic.deploy.compress.apply_compress` and friends yourself.
+For details see [Deploy your own model](/en/guides/deploy-your-model/).
+:::
+
+<details>
+<summary>Input shapes and accuracy</summary>
+
+- **MNIST** (2 `LutLayer`s × 2,000 gates): the input is 400 bits (a 20×20 binary image), the output is 10 classes.
+  The hard accuracy over 2,000 test images is **0.867**. The generated C and the PyTorch hard eval matched as integers (0 differences over 10,000 elements).
+  `examples/29_deploy_mnist.py` writes the bundle to `out_examples/deploy_mnist/mnist.bundle.json`
+- **Activity recognition k600** (4 layers): the input is 4,608 bits (9 channels × 128 steps × 4 thresholds), the output is 6 classes.
+  The test accuracy over all 2,947 windows with the host `ir/simulate.py` is **0.8049**
+- **Activity recognition k2400** (4 layers): same input and output as k600. The accuracy over all 2,947 windows is **0.8911**
+- **Activity recognition k6000** (6 layers): same input and output as k600. The accuracy over the same 2,947 windows is **0.9009**
+- **Face detection**: the input is a u8 3×128×128 image (2,834,432 bits after preprocessing), the output is a 5,120-element score map.
+  `best_hard_mAP` at training time was 0.3326 (it cannot be reproduced without WIDER FACE, so this site did not re-measure it)
+- The 50 windows used for the device and simulator measurements are a subset of the whole, so their accuracy differs from the table
+  (38/50 for k600, 38/50 for k2400, 40/50 for k6000, 42/50 for MNIST)
+
+</details>
+
+The face-detection "gate count" is 14,784 when counted with weight sharing and 2,686 after conversion to an instruction list.
+Spatially unrolled and laid out naively it would be 55,574,528 LUT equivalents, but the runtime runs it as an instruction list,
+so `model.c` fits in 121 KB.
+
+`MDL_CTX_BYTES` is **the work RAM one context needs**, that is, the size of the region that gets rewritten during inference.
+Weights and instruction lists are not included; they sit as `static const` in `.rodata` (flash on microcontrollers) and are shared by all contexts.
+The 1,544,000 B of face detection exceeds the RAM of a small microcontroller, so it does not fit on the [ESP32](/en/guides/deploy-esp32/).
+
+## Reducing the gate count (lossless)
+
+:::tip[Gates are reduced automatically by default]
+By default (`--compress fast`), `griffith deploy bundle` automatically applies every lossless reduction that finishes in seconds (**sweep** for dense, **resynthesis** for conv2d).
+`griffith deploy codegen-c` / `verify-c`, which generate C, **automatically adopt flattening (`lut_flat`) when the effective-gate reduction is 25% or more** by default (`--dense-flat auto`).
+Both are **lossless** (the output stays the same as integers on any input), and they are used only after checking that `ir/simulate.py` gives the same output before and after the transformation.
+Compressions that could not be applied, for example because the graph mixes dense and conv2d, are skipped automatically and the reason is recorded in `skipped` of `about.compress` (compressions with no target are not listed). To turn things off, see the table below. Everything the deploy kit compresses and optimizes is collected in [Compression and optimizations](/en/reference/deploy-optimizations/).
+:::
+
+| Stage | Default | What it does | How to turn it off or change it by hand |
+|---|---|---|---|
+| `bundle --compress` | `fast` | Dense: removes constant, duplicate (CSE), and unreferenced gates (sweep). conv2d: lossless resynthesis of the trees (search limit 4 gates, verified by exhaustive per-tree truth-table equality and forward computation on real samples). Instruction-list conversion of conv2d happens at every level | `--compress none` (no transformation), `--no-sweep` (turn off only sweep). `--compress max` uses search limit 5 plus extra ir/simulate verification (minutes on real models) |
+| `codegen-c` / `verify-c` `--dense-flat` | `auto` | Tries it, and if the reduction is at least 25%, emits table-driven C from a flat netlist (`lut_flat`) without pass-throughs and constants (`codegen-web` makes the same decision by default with threshold 0; `codegen-cuda` / `codegen-metal` default to `off` and decide with the 25% threshold only when given `--dense-flat auto`; the bundle is unchanged) | `--dense-flat off` (conventional C), `on` (always adopt), `--dense-flat-min-reduction R` (threshold) |
+
+The individual flags `--sweep` / `--resynth lossless` / `bundle --dense-flat` (bakes it into the IR) remain for compatibility, and **when given they take priority over `--compress`**.
+`--dense-batch` works together with flattening (for a flattened model, the 32-image batch entry point is added by default even if you do not give it).
+
+| Compression | Target | What it reduces | Measured effect | Caveat |
+|---|---|---|---|---|
+| sweep (`--compress fast`) | dense (a sequence of `lut_layer`s) | Constant, duplicate (CSE), and unreferenced gates | About 10 to 20% fewer gates executed (k6000 36,000 → 28,636, k2400 9,600 → 8,681, k600 2,400 → 1,989, MNIST 4,000 → 3,615) | `MDL_CTX_BYTES` grows slightly |
+| flattening (`--dense-flat auto`) | dense (default on C / Web; opt-in on CUDA / Metal) | On top of sweep, turns the model into a flat netlist without pass-throughs and constants and runs that | About 45 to 58% fewer effective gates (k6000 36,000 → 15,124, k2400 9,600 → 4,886, k600 2,400 → 971, MNIST 4,000 → 2,210) | On the GPU (Metal measurement), large models can get slower (0.47-0.71x on k6000 at batch 128 and above (1.02x at batch 32)), so CUDA / Metal default to `off`. `MDL_CTX_BYTES` grows by the signal table (12,000 B → 25,736 B for k6000). If RAM is tight, use `--dense-flat off` |
+| conv resynthesis (`--compress fast`) | conv (face detection and the like) | Resynthesizes conv2d trees to cut the gates of the instruction list | Face detection 1,279 → 1,077 gates (-15.8%), resynthesis takes 1.2 s (Apple M3). Code size (model.c) -4 to 7%, binary -9 to 10%, delivery size about unchanged (-0.6 to 1.7%) | **Speed did not change** (see below). It helps mainly on flash-constrained targets |
+
+The result is recorded in `about.compress` (`{level, applied, skipped, gates, always}`) and `griffith deploy info` shows it on one line. Instruction-list conversion of conv2d happens at every level, so it is recorded in `always`. `codegen-c` prints whether flattening was adopted and the reduction to standard output and to the top comment of `model.h` plus `#define MDL_DENSE_FLAT 1/0`.
+
+The resynthesis search has been sped up (it derives a lower bound of e-1 gates from the number e of essential variables and skips trees already at the bound; the search is restricted to essential variables; verification is cheaper). At the same limit the result is **gate-for-gate identical** to the old search. Measured on an Apple M3: face detection takes 1.2 s at limit 4 (1,279 → 1,077) and 1.2 s at limit 5 (→ 1,076); the few-class k64 model takes 1.3 s / 3.0 s (1,509 → 1,316 / 1,314); seg k128 takes 1.9 s / 8.2 s (2,815 → 2,636 / 2,625). With the earlier implementation, face detection took 253.5 s.
+The measurements below are values with both sweep and flattening applied (the same circuit as the manual `--sweep --dense-flat`).
+
+```bash
+# As is (dense: sweep is automatic; flattening is decided automatically at C generation)
+uv run griffith deploy bundle out_examples/demo_models/har_dlgn_k6000.model.json \
+    -o out_examples/demo_models/har_dlgn_k6000.bundle.json
+uv run griffith deploy info out_examples/demo_models/har_dlgn_k6000.bundle.json   # what was applied, and what codegen-c is expected to do
+uv run griffith deploy codegen-c out_examples/demo_models/har_dlgn_k6000.bundle.json -o out_examples/har_c   # prints whether flattening was adopted and the reduction
+
+# Turn it off (as before, the gate count stays as trained)
+uv run griffith deploy bundle out_examples/demo_models/har_dlgn_k6000.model.json --compress none \
+    -o out_examples/demo_models/har_dlgn_k6000.plain.bundle.json
+uv run griffith deploy codegen-c out_examples/demo_models/har_dlgn_k6000.plain.bundle.json --dense-flat off -o out_examples/har_plain_c
+
+# conv (face detection): resynthesize at fetch time, producing the separate artifacts det_face_lut_k256_resynth.*
+uv run python scripts/fetch_demo_models.py face --resynth lossless
+```
+
+All the arguments of each option are in [`griffith deploy bundle`](/en/reference/cli/#griffith-deploy-bundle).
+
+### Measured effect (summary)
+
+The detailed tables are in [Run on ESP32](/en/guides/deploy-esp32/#effect-of-gate-reduction) (real device) and
+[Run on iPhone](/en/guides/deploy-ios/#effect-of-gate-reduction-simulator) (simulator, host-CPU values).
+
+- On the **real ESP32**, the version with both sweep and flattening applied (the manual `--sweep --dense-flat`) was fastest on all four models. k6000 went from 26.60 ms to 12.69 ms, and MNIST from 725.2 µs to 324.7 µs.
+  The outputs match raw as integers in every case (confirmation of lossless on the device). However, the k2400 flat result (7.4x, from 5,785.5 µs to 782.2 µs)
+  cannot be explained by the gate reduction alone, and **we have not investigated the cause**
+- On the **iOS simulator** (host CPU), flat is 1.4 to 1.9x over raw on HAR, but **for MNIST it is on par with sweep and did not get faster**.
+  Even when gates drop, for a model whose reduction is small (MNIST is -44.8% with flat), the table-driven cost can cancel it out. **Measure before you use it**
+- **Face detection `--resynth lossless`** cut the gates by 13.7%, but **the time per inference did not change** (1,584 µs and 1,577 µs).
+  The time looks dominated by preprocessing and the image convolutions. Reducing the gate count does help the size of the bundle and `model.c` (121,387 B to 112,463 B)
+- For memory, flat shrinks flash (`.rodata`) and grows static DRAM. **On a microcontroller with little RAM, check `MDL_CTX_BYTES` first**
+
+### Choosing a model: k6000 or k2400
+
+Even for the same activity recognition, you can pick versions with different gate counts at training time. **Going from k6000 to k2400 cuts the gate count by 3.75 times,
+and the accuracy over all 2,947 windows drops by 1.0 point, from 0.9009 to 0.8911** (host `ir/simulate.py`). For speed, raw is 26.60 ms to 5.79 ms on the real ESP32 (about 4.6x faster),
+and 3.9x faster for raw on the iOS simulator (host CPU) (3.4x between sweeps and 2.9x between flats in the same 12-run measurement).
+**Choosing a model that is small from training** pays off in speed more than trimming gates with an optimization option.
+But the accuracy on the 50-window sample (k6000 80%, k2400 76%) is not representative of the whole, so compare accuracy by the values over all 2,947 windows.
+
+## What to read next
+
+- [Deploy Kit Quickstart](/en/guides/deploy-quickstart/) — check the whole flow on XOR
+- [Run on ESP32](/en/guides/deploy-esp32/) — run the three models on a microcontroller
+- [Run on iPhone](/en/guides/deploy-ios/) — build an app that bundles the three models
+- [Deploy bundle spec](/en/reference/deploy-bundle/) — the bundle format, including the `readout` section
+
+{/* i18n:source=guides/deploy-models.mdx hash=1b6f702bb738 */}

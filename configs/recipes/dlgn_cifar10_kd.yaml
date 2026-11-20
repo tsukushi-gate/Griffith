@@ -1,0 +1,43 @@
+# DLGN CIFAR-10 強teacher KDレシピ。
+# dlgn_cifar10_quick.yaml(scratch基線)に distill(知識蒸留)ブロックを追加。
+# teacher = HuggingFace公開 resnet18_cifar10(test acc ~0.955、強teacher領域)。
+#
+# 重要な整合性2点(確立、runner._apply_distill/load_raw/TEACHER_TRANSFORMS参照):
+#   1. standardize: true は必須。GroupSum τ(model.tau=100)× KD温度 T の二重温度で
+#      standardize=False のままだと KL が崩壊する(' で実証)。
+#   2. teacher_transform: cifar10-resnet18-hf が正規化を担う(モデル固有std、実測でacc 0.9498)。cifar-10-3-thresholds の load_raw は
+#      ToTensor のみ(未正規化 [0,1] の 3x32x32)を teacher に渡すため、'none' のままだと
+#      入力分布不整合で teacher ロジットが壊れる。TEACHER_TRANSFORMS['cifar10'](チャネル
+#      正規化)を teacher 側で適用して整合させる。
+#      なお student 側の入力は cifar-10-3-thresholds(9216ビット二値化)で、teacher 入力
+#      (正規化 3x32x32 連続値)とは独立(load_raw が別途生成、cache でインデックス整列)。
+#
+# 実行(SSH GPU、grid = α×T 小格子): scripts/remote/run.sh GPU機B \
+#   'set -a && . ./.env && set +a && uv run griffith launch configs/recipes/dlgn_cifar10_kd.yaml \
+#    --grid "distill.alpha=[0.25,0.5] distill.temperature=[2,4]" --local'
+data:
+  name: cifar-10-3-thresholds
+  batch_size: 128
+model:
+  kind: dlgn
+  k: 16000
+  layers: 4
+  n_inputs: 2
+  parameterization: softmax
+  tau: 100.0
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 15
+  seed: 42
+  eval_interval: 500
+  wandb: false  # 有効化するには wandb: true と WANDB_API_KEY を設定
+  run_name: d6_kd_cifar10
+distill:
+  teacher: 'hf:edadaltocg/resnet18_cifar10'
+  standardize: true
+  teacher_transform: cifar10-resnet18-hf
+  cache: true
+  alpha: 0.25
+  temperature: 2.0

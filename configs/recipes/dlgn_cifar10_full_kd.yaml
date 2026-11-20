@@ -1,0 +1,32 @@
+# DLGN CIFAR-10 フルレシピ+強teacher KD(D6絶対値引き上げ)。
+# dlgn_cifar10_full.yaml(歴史的0.82構成、100k iter)に、確定した勝ちKD設定
+# (α=0.25 / T=4 / standardize / モデル固有std正規化)を追加。
+# teacher = HuggingFace公開 resnet18_cifar10(実測0.9498)。
+# 短予算では+2.3ptのliftを確認済み(実測)。
+# 実行(Modal): uv run griffith launch configs/recipes/dlgn_cifar10_full_kd.yaml --grid "run.seed=[42]" --modal
+data:
+  name: cifar-10-3-thresholds
+  batch_size: 128
+model:
+  kind: dlgn
+  k: 16000
+  layers: 4
+  n_inputs: 2
+  parameterization: softmax
+  tau: 100.0
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 256
+  seed: 42
+  eval_interval: 2000
+  wandb: false  # 有効化するには wandb: true と WANDB_API_KEY を設定
+  run_name: d6_kd_cifar10_full
+distill:
+  teacher: 'hf:edadaltocg/resnet18_cifar10'
+  standardize: true            # 必須: GroupSum τ×KD Tの二重温度崩壊を防ぐ
+  teacher_transform: cifar10-resnet18-hf  # 必須: モデル固有std(汎用cifar10だと-0.5pt)
+  cache: true
+  alpha: 0.25                  # 最適(hard label錨25%)
+  temperature: 4.0             # 最適

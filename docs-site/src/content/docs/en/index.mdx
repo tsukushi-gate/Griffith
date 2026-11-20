@@ -1,0 +1,149 @@
+---
+title: Griffith
+description: Build fast, low-power AI chips in Python. Train logic-gate neural networks and deploy them straight to FPGAs via Verilog / VHDL.
+template: splash
+editUrl: false
+lastUpdated: false
+hero:
+  title: Griffith
+  tagline: Build fast, low-power AI chips in Python
+  actions:
+    - text: Quickstart
+      link: /en/getting-started/quickstart/
+    - text: GitHub
+      link: https://github.com/tsukushi-gate/Griffith
+---
+
+import { Code } from '@astrojs/starlight/components';
+
+export const quickstart = `import torch
+import griffith_logic as gl   # gl is the idiomatic alias
+
+# A 3-layer N=4 LUT network (MNIST-sized)
+model = torch.nn.Sequential(
+    torch.nn.Flatten(),
+    gl.LutLayer(in_dim=784, out_dim=16000, n_inputs=4),
+    gl.LutLayer(in_dim=16000, out_dim=16000, n_inputs=4),
+    gl.LutLayer(in_dim=16000, out_dim=16000, n_inputs=4),
+    gl.GroupSum(k=10, tau=30.0),
+)
+
+# Training: gradients flow through a softmax relaxation
+y = model(torch.rand(32, 784))       # (32, 10) class logits
+
+# Inference: argmax discretization collapses it into a Boolean circuit
+model.eval()
+y_hard = model(torch.rand(32, 784))  # no GPU, bitwise ops only`;
+
+<p class="not-content mx-auto mt-6 max-w-2xl text-center text-sm text-(--sl-color-gray-3)">
+  Named after Griffith Observatory, whose mission is to bring astronomy to everyone — we want
+  differentiable logic to be just as accessible.
+</p>
+
+<div class="not-content mx-auto mt-16 max-w-5xl">
+
+  <h2 class="text-center text-2xl font-bold text-(--sl-color-white) sm:text-3xl">
+    Make logic gates <span class="md-accent-text">learnable</span>
+  </h2>
+  <p class="mx-auto mt-3 max-w-2xl text-center text-sm text-(--sl-color-gray-3) sm:text-base">
+    Train with a continuous relaxation, infer as a pure Boolean circuit.
+    An IR (intermediate representation) bridges the two.
+  </p>
+
+  <div class="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+    <div class="md-card rounded-xl p-5">
+      <div class="mb-3 inline-flex size-9 items-center justify-center rounded-lg md-chip-logic">◧</div>
+      <h3 class="text-base font-semibold text-(--sl-color-white)">Learnable logic gates</h3>
+      <p class="mt-2 text-sm leading-relaxed text-(--sl-color-gray-3)">
+        N-input LUTs (N=2/4/6) relaxed into differentiable form — from difflogic's 16 gates
+        all the way to FPGA LUT6, in one layer type.
+      </p>
+    </div>
+
+    <div class="md-card rounded-xl p-5">
+      <div class="mb-3 inline-flex size-9 items-center justify-center rounded-lg md-chip-real">⌁</div>
+      <h3 class="text-base font-semibold text-(--sl-color-white)">Straight to FPGA</h3>
+      <p class="mt-2 text-sm leading-relaxed text-(--sl-color-gray-3)">
+        Extract the trained model into an IR (JSON), then emit Verilog / VHDL. Inference runs
+        as bitwise operations — fast and low power, no GPU.
+      </p>
+    </div>
+
+    <div class="md-card rounded-xl p-5">
+      <div class="mb-3 inline-flex size-9 items-center justify-center rounded-lg md-chip-logic">⇄</div>
+      <h3 class="text-base font-semibold text-(--sl-color-white)">Hybrid networks</h3>
+      <p class="mt-2 text-sm leading-relaxed text-(--sl-color-gray-3)">
+        Keep attention in PyTorch and swap only the MLP for LUTs. Drop a logic layer into any
+        existing <code>nn.Module</code>.
+      </p>
+    </div>
+
+    <div class="md-card rounded-xl p-5">
+      <div class="mb-3 inline-flex size-9 items-center justify-center rounded-lg md-chip-logic">▤</div>
+      <h3 class="text-base font-semibold text-(--sl-color-white)">Visual editor</h3>
+      <p class="mt-2 text-sm leading-relaxed text-(--sl-color-gray-3)">
+        Inspect the IR graph, LUT heatmaps and live training (time machine / gradient streaming)
+        from the browser.
+      </p>
+    </div>
+
+    <div class="md-card rounded-xl p-5">
+      <div class="mb-3 inline-flex size-9 items-center justify-center rounded-lg md-chip-real">≡</div>
+      <h3 class="text-base font-semibold text-(--sl-color-white)">HDL equivalence checking</h3>
+      <p class="mt-2 text-sm leading-relaxed text-(--sl-color-gray-3)">
+        Tests assert that PyTorch hard eval ⇔ IR simulate ⇔ HDL simulation all agree.
+      </p>
+    </div>
+
+    <div class="md-card rounded-xl p-5">
+      <div class="mb-3 inline-flex size-9 items-center justify-center rounded-lg md-chip-real">∇</div>
+      <h3 class="text-base font-semibold text-(--sl-color-white)">Pluggable learning rules</h3>
+      <p class="mt-2 text-sm leading-relaxed text-(--sl-color-gray-3)">
+        BP / AP (derivative-free) / DFA / EGGROLL (evolution strategies), annotated per layer.
+        Mix different rules in one network.
+      </p>
+    </div>
+
+  </div>
+
+  <div class="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+    <span class="text-(--sl-color-gray-4)">Read next:</span>
+    <a href="/en/tutorials/nn-basics/" class="text-(--sl-color-gray-2) hover:text-(--sl-color-white)">Intro Course (no ML background needed)</a>
+    <a href="/en/tutorials/" class="text-(--sl-color-gray-2) hover:text-(--sl-color-white)">Example gallery</a>
+    <a href="/en/reference/benchmarks/" class="text-(--sl-color-gray-2) hover:text-(--sl-color-white)">Benchmarks</a>
+    <a href="/en/explanation/dlgn/" class="text-(--sl-color-gray-2) hover:text-(--sl-color-white)">What is DLGN?</a>
+    <a href="/en/guides/fpga/" class="text-(--sl-color-gray-2) hover:text-(--sl-color-white)">Deploy to FPGA</a>
+    <a href="/en/reference/api/" class="text-(--sl-color-gray-2) hover:text-(--sl-color-white)">API reference</a>
+  </div>
+</div>
+
+<div class="mx-auto mt-20 max-w-4xl">
+
+## Try it in 30 seconds
+
+```bash
+pip install griffith-logic          # distribution: griffith-logic / import: griffith_logic
+```
+
+To work on Griffith itself (or to run the `examples/`), use uv instead.
+
+```bash
+uv sync --extra dev --extra cpu     # setup (use --extra cu128 on GPU machines)
+uv run python examples/01_xor.py    # learn XOR → accuracy 1.00 on the discretized circuit
+```
+
+<Code code={quickstart} lang="python" title="mnist_lut.py" />
+
+</div>
+
+<div class="not-content mx-auto mt-16 mb-8 max-w-4xl text-center">
+  <a
+    href="/en/getting-started/installation/"
+    class="inline-block rounded-lg border border-(--sl-color-gray-5) px-6 py-3 text-sm font-semibold text-(--sl-color-white) no-underline transition-transform hover:-translate-y-0.5 hover:border-md-logic-400"
+  >
+    Install it →
+  </a>
+</div>
+
+{/* i18n:source=index.mdx hash=b24d662d0530 */}

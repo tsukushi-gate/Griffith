@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>seg ランタイム×バックエンド ベンチ</title>
+  <style>
+    :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, sans-serif; }
+    body { margin: 0 auto; max-width: 1300px; padding: 16px; line-height: 1.5; }
+    h1 { font-size: 1.3rem; }
+    .muted { opacity: 0.65; font-size: 0.85em; }
+    nav a { margin-right: 14px; }
+    #status { font-family: ui-monospace, monospace; font-size: 0.85rem; min-height: 1.4em; margin: 8px 0; }
+    #env { font-family: ui-monospace, monospace; font-size: 0.78rem; opacity: 0.8; }
+    .tablewrap { overflow-x: auto; margin-top: 10px; }
+    table { border-collapse: collapse; font-size: 0.78rem; width: 100%; }
+    th, td { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); padding: 4px 8px; text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+    td.note { white-space: normal; text-align: left; max-width: 260px; opacity: 0.8; }
+    .ok { color: #0a7d38; font-weight: 600; }
+    .err { color: #c0392b; font-weight: 600; }
+    pre { background: color-mix(in srgb, currentColor 8%, transparent);
+      padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 0.75rem; margin-top: 14px; }
+  </style>
+</head>
+<body>
+  <nav><a href="/">ベンチ</a><a href="/convbench.html">segベンチ</a><a href="/detbench.html">検出ベンチ</a><a href="/segbackends.html">segバックエンド行列</a><a href="/detbackends.html">検出バックエンド行列</a><a href="/seg.html">segデモ</a><a href="/detmono.html">モノクロ数字検出デモ</a><a href="/det.html">カラー数字検出デモ</a><a href="/detreal.html">実物体検出デモ</a><a href="/detface.html">顔検出デモ</a><a href="/webcam.html">webcamデモ</a></nav>
+  <h1>seg ランタイム×バックエンド×6指標</h1>
+  <p class="muted">
+    DLGN(packed, 純JS)/ ONNX Runtime Web(wasm・webgpu)/ TensorFlow.js(webgl・wasm・webgpu)
+    の6組み合わせを同一 <span data-meta="inputRes">—</span> 入力で計測する。6指標: ①ペイロード(gzip transfer/decoded)
+    ②コールドロード ③ウォームレイテンシ(p50/p95/min/max) ④スループット(複数試行中央値)
+    ⑤精度(モデルdocメタ/teacher実測) ⑥メモリ差分。方法論は
+    <code>tools/webbench/src/harness.ts</code>(HAR時系列ベンチ)と同一。
+    WebGPU/wasm未対応環境やモデル未配置は該当行のみ「利用不可」表示(graceful degrade)。
+    <!-- 数値は data-meta / data-ref 由来。-->
+    <br>DLGN=SegConvDLGN <b data-meta="kLabel">—</b>(<b data-meta="accuracy">—</b>、
+    <span data-meta="gatesReduced">—</span> ゲート(簡約後・実行実体)/
+    <span data-meta="gatesUnrolled">—</span> LUT(空間展開後))、
+    ONNX/TF.js=SmallUNet teacher(<b data-ref="seg_unet_teacher.accuracy">—</b>、
+    <span data-ref="seg_unet_teacher.params">—</span>)。
+  </p>
+  <div id="env" class="muted"></div>
+  <div id="status">計測中…</div>
+  <div id="table" class="tablewrap"></div>
+  <pre id="out"></pre>
+  <script type="module" src="/src/segbackends_main.ts"></script>
+</body>
+</html>

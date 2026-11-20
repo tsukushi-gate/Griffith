@@ -1,0 +1,47 @@
+# 事前実験 fmc-wiring-w1000(配線の本実験の前段)/ 腕 A2: 幅 1000 の 4 入力 butterfly
+# (循環 radix-4、内部調査リポジトリ先行実験 BF4 系)。
+# 層 0 = gather(rot_n、idx[m] = (4g + m) mod 784。4·1000 ≥ 784 で全入力を被覆)、
+# 層 1〜5 = (g + m·stride) mod 1000、stride = 1, 4, 16, 64, 256(4^(l−1)、strides 省略時の既定)。
+# 4^5 = 1024 ≥ 1000 なので 5 段で全到達(クラス受容野 平均 / 最小 1.000)。
+# 2 入力(radix-2)では 6 層で 2^5 = 32 しか届かず(contig 割当のクラス受容野 0.334、全到達には 11 層)採用しない。
+# エディタのサンプル「MNIST butterfly(4 入力)1000 学習」(tools/editor/frontend/src/samples/wiringSamples.json)は
+# 本レシピと同じ配線(tests/test_editor_samples_wiring.py が層ごとに一致を検査)。
+#
+# 実測(CPU、`griffith train`、hard_acc、seed 0 / 1): 89.70 / 88.63%(平均 89.17%、random 比 −1.50pt。
+#   8 epoch 目も上昇中 = 未収束)。wandb: 7d8k3n9e / p1z5bwof(group dlgn-ffn、tag fmc-wiring-w1000)。
+#   8 epoch の壁時計 636 / 534 秒
+data:
+  name: mnist
+  batch_size: 100
+  params:
+    binarize_threshold: 0.5
+model:
+  kind: dlgn
+  k: 1000
+  layers: 6
+  n_inputs: 4
+  parameterization: softmax
+  selection: soft
+  tau: 3.75
+  connections:
+    kind: butterfly
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 8
+  eval_interval: 0
+  wandb: true
+  wandb_group: dlgn-ffn
+  wandb_job_type: train
+  wandb_tags: [fmc-wiring-w1000, pre-experiment, butterfly, bf4, mnist-6k]
+  wandb_notes: >-
+    エディタのサンプル(rot / butterfly の段別パラメータ例)を作る前の事前実験。
+    幅 1000 × 6 層の 4 入力 butterfly(gather + stride 4^(l−1))。2 入力 butterfly の
+    MNIST 実測は先行実験に無く(内部調査リポジトリ先行実験は別定義で −10pt)、
+    4 入力は内部調査リポジトリ先行実験 BF4 8k = 96.98%。基準は fmc_w1000_random。
+  wandb_hypothesis: >-
+    radix-4 で 5 段全到達にした butterfly は、幅 1000 でも固定ランダム配線と
+    同等以上の精度になる。
+  run_name: fmc_w1000_bf4
+  export_netlist: false

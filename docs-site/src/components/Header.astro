@@ -1,0 +1,149 @@
+---
+// Starlight 既定 Header の上書き。
+// 違いは1点: トップナビゲーション(ドキュメント/チュートリアル/API/DLGNとは)を追加する。
+// 狭い画面ではナビを隠し、Starlight のモバイルメニュー(サイドバー)に委ねる。
+import config from 'virtual:starlight/user-config';
+
+import LanguageSelect from 'virtual:starlight/components/LanguageSelect';
+import Search from 'virtual:starlight/components/Search';
+import SiteTitle from 'virtual:starlight/components/SiteTitle';
+import SocialIcons from 'virtual:starlight/components/SocialIcons';
+import ThemeSelect from 'virtual:starlight/components/ThemeSelect';
+
+const shouldRenderSearch =
+	config.pagefind || config.components.Search !== '@astrojs/starlight/components/Search.astro';
+
+// ロケール依存のラベル(Starlightのlocaleはrootロケール=日本語でundefined)。
+const isEn = Astro.locals.starlightRoute.locale === 'en';
+// サブパス配信(GitHub Pages のプロジェクトページ等)では BASE_URL が `/Griffith/` になる。
+// 手書きのルート相対リンクには base が自動で付かないので、ここで前置する。
+const sitePrefix = import.meta.env.BASE_URL.replace(/\/$/, '');
+const base = sitePrefix + (isEn ? '/en' : '');
+const navLinks = isEn
+	? [
+			{ text: 'Docs', link: `${base}/getting-started/installation/` },
+			{ text: 'Tutorials', link: `${base}/tutorials/xor/` },
+			{ text: 'API', link: `${base}/reference/api/` },
+			{ text: 'What is DLGN?', link: `${base}/explanation/dlgn/` },
+		]
+	: [
+			{ text: 'ドキュメント', link: `${base}/getting-started/installation/` },
+			{ text: 'チュートリアル', link: `${base}/tutorials/xor/` },
+			{ text: 'API', link: `${base}/reference/api/` },
+			{ text: 'DLGNとは', link: `${base}/explanation/dlgn/` },
+		];
+
+const currentPath = Astro.url.pathname;
+---
+
+<div class="header">
+	<div class="title-wrapper sl-flex">
+		<SiteTitle />
+	</div>
+	<div class="sl-flex print:hidden">
+		{shouldRenderSearch && <Search />}
+	</div>
+	<div class="sl-hidden md:sl-flex print:hidden right-group">
+		<nav class="md-topnav" aria-label={isEn ? 'Main' : 'メインナビゲーション'}>
+			{
+				navLinks.map((l) => (
+					<a href={l.link} aria-current={currentPath.startsWith(l.link) ? 'page' : undefined}>
+						{l.text}
+					</a>
+				))
+			}
+		</nav>
+		<div class="sl-flex social-icons">
+			<SocialIcons />
+		</div>
+		<ThemeSelect />
+		<LanguageSelect />
+	</div>
+</div>
+
+<style>
+	@layer starlight.core {
+		.header {
+			display: flex;
+			gap: var(--sl-nav-gap);
+			justify-content: space-between;
+			align-items: center;
+			height: 100%;
+		}
+
+		.title-wrapper {
+			overflow: clip;
+			padding: 0.25rem;
+			margin: -0.25rem;
+			min-width: 0;
+		}
+
+		.right-group,
+		.social-icons {
+			gap: 1rem;
+			align-items: center;
+		}
+		.social-icons::after {
+			content: '';
+			height: 2rem;
+			border-inline-end: 1px solid var(--sl-color-gray-5);
+		}
+
+		/* トップナビ: 幅に余裕がある画面だけ表示する(狭い画面はモバイルメニューに委ねる) */
+		.md-topnav {
+			display: none;
+			gap: 1.25rem;
+			align-items: center;
+			white-space: nowrap;
+		}
+		.md-topnav a {
+			color: var(--sl-color-gray-2);
+			text-decoration: none;
+			font-size: var(--sl-text-sm);
+		}
+		.md-topnav a:hover {
+			color: var(--sl-color-white);
+		}
+		.md-topnav a[aria-current='page'] {
+			color: var(--sl-color-white);
+		}
+		@media (min-width: 72rem) {
+			.md-topnav {
+				display: flex;
+			}
+			.md-topnav::after {
+				content: '';
+				height: 2rem;
+				border-inline-end: 1px solid var(--sl-color-gray-5);
+			}
+		}
+
+		@media (min-width: 50rem) {
+			:global(:root[data-has-sidebar]) {
+				--__sidebar-pad: calc(2 * var(--sl-nav-pad-x));
+			}
+			:global(:root:not([data-has-toc])) {
+				--__toc-width: 0rem;
+			}
+			.header {
+				--__sidebar-width: max(0rem, var(--sl-content-inline-start, 0rem) - var(--sl-nav-pad-x));
+				--__main-column-fr: calc(
+					(
+							100% + var(--__sidebar-pad, 0rem) - var(--__toc-width, var(--sl-sidebar-width)) -
+								(2 * var(--__toc-width, var(--sl-nav-pad-x))) - var(--sl-content-inline-start, 0rem) -
+								var(--sl-content-width)
+						) / 2
+				);
+				display: grid;
+				grid-template-columns:
+					minmax(
+						calc(var(--__sidebar-width) + max(0rem, var(--__main-column-fr) - var(--sl-nav-gap))),
+						auto
+					)
+					1fr
+					auto;
+				align-content: center;
+			}
+		}
+	}
+</style>

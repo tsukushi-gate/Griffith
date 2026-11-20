@@ -1,0 +1,39 @@
+---
+title: 'Explanation'
+description: 'What a DLGN is, why it can be made differentiable, and the reasoning behind the learning rules and design decisions. This section covers the why, not the how.'
+sidebar:
+  order: 0
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+This section is about **reasoning, not procedure**. For hands-on routes, see the
+[tutorials](/en/tutorials/) and [guides](/en/guides/).
+
+## Start here
+
+With no background at all, begin with "What is a neural network, really?".
+If you've done machine learning before, "What is a DLGN" alone is enough.
+
+<CardGrid>
+  <LinkCard title="What is a DLGN, and how does it differ from an NN?" href="/en/explanation/dlgn/" description="You learn which logic gate each neuron becomes, not a weight matrix. The soft/hard phases, and why inference reduces to bitwise ops." />
+  <LinkCard title="What is a neural network, really?" href="/en/explanation/ai-basics/" description="Perceptron → gradient descent → why differentiability is non-negotiable. The shortest path from zero background." />
+</CardGrid>
+
+## Digging into the mechanism
+
+<CardGrid>
+  <LinkCard title="DLGN taxonomy and lineage" href="/en/explanation/taxonomy/" description="The three families — arithmetic DLGN, native DLGN, 6-LUT DLGN — and where hybrids sit." />
+  <LinkCard title="LutLayer internals" href="/en/explanation/lut-layer/" description="Deriving y = Σ w_k · basis_k(x), the butterfly basis, the five parameterizations, and the soft→hard collapse." />
+  <LinkCard title="Learning rules (BP/AP/DFA/ES)" href="/en/explanation/learning-rules/" description="How backprop, Akiho Propagation, DFA, and EGGROLL assign credit differently — and how to mix them per layer." />
+  <LinkCard title="Architecture overview" href="/en/explanation/architecture/" description="The 8-stage dataflow from training → IR extraction → validation → lowering → HDL, and why the pieces are kept loosely coupled." />
+</CardGrid>
+
+## Background and vocabulary
+
+<CardGrid>
+  <LinkCard title="Design decisions" href="/en/explanation/design-decisions/" description="Seven decisions that pay off later — such as making the IR the source of truth — recorded in ADR form." />
+  <LinkCard title="Glossary" href="/en/explanation/glossary/" description="DLGN, LUT, soft/hard, discretization gap, and the other terms this site and the code use identically." />
+</CardGrid>
+
+{/* i18n:source=explanation/index.mdx hash=43435dcf2217 */}

@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use Griffith in your research, please cite it as below."
+title: "Griffith: Differentiable Logic Gate Networks for PyTorch"
+abstract: >-
+  Griffith is a PyTorch library for differentiable logic gate networks: it
+  trains logic circuits with gradient descent and exports them to an
+  intermediate representation, Verilog, and VHDL for hardware deployment.
+type: software
+version: "0.1.0"
+date-released: "2026-11-20"
+license: Apache-2.0
+repository-code: "https://github.com/tsukushi-gate/Griffith"
+url: "https://tsukushi-gate.github.io/Griffith/"
+keywords:
+  - differentiable logic gate networks
+  - logic gate network
+  - lookup table network
+  - pytorch
+  - hardware acceleration
+  - fpga
+authors:
+  - family-names: "Akiho"
+    given-names: "Masato"
+    website: "https://github.com/Tebaeleven"
+  # TODO(human): ORCID を取得したら `orcid: "https://orcid.org/0000-0000-0000-0000"` を追加してください。
+references:
+  - type: conference-paper
+    title: "Deep Differentiable Logic Gate Networks"
+    year: 2022
+    collection-title: "Advances in Neural Information Processing Systems 35 (NeurIPS 2022)"
+    authors:
+      - family-names: "Petersen"
+        given-names: "Felix"
+      - family-names: "Borgelt"
+        given-names: "Christian"
+      - family-names: "Kuehne"
+        given-names: "Hilde"
+      - family-names: "Deussen"
+        given-names: "Oliver"
+    url: "https://arxiv.org/abs/2210.08277"

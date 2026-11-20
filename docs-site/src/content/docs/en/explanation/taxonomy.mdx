@@ -1,0 +1,146 @@
+---
+title: 'DLGN taxonomy and lineage'
+description: 'The three families — arithmetic DLGN, native DLGN, 6-LUT DLGN. How they differ from compiling an ordinary MLP to an FPGA, how to pick a fan-in, and where hybrids sit.'
+---
+
+"DLGN" covers three lineages whose properties differ considerably. This page sorts out
+**what actually qualifies as a DLGN**, the families inside it, and the break between all of them
+and the "compile an ordinary MLP to an FPGA" approach. The prerequisite is
+[What is a DLGN](/en/explanation/dlgn/).
+
+## 1. What qualifies as a DLGN
+
+At the core: **an NN whose neuron is a logic gate / LUT (a Boolean function) rather than a
+multiply-accumulate (MAC) unit**. During training, "which gate each neuron becomes" is relaxed into
+something differentiable and learned by gradients; after training, argmax fixes each gate and the
+model becomes a **multiplication-free, purely Boolean circuit**.
+
+Three axes decide it.
+
+1. Is the **unit of computation** a Boolean function (gate / LUT), or a MAC?
+2. Is **gate selection learned** (softmax relaxation or EFD → discretization)?
+3. Is **inference multiplication-free logic**?
+
+Satisfy all three and it's a DLGN. Within that, the families below differ in
+**fan-in, parameterization, wiring, and how the gates are obtained**.
+
+## 2. The three families
+
+| | **Arithmetic DLGN**<br/>(LogicNets family) | **Native DLGN**<br/>(difflogic family) | **6-LUT DLGN**<br/>(DWN family) |
+|---|---|---|---|
+| How gates are obtained | **exact lowering** from quantization + sparsification + popcount thresholds (a mathematical derivation, not learning) | **16 gates under a softmax, learned freely by gradients** | n-input LUTs **learned with EFD gradients** |
+| Semantics | **arithmetic is preserved** (popcount tree = addition, threshold = activation) | any free composition of Boolean functions (no arithmetic needed) | any n-input Boolean function |
+| Fan-in | N after sparsification (e.g. 32/48) → adder tree | **2 inputs (16 gates)** | **6 inputs (LUT6)** |
+| Wiring | fixed correspondence to the important inputs picked by sparsification (it means something) | fixed random (the wiring carries no meaning) | **learnable mapping** |
+| What the "weights" really are | **weights = circuit topology** (the weights are the circuit) | a choice of "which gate" (thrown away after training) | LUT contents + wiring |
+| Scale on MNIST | large: about 418k LUTs | small: under 24k gates (about 1/50) | tiny: about 4.6k LUTs (FPGA) |
+| In this library | **the output of a conversion**, emitted by `export/lowering.py` and friends | `layers/lut.py` (softmax) + the various models | `models/dwn.py` |
+
+Sources: Umuroglu et al. (LogicNets, 2020) / Petersen et al. (difflogic, NeurIPS 2022) /
+Bacellar et al. (DWN, ICML 2024).
+
+## 3. How this differs from "ordinary MLP → FPGA"
+
+Even among circuits that run on an FPGA, there are degrees: **is multiplication kept or removed**,
+and **is the arithmetic meaning kept or discarded**.
+
+| Approach | Computation | Multiplication | FPGA resources |
+|---|---|---|---|
+| **MLP → FPGA (the ordinary way)** | MAC (sum of weight × activation) | **stays** | DSPs / multipliers + adders |
+| **Quantized MLP → LUT** (= arithmetic DLGN) | the MAC becomes a **popcount adder tree** (quantize + sparsify + enumerate truth tables) | **gone**, but **the arithmetic meaning is preserved** | LUTs (adder tree) |
+| **Native DLGN** (difflogic) | each neuron is a **learned two-input logic gate** | never there to begin with | LUTs (logic) |
+| **6-LUT DLGN** (DWN) | learned six-input LUTs + learned wiring | never there to begin with | direct LUT6 mapping |
+
+The break is at the third step. **"Ordinary MLP → FPGA" merely turns multiplication into circuitry;
+inside, it's still an MLP.** **Arithmetic DLGN converts a quantized MLP's arithmetic exactly into
+LUTs** (weights = circuit; multiplication disappears but the additive structure survives). And
+**native DLGN throws the arithmetic away entirely and learns logic from the start** — that is the
+genuinely discontinuous leap.
+
+## 4. Why converting an existing model doesn't work
+
+"Repurpose a strong pretrained MLP as a native DLGN and it should come out stronger" is a natural
+thought, but we measured three routes in-house (distillation / transferred initialization from the
+sparsified fan-in sets / layerwise binary distillation) and **none of them beat training from
+scratch**. Transferred initialization was much worse.
+
+The taxonomy explains why. **Arithmetic DLGN (dense arithmetic, weights = circuit) and native DLGN
+(sparse, free Boolean logic) are as unalike as it gets**, and a native DLGN's strength is exactly
+that it can learn gates as free discrete logic. Transcribing arithmetic structure onto it
+**confines that freedom to the mold of arithmetic**, which acts as a constraint rather than a head
+start.
+
+→ **Conversion is worth it only when a hardware-faithful arithmetic circuit is the goal. If a
+native DLGN is the goal, training from scratch is the answer.** Knowledge distillation from a
+strong teacher only means something when the teacher is substantially stronger than a
+from-scratch DLGN.
+
+## 5. Where this library's models sit
+
+**Nearly every trainable model here is a native DLGN** (`n_inputs=2`,
+`parameterization='softmax'`); what differs is **the architecture**, not the gate scheme.
+
+| Model | Family | What it is |
+|---|---|---|
+| **dlgn** (`layers/lut.py` + `LutStack`) | native DLGN | 2-input, 16-gate softmax, stacked MLP-style |
+| **conv-dlgn** (`conv.py::LutConv2d`) | native DLGN (conv) | tree structure + OR pooling (LogicTreeNet family) |
+| **rddlgn** | native DLGN (recurrent seq2seq) | LutStack + a recurrent encoder-decoder |
+| **attention** | native DLGN (attention seq2seq) | **attention and all, entirely logic** (LogicAttention) |
+| **logic-gpt** | native DLGN (decoder-only) | LutStack + causal self-attention |
+| **DWN** (`models/dwn.py`) | **6-LUT DLGN** | 6-input LUTs + learned wiring (the only non-2-input model) |
+| **Arithmetic DLGN** | — (not a model but **the output of a conversion**) | popcount adder-tree circuit |
+
+## 6. A caution on "why not just use 6-LUTs everywhere for FPGA?"
+
+For inference and FPGA area, 6-LUTs do win (the physical cell is a LUT6, so six inputs map onto one
+cell while two inputs waste most of it; DWN solves MNIST in 4.6K LUTs, about 1/18 of FINN's 83K).
+But **the weaknesses of 6-LUT DLGN are all on the training side**.
+
+1. **EFD gradients are approximate** — 2-input softmax gives exact gradients, whereas an n-input LUT
+   is an approximation, and optimization grows less stable as fan-in rises
+2. **It overfits easily** — a capacity of $2^{2^6}$ is plenty for memorization, so regularization
+   such as Spectral Regularization is all but mandatory
+3. **Learnable mapping is fragile** — in our measurements the learned-wiring version has lost to
+   fixed wiring, and hard accuracy has collapsed outright; the DWN paper itself treats
+   "learned wiring in the first layer only" as the standard practice
+4. **Diminishing returns on fan-in** (it plateaus around six inputs)
+5. **Training memory blows up** (64 entries per gate plus the wiring matrix)
+6. **It's slow on CPU/GPU** (it becomes a table lookup, which destroys bit parallelism)
+
+difflogic chose two inputs not because it is optimal for FPGAs, but for **clean training (16 gates
+with exact gradients) and CPU/GPU speed**. The right conclusion is to treat
+**fan-in as a knob set by the deployment target**.
+
+| Goal | Favored fan-in |
+|---|---|
+| FPGA area | 6 |
+| CPU / GPU inference speed | 2 |
+| Training stability | 2 |
+
+## 7. Where hybrids (partial logic-gate conversion) sit
+
+There is also a school that replaces **only part** of the network with LUTs. The representative
+example is LL-ViT (Nag et al., ICFPT 2025), which **replaces only the MLP (channel mixer) of a ViT
+with LUT neurons and leaves attention as an ordinary Transformer**.
+
+- Overall: a **hybrid (partial LGN)** — not everything is a gate
+- MLP: n-input LUTs trained with DWN's EFD (= the 6-LUT / DWN family)
+- Attention: ordinary multi-head self-attention (**multiplication present = not a DLGN**)
+- Input/output bridges: thermometer encoding (reals → bits) and conditional summation
+  (4-bit quantization = arithmetic remains)
+- In this library: `hybrid/` (`replace_mlp_with_lut`) and `encoding/bridges.py`
+
+By contrast, this library's DLGN attention models turn **attention itself entirely into logic**.
+Same "LUT × attention" label, different position. In terms of the three families, the accurate
+two-level reading is that **the LUTs inside LL-ViT are 6-LUT (DWN) family, while the model as a
+whole is not a pure DLGN but a hybrid of LUTs and a Transformer**.
+
+## References
+
+- Petersen et al., *Deep Differentiable Logic Gate Networks*, NeurIPS 2022 — the origin of native DLGN
+- Petersen et al., *Convolutional Differentiable Logic Gate Networks*, NeurIPS 2024 (Oral) — the conv version
+- Bacellar et al., *Differentiable Weightless Neural Networks*, ICML 2024 — 6-LUT DLGN
+- Umuroglu et al., *LogicNets*, FPL 2020 — arithmetic DLGN
+- Nag et al., *LL-ViT*, ICFPT 2025 — hybrid
+
+{/* i18n:source=explanation/taxonomy.mdx hash=a31a09c9af96 */}

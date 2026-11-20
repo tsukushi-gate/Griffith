@@ -1,0 +1,7 @@
+node_modules/
+dist/
+test-results/
+playwright-report/
+# tree.jsonは data/*.md から機械生成する成果物(複数レーンが並行でdata/を増やすため
+# コミットするとコンフリクトの温床になる)。dev/build 時に build-tree.mjs が再生成する。
+src/data/tree.json

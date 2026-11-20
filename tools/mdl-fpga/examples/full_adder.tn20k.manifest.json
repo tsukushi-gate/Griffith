@@ -1,0 +1,14 @@
+{
+  "manifest_version": "0.2",
+  "ir": "full_adder.ir.json",
+  "board": "tang-nano-20k",
+  "mode": "spatial",
+  "io": {
+    "protocol": "uart-115200-8n1",
+    "link": {
+      "type": "uart",
+      "baud": 115200,
+      "attach": { "header": "BL616_UART", "rx_index": 0, "tx_index": 1 }
+    }
+  }
+}

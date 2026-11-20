@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>カメラでライブ実行 — ブラウザ推論デモ</title>
+  <link rel="stylesheet" href="/src/app.css" />
+</head>
+<body class="bg-bg font-sans text-fg antialiased">
+  <div id="shell"></div>
+  <main class="px-4 py-6 md:pl-72 md:pr-8">
+    <h1 class="text-xl font-bold">カメラでライブ実行</h1>
+    <p class="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
+      カメラの映像を1フレームずつ推論し、結果を重ねて表示します。
+      動かす手法は左のメニューの「手法」セレクタで1つだけ選びます
+      (DLGN / ONNX Runtime Web / TensorFlow.js / MediaPipe)。
+      タスク・手法・計算方法は左のメニューで切り替えられます。
+      学習に使った写真とカメラ映像は写り方が違うため、精度は下がります。
+    </p>
+    <!-- ロード済みモデルの情報(全て data-meta 由来)。 -->
+    <p class="mt-2 max-w-3xl text-sm leading-relaxed text-muted" id="modelmeta">
+      現在のモデル: <span data-meta="modelName">—</span> /
+      <span data-meta="accuracy">—</span> /
+      入力 <span data-meta="inputRes">—</span>、<span data-meta="inputChannels">—</span>チャンネル
+      (<span data-meta="preprocLabel">—</span>) /
+      <span data-meta="nClasses">—</span>クラス(<span data-meta="labels">—</span>)
+      <span data-about="recipe"></span>
+    </p>
+    <p class="mt-3 max-w-3xl rounded-lg border border-line bg-panel p-3 text-xs leading-relaxed text-muted"
+       data-note="concurrency"></p>
+    <p class="mt-2 max-w-3xl rounded-lg border border-line bg-panel p-3 text-xs leading-relaxed text-muted">
+      MediaPipe はブラウザ向けの定番モデルです(顔検出は BlazeFace、
+      セグメンテーションは Selfie Segmenter)。いずれも大量の実データで学習した
+      実用モデルで、学習データの規模がこちらとは大きく違います。
+      とくにセグメンテーションは、MediaPipe が「人物と背景」、
+      こちらは「ペットと背景」を切り分けるモデルなので、切り分ける対象が違います。
+      公平に比べられるのは配信サイズ・読み込み時間・推論時間です。
+    </p>
+    <div class="mt-4 flex items-center gap-4">
+      <video id="video" autoplay playsinline muted
+             class="h-24 w-24 rounded-lg border border-line object-cover"></video>
+      <div id="status" class="text-xs text-muted">—</div>
+    </div>
+    <div id="grid"></div>
+  </main>
+  <script type="module" src="/src/webcam_main.ts"></script>
+</body>
+</html>

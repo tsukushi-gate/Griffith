@@ -1,0 +1,24 @@
+# DLGN CIFAR-10 フルレシピ(scratch、歴史的0.82構成のrunner版)。
+# 由来: train.py の CIFAR-10 フル構成
+#   --dataset cifar-10-3-thresholds --n-inputs 2 -k 16000 -l 4 -t 100 -ni 100000
+# bs=128 で 100k iter ≈ 256 epochs(390 step/ep)。D6絶対値引き上げのscratch対照。
+# 実行(Modal): uv run griffith launch configs/recipes/dlgn_cifar10_full.yaml --grid "run.seed=[42]" --modal
+data:
+  name: cifar-10-3-thresholds
+  batch_size: 128
+model:
+  kind: dlgn
+  k: 16000
+  layers: 4
+  n_inputs: 2
+  parameterization: softmax
+  tau: 100.0
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 256
+  seed: 42
+  eval_interval: 2000
+  wandb: false  # 有効化するには wandb: true と WANDB_API_KEY を設定
+  run_name: d6_scratch_cifar10_full

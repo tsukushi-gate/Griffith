@@ -1,0 +1,49 @@
+# 成果共有 computed-wiring-overlay / 較正アンカー C3: MNIST 48K の固定ランダム配線(P0)。
+# 社内先行実験掃引A の基準腕(先行実験と同じ配線)を md train のレシピで再走する。
+#
+# 先行実験との対応:
+#   P0 の配線は torch.randint による**無制約の乱択**(各スロット独立一様)なので
+#   connections.kind は random_uniform を使う。library 既定の 'random' は
+# 使用回数が均衡する乱択で、先行実験では P7(ランダム置換)に相当する別の腕になる。
+# 評価は最終エポックの離散精度 hard_acc(先行実験 train_sweep.py は final のみ。best は使わない)。
+#   selection は soft(先行実験は soft 学習・eval だけ argmax)、init_mode は未指定(N(0,1))。
+#   tau = 30·W/8000。
+# 原値(2 seed): 0.9398 / 0.9408(先行実験実測表掃引A)
+#
+# 実行: uv run md launch --grid "run.seed=[0,1]" configs/recipes/cwo_mnist_48k_p0.yaml --local
+data:
+  name: mnist
+  batch_size: 100
+  params:
+    binarize_threshold: 0.5        # ToTensor([0,1]) > 0.5、28x28 の row-major 平坦化
+model:
+  kind: dlgn                       # Flatten + LutLayer×6 + GroupSum(10)
+  k: 8000
+  layers: 6                        # 48,000 ゲート
+  n_inputs: 2
+  parameterization: softmax        # OP(先行実験と同じレジーム)
+  selection: soft
+  tau: 30.0
+  connections:
+    kind: random_uniform           # 各スロット独立一様の無制約乱択(= 先行実験 P0)
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 8
+  eval_interval: 0                 # エポック末のみ評価 → hard_acc は最終エポックの値
+  wandb: true
+  wandb_group: dlgn-ffn
+  wandb_job_type: train
+  wandb_tags: [computed-wiring-overlay, calibration, P0, mnist-48k]
+  wandb_notes: >-
+    成果共有 computed-wiring-overlay の較正アンカー C3。MNIST 48K の基準腕
+    P0(固定ランダム配線)を md train のレシピで再走する。先行実験とは配線・初期化・
+    バッチ順の RNG ストリームが違うので 1 run 対 1 run の一致は期待せず、2 seed 平均で判定する。
+  wandb_hypothesis: >-
+    配線を層ごとの幾何級数シフト(rot)で計算しても、固定ランダム配線と同等以上の
+    精度になる。本 run はその基準(P0)。
+  run_name: cwo_mnist_48k_p0
+# 原値の seed 別最小 0.9398 から 0.5pt 引いた下限(claims.json C3 の許容幅)
+expected_metrics:
+  hard_acc_min: 0.9348

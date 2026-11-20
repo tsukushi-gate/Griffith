@@ -1,0 +1,33 @@
+# 少データ(6k)KD-to-native レシピ。
+# dlgn_mnist_kd_quick30.yaml + data.params.limit=6000。
+# 対照: N0 scratch 6k = 0.8522(実測)。
+# 少データはKD(soft label)が最も効くはずの領域(FSKD: 1%未満データで教師同等回復)。
+# 実行: uv run griffith launch configs/recipes/dlgn_mnist_kd_quick30_6k.yaml --grid "distill.temperature=[1,2,4]" --local
+data:
+  name: mnist
+  batch_size: 128
+  params:
+    limit: 6000
+model:
+  kind: dlgn
+  k: 2000
+  layers: 3
+  n_inputs: 2
+  parameterization: softmax
+  tau: 10.0
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 30
+  seed: 42
+  eval_interval: 500
+  wandb: false  # 有効化するには wandb: true と WANDB_API_KEY を設定
+  run_name: d5_n1_kd6k
+distill:
+  teacher: 'ckpt:checkpoints/teacher_mlp_float_mnist_20260703_022747/best.pt'
+  standardize: true
+  teacher_transform: binarize05
+  cache: true
+  alpha: 0.25
+  temperature: 2.0

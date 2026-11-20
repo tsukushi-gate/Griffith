@@ -1,0 +1,221 @@
+---
+title: 'Model Zoo'
+description: 'The complete list of models built out of logic gates alone. Classification, language, generation, detection, NLP and the experimental branches — one line each, with what the model actually solves, headline accuracy, main open problem and how strongly the world-first claim is backed.'
+---
+
+An **index that puts every model run in this library in one place**.
+One line per model, with **a single sentence on what it solves**, **a single headline number** and
+**a single line on the main open problem**; detailed conditions and discussion are delegated to the
+linked pages. If you want the discussion, go to
+[How far logic gates get, architecture by architecture](/en/explanation/results/architecture-survey/) and
+[Models from the experimental branches](/en/explanation/results/experimental-models/).
+
+**The "What it solves" column is compressed into one sentence that assumes no prior knowledge.**
+The more concrete **input → output** and the **dataset** are collected in the collapsible block
+directly under each table (keeping them out of the table is what keeps it readable on a phone).
+
+:::caution[How to read the headline numbers]
+- The values listed here are **full-run values**. The numbers that appear on the tutorial pages come
+  from **scaled-down versions that finish in minutes on CPU** (fewer gates, fewer steps), so under
+  different conditions they will not match. That is why the same model name can carry two numbers an
+  order of magnitude apart.
+- Unless noted otherwise, each row is a **single-seed, single-configuration** measurement; seed
+  variance was not taken. Rows with multiple seeds say so inline.
+- Metrics are reported primarily on the **hard** side (the pure Boolean circuit with gates fixed by
+  argmax).
+- Rows marked "needs calibration" are records that **have not converged and whose cause is not yet
+  identified** — a current position, not an achievement.
+- The single source of truth for the numbers is [Benchmarks](/en/reference/benchmarks/). If you find
+  a contradiction, that page wins.
+:::
+
+## Badges for the strength of a world-first claim
+
+The "World-first" column on this page does not express **the claim itself** but **how strongly the
+audit backs it**.
+
+> **S1** = paper-grade absence evidence (search queries, survey date and the scope of the claim all
+> written out) / **S2** = falsification search audited (nearest literature cited, qualified form
+> required) / **🟡** = close literature exists (survives only in qualified form) / **S3** = claim
+> only, not audited / **Retracted** = withdrawn after a counterexample was found / **—** =
+> reproduction or port (no world-first claim)
+
+The basis for each verdict (search queries, survey dates, the wording of the qualified forms, and
+the claims that were retracted) is in
+[Auditing the "world-first" claims](/en/explanation/results/world-firsts/).
+No badge proves that something "certainly does not exist"; each one means only that
+**no counterexample was found within the scope of an exhaustive search**.
+Preprints from the last few weeks, non-English literature and paywalled literature are outside that
+scope.
+
+## 1. Image classification
+
+| Model | What it solves | Where it lives | Headline accuracy | Main open problem | World-first | Links |
+|---|---|---|---|---|---|---|
+| DLGN (baseline) | Look at an image of a handwritten digit and say **which of 0–9 it is** (image classification) | `griffith_logic/layers/` | MNIST hard **0.9784** (48,000 gates, official recipe, 200k iter) | The library's best accuracy. A different configuration, Hard-ST with 6 layers × 64,000, reaches 0.9802, but with 8× the gate count | — | [Reproduction](/en/explanation/results/dlgn-repro/) · [Benchmarks](/en/reference/benchmarks/) · [MNIST](/en/tutorials/mnist/) |
+| Conv-DLGN | Look at a color photo and say **which of 10 classes it is**, with convolution built out of LUT trees | `griffith_logic/conv.py` | CIFAR-10 hard **0.5808** (after the `softmax16g` fix) | Before the fix, a structural flaw in the 4-entry simplex held it to 0.4921. Accuracy falls off sharply beyond MNIST-class tasks | — | [Benchmarks](/en/reference/benchmarks/) · [Architecture survey](/en/explanation/results/architecture-survey/) |
+| LogicMixer (MLP-Mixer) | Cut the image into small patches and **mix across patches and within patches in turn** to say what is in it | `griffith_logic/models/mlp_mixer.py` | MNIST hard **0.671** (saturates at 20k steps, **needs calibration**) | Saturates at 20k steps, far short of DLGN's 0.9784. Calibration at scale is unfinished | **S1** | [Tutorial](/en/tutorials/logic-mixer/) · [Benchmarks](/en/reference/benchmarks/) |
+| LogicResNet | Classify images; the real point is whether a **residual (shortcut) that passes the input through unchanged** can be built out of logic gates | `griffith_logic/models/logic_resnet.py` | MNIST hard **0.113** (3 ep, ≈chance, **needs calibration**) | Loss falls from 1.55 to 1.31 while accuracy stays at chance. Calibrating τ (the `GroupSum` temperature) and the output scale is unresolved | **S2** | [Tutorial](/en/tutorials/logic-resnet/) · [Benchmarks](/en/reference/benchmarks/) |
+| LLViT | Classify images with a patch-based Transformer, with **only the channel-mixing MLP** replaced by a circuit (a hybrid) | `griffith_logic/models/llvit.py` | **No full-run number** (only hybrid-replacement tests) | Teacher calibration is WIP. **Not at a stage where an accuracy can be published** | — | [Hybrid](/en/tutorials/hybrid/) · [API](/en/reference/api/dwn/) |
+| BinaryBrainModel | Recognize handwritten digits with **6-input LUTs plus frame modulation** — a reproduction of the BinaryBrain approach | `experiments/train_binarybrain.py` | MNIST hard **0.9483** (N=6, 10 ep, 14,516 gates) | Degrades from 0.9483 to 0.9299 over 10 ep (caused by BatchNorm `momentum=1.0`). The accuracy advantage is paid for with 15.1× the FLOPs and 9× the wall-clock time | — | [Tutorial](/en/tutorials/binarybrain/) · [API](/en/reference/api/binarybrain/) · [Parameterization](/en/explanation/results/parameterization-study/) |
+
+<details>
+<summary>Input → output and dataset (image classification)</summary>
+
+- **DLGN** — in: a binarized MNIST image, 400 bits (20×20; 784 bits for the 28×28 variant) → out: logits over 10 classes / dataset: **MNIST**
+- **Conv-DLGN** — in: a color image `(B,C,H,W)` in [0,1] → `LutConv2d` + `OrPooling2d` → out: logits over 10 classes / dataset: **CIFAR-10**
+- **LogicMixer** — in: the image thermometer-encoded and split into non-overlapping patches (7×7 patches on MNIST, i.e. 16 tokens) → out: class logits / dataset: **MNIST** (CIFAR-10 also selectable)
+- **LogicResNet** — in: a thermometer-encoded image `(B, C*bits, H, W)` → out: class logits / dataset: **MNIST** (the tutorial uses MNIST 20×20)
+- **LLViT** — in: an image `(B,3,224,224)` (32×32 in the experiments) → patch embedding + cls token → out: class logits / dataset: **CIFAR-10**
+- **BinaryBrainModel** — in: MNIST `(B,1,28,28)`, stochastically binarized into frames (15 by default) → out: 10 classes / dataset: **MNIST**
+
+</details>
+
+## 2. Sequence and language
+
+| Model | What it solves | Where it lives | Headline accuracy | Main open problem | World-first | Links |
+|---|---|---|---|---|---|---|
+| LogicGPT | Read text one character at a time and **predict the next character** (a character-level language model), with everything from embedding to output closed inside the circuit | `griffith_logic/models/logic_gpt.py` | Tiny Shakespeare hard val ppl **13.31** (the Gumbel-calibrated arm, **seed 0 only**) | The gap to the FP ceiling of 4.94 is large. Greedy generation mode-collapses, and turning the projections into circuits (L1) flattens the attention distribution to uniform | **S2** | [Tutorial](/en/tutorials/logic-gpt/) · [API](/en/reference/api/logic-gpt/) · [Discretization gap](/en/explanation/results/discretization-gap/) |
+| LogicLadderGPT | Also predicts the next character, but as a way to measure **how much of a Transformer can be turned into a circuit**, rung by rung from L0 to L3 | `griffith_logic/models/logic_ladder_gpt.py` | Rung L1 of the ladder, hard ppl **19.242±0.939** (3 seeds; the degradation from L0b's 7.880±0.382) | The discretization gap on a LM is about 10× that on sMNIST (LM 0.3–0.5 nat vs. sMNIST 0.02–0.05) | — | [Tutorial](/en/tutorials/logic-ladder/) · [Discretization gap](/en/explanation/results/discretization-gap/) |
+| RDDLGN | Read a string and **write out a transformed string** (copy / reverse / sort / translate), with a recurrent model that has no attention | `griffith_logic/models/rddlgn.py` | Data-free distilled char LM, tiny_shakespeare BPC **2.71** (teacher 2.20) | On translation, hard collapses (soft BPC 2.857 vs. hard ≈14). Adding capacity widens the gap instead of closing it | — | [Tutorial](/en/tutorials/rddlgn-seq2seq/) · [API](/en/reference/api/seq2seq/) |
+| DLGNAttentionSeq2Seq / Translator | The same string-to-string transformation, but with **attention** — each output position learns where in the input to look — built as a circuit | `griffith_logic/models/attention/` | copy (seq_len=16) hard acc **25.77%** (soft 71.66%) | The absolute hard number is far from practical. The conclusion rests on the single copy task and has not been extrapolated to real translation | **S2** | [API](/en/reference/api/attention/) · [Benchmarks](/en/reference/benchmarks/) |
+| Boolean / MultiQuery / Pointer / Positional attention | Four minimal attention experiments: **recall the value that matches a key**, recall two at once, **look up by position index**, and **sort** | `griffith_logic/models/attention/` | Attention alignment accuracy **100%** on all four tasks, both soft and hard | Attention hits 100% immediately, but value decoding is the ceiling (94.6% on Task 2). Whole-sequence exact match drops to 79.8% | **S2** | [Tutorial](/en/tutorials/attention-tour/) · [API](/en/reference/api/attention/) |
+| LogicReservoir | Push a sequence through a **frozen random circuit** and train only the readout, to answer "what was the bit N steps ago" or "what is the parity" | `griffith_logic/models/logic_reservoir.py` | Delayed bit recall, hard acc **1.00** by training the readout alone (every seed) | Parity breaks down at k=3 and is near chance at k=4. No full run on sMNIST yet | **Retracted** | [Tutorial](/en/tutorials/logic-reservoir/) · [Benchmarks](/en/reference/benchmarks/) |
+| LogicLSTMCell / LogicGRUCell | **Remember the first bit of a sequence and report it 8 steps later** (a task that needs memory), testing the forget-gate-as-MUX correspondence | `griffith_logic/blocks/recurrent.py` | Delayed copy (T=8), hard acc **1.00** within ≤200 steps on every seed (an Elman-type model is ≈0.86 even at 800 steps) | No drop-in evaluation on real tasks (translation, char LM) yet. Toy tasks only | **S1** | [Tutorial](/en/tutorials/logic-lstm/) · [Benchmarks](/en/reference/benchmarks/) |
+| RDDLGNCharLM | Predict the next character, but **learning from an existing model's outputs alone, with no ground-truth data** (data-free distillation) | `experiments/train_rddlgn_charlm.py` | char LM hard BPC **3.62** (gumbel_st+anneal, data-free KD, **single seed**) | The absolute values diverge widely from another report; what is robust is the ordering, not the absolute values. Still short of the teacher's 2.20 | — | [Discretization gap](/en/explanation/results/discretization-gap/) |
+
+<details>
+<summary>Input → output and dataset (sequence and language)</summary>
+
+- **LogicGPT** — in: character token ids `(B,S)` → out: next-character logits at every position, `(B,S,65)` / dataset: **Tiny Shakespeare** (character level, vocab 65)
+- **LogicLadderGPT** — in: character token ids `(B,T)` → out: `(B,T,65)`. The embedding and the LM head stay floating-point / dataset: **Tiny Shakespeare**
+- **RDDLGN** — in: token ids `(B, seq_len)` → the encoder folds them into a fixed-length context bit string (384 bits as measured) → out: `(B, seq_len, vocab)` / dataset: synthetic **copy / reverse / sort** and **WMT14 En→De**
+- **DLGNAttentionSeq2Seq / Translator** — in: a bit string or token ids → cross-attention scored by XNOR-popcount similarity → out: `(B, seq_len, classes or vocab)` / dataset: synthetic **copy / reverse / sort** and **WMT14**
+- **Boolean / MultiQuery / Pointer / Positional attention** — in: bit strings of 36 / 40 / 12 / 18 bits respectively → out: 16 classes (Boolean, Positional), `(B,2,16)` (MultiQuery), a 4-step pointer sequence (Pointer) / dataset: **synthetic data generated on the fly** (not a real dataset)
+- **LogicReservoir** — in: a sequence of logic values `(B,T,input_size)` → the state of a frozen width-512 circuit → out: class logits from the readout / dataset: synthetic **parity** and **delay-d recall**
+- **LogicLSTMCell / LogicGRUCell** — in: random bit strings `(N,8,1)` → out: the first bit of the sequence / dataset: synthetic **delayed copy (T=8)**
+- **RDDLGNCharLM** — in: a window of character token ids (vocab 65) → out: next-character logits / dataset: **Tiny Shakespeare** (the teacher is a public nanoGPT; data-free distillation uses no ground-truth labels)
+
+</details>
+
+## 3. Generative
+
+| Model | What it solves | Where it lives | Headline accuracy | Main open problem | World-first | Links |
+|---|---|---|---|---|---|---|
+| LogicBinaryDiffusion | **Make an image by removing noise a little at a time from a noisy black-and-white image** (discrete diffusion), where adding noise is XOR | `griffith_logic/models/logic_diffusion.py` | binary MNIST acc@t1 **0.886** (4 ep, **single run**) | With naive re-noising, generation collapses; it only works after redesigning around XOR-based ancestral sampling. Generation quality has not been evaluated quantitatively | **S1** | [Tutorial](/en/tutorials/logic-diffusion/) · [Benchmarks](/en/reference/benchmarks/) |
+| LogicVAE | **Compress an image down to a few dozen bits and reconstruct or generate images from those bits** (a VAE whose latent is a Bernoulli bit string) | `griffith_logic/models/logic_vae.py` | binary MNIST reconstruction **193.6 nat/image** (30 ep, **single run**, no posterior collapse) | There is no external baseline inside the library against which to judge whether 193.6 nat is good or bad | **S1** | [Tutorial](/en/tutorials/logic-vae/) · [Benchmarks](/en/reference/benchmarks/) |
+| LogicGAN | **Turn a string of random bits into a black-and-white pattern image**, trained against a circuit that tries to tell real from fake | `griffith_logic/models/logic_gan.py` | **No numbers (open problem)**. Structural contract and a dynamics smoke test only | Diverges untuned. Even after stabilization, late D accuracy sits at 0.78–0.874 (ideal 0.5) and mode collapse remains | **S1** | [Tutorial](/en/tutorials/logic-gan/) |
+| LogicWaveNet | **Predict the next token from past tokens only** (the causal dilated-convolution structure used for audio) | `griffith_logic/models/logic_wavenet.py` | hard acc **100%** on periodic patterns (**no full run yet**) | No full run on real audio data; toy tasks only | **🟡** | [Tutorial](/en/tutorials/logic-wavenet/) |
+| LutAutoencoder | **Squeeze an image through a narrow bottleneck and restore it** (an autoencoder) | `experiments/train_autoencoder_cnn.py` | MNIST test MSE (hard) **0.0863** (30,784 gates, epoch 63) | hard carries about twice the error of soft (0.0438). No non-logic baseline is set up inside the library | — | [Benchmarks](/en/reference/benchmarks/) |
+
+<details>
+<summary>Input → output and dataset (generative)</summary>
+
+- **LogicBinaryDiffusion** — in: the noisy image `x_t` at step t plus a time embedding → out: a prediction of the original image `x_0`, `(B,C,H,W)` / dataset: **binarized MNIST** (the tutorial shrinks it to 8×8)
+- **LogicVAE** — in: an image `(B,C,H,W)` → latent bits `z ∈ {0,1}^64` (the implementation default; the scaled-down tutorial uses 96 bits) → out: per-pixel logits / dataset: **binarized MNIST** (the VAE-1 experiments also cover Fashion-MNIST)
+- **LogicGAN** — in: a random bit string `(B, noise_bits)` → out: a black-and-white image `(B,C,H,W)`; the discriminator maps an image to a real/fake logit / dataset: a synthetic set of **four 8×8 binary patterns** (top / bottom / left / right half)
+- **LogicWaveNet** — in: token ids `(B,T)` → causal dilated convolutions → out: `(B,T,vocab)` / dataset: a synthetic toy of **period-5 bit strings** (sequence length 60, vocab 2)
+- **LutAutoencoder** — in: an MNIST image → a bottleneck (256 dimensions in the full run) → out: a reconstruction of the same size / dataset: **MNIST**
+
+</details>
+
+## 4. Detection and dense prediction
+
+| Model | What it solves | Where it lives | Headline accuracy | Main open problem | World-first | Links |
+|---|---|---|---|---|---|---|
+| CenterNetLUT | Say **where in the image each thing is, and what it is**, as boxes (object detection) — it outputs each digit's center, size and class | `experiments/detection_model.py` | Multi-MNIST detection mAP (hard) **0.5425** (epoch 78, 13,944 params) | Collapses late in training and oscillates between 0.005 and 0.54. Soft loss goes down, but hard performance is not optimized directly. **This mAP is a pre-fix figure (image-scope bug in `compute_map`) and is awaiting re-measurement** | **S2** | [Tutorial](/en/tutorials/detection/) · [Benchmarks](/en/reference/benchmarks/) · [Discretization gap](/en/explanation/results/discretization-gap/) |
+| CenterNetHardST | The same object detection, with gates **fixed during training** (Hard-ST) — the countermeasure arm against the discretization gap | `experiments/detection_model_hard_st.py` | Independent headline numbers are **not yet compiled** (the hard-ST countermeasure arm) | Positioned as the countermeasure arm against the discretization gap above | **S2** | [Discretization gap](/en/explanation/results/discretization-gap/) |
+| YoloLutModel | The same object detection, solved with a **YOLO-style head** (class, objectness, coordinates) | `experiments/yolo_lut_model.py` | **No full run yet** (encode/decode round-trip IoU > 0.8) | Round-trip IoU verifies implementation soundness, not detection performance. **No accuracy can be published** | **S2** | [Benchmarks](/en/reference/benchmarks/) |
+| LogicUNet | **Paint every single pixel as foreground or background** (semantic segmentation), doubling as a test of skip connections | `griffith_logic/models/logic_unet.py` | Full MNIST mask IoU **0.373** (4 ep, **needs calibration**; 0.875 on the 8×8 toy) | Shapes get coarse when scaling up from the toy. That skip connections beat no skips is demonstrated across 5 seeds | **🟡** | [Tutorial](/en/tutorials/logic-unet/) · [Benchmarks](/en/reference/benchmarks/) |
+
+<details>
+<summary>Input → output and dataset (detection and dense prediction)</summary>
+
+- **CenterNetLUT** — in: a 96×96 synthetic image binarized at 3 thresholds, `(B,3,96,96)` → out: three heads at stride 4 (24×24) — `hm` (a center heatmap over 10 classes), `size` (width and height) and `off` (sub-pixel correction) / dataset: synthetic **Multi-MNIST** (1–3 MNIST digits placed at random without overlap; 10,000 train / 2,000 test)
+- **CenterNetHardST** — the same input/output contract as CenterNetLUT (only `LutConv2d` is swapped for the Hard-ST version) / dataset: the same synthetic **Multi-MNIST**
+- **YoloLutModel** — in: `(B,C,H,W)` → out: three heads — `cls` (class), `obj` (objectness) and `reg` (dx, dy, w, h over K bins each) / dataset: synthetic **Multi-MNIST**
+- **LogicUNet** — in: an image `(B,C,H,W)` → out: per-pixel logits `(B, out_channels, H, W)` / dataset: **mnist-mask** (masks derived from MNIST) and **pet64**. The tutorial restores masks from a noisy MNIST 20×20
+
+</details>
+
+## 5. NLP
+
+| Model | What it solves | Where it lives | Headline accuracy | Main open problem | World-first | Links |
+|---|---|---|---|---|---|---|
+| TextCNNModel (binary) | Read a Japanese social-media post and say **whether it is positive or negative** (binary sentiment polarity) | `experiments/train_textcnn.py` | WRIME binary sentiment polarity, hard accuracy **82%** (4 hours of training) | Switching between hard and soft usually costs a 2–5% discretization gap. A single Japanese dataset only | **S2** | [Tutorial](/en/tutorials/textcnn/) · [Benchmarks](/en/reference/benchmarks/) |
+| TextCNNModel (8 emotions) | For the same post, say **whether each of 8 emotions — joy, sadness and so on — is present** (multi-label) | `experiments/train_textcnn_emotion.py` | WRIME 8 emotions, F1 **0.367** (Accuracy 83.4%, approx. 2.08M parameters) | In a multi-label, imbalanced setting accuracy merely looks high while detection power is lacking. **Publishing Accuracy on its own would be misleading** | **S2** | [Benchmarks](/en/reference/benchmarks/) |
+
+<details>
+<summary>Input → output and dataset (NLP)</summary>
+
+- **TextCNNModel (binary)** — in: token ids `(B, seq_len)` (vocab 8,000) → out: logits over 2 classes / dataset: **WRIME** (Japanese social-media sentiment)
+- **TextCNNModel (8 emotions)** — in: the same → out: `(B,8,2)`, i.e. present/absent for each of 8 emotions / dataset: **WRIME ver1** (43,200 items, Avg. Readers annotations)
+
+</details>
+
+## 6. Foundations and building blocks
+
+| Model | What it solves | Where it lives | Headline accuracy | Main open problem | World-first | Links |
+|---|---|---|---|---|---|---|
+| DWNClassifier | Classify by **turning real-valued features into bits with a thermometer code and stacking LUTs** — the testbed for whether the wiring itself can be learned | `griffith_logic/models/dwn.py` | In a 4-arm comparison of connection schemes, learnable **reaches 100%**, with a post-training connection SAT rate of 1.00 | Learnable connections on the dense route have a low ceiling in the literature; the high-accuracy regime belongs to the Conv route | — | [Tutorial](/en/tutorials/dwn/) · [API](/en/reference/api/dwn/) |
+| Converted student (adder-tree lowering) | **Replace an already-trained floating-point MLP with a logic circuit that makes exactly the same decisions** — testing whether conversion preserves accuracy | `experiments/convert_*.py` | MNIST hard acc **0.9558** (bits=4, exact lowering, 417,930 LUT outputs / 61 layers; teacher 0.9747) | The first winning recipe to land within 2% of the teacher, but the circuit is 50–70× the size of a native DLGN (6–8k gates) | — | [Architecture survey](/en/explanation/results/architecture-survey/) |
+| Converted student (native conversion) | Test whether **a trained model's knowledge can be distilled into a DLGN built from scratch** | `experiments/distill_layerwise_native_mnist.py` and others | All three paths land **below scratch** (KD 0.9100 / transfer initialization 0.68 / layer-wise binary distillation 0.8871 against scratch 0.9088) | A dense arithmetic MLP and sparse discrete logic are too dissimilar for there to be much knowledge worth transferring. Capacity that is not there cannot be fabricated by an accurate teacher | — | [Architecture survey](/en/explanation/results/architecture-survey/) |
+
+<details>
+<summary>Input → output and dataset (foundations and building blocks)</summary>
+
+- **DWNClassifier** — in: real-valued features `(B, in_features)`, bit-encoded with a thermometer code (on MNIST 20×20: 400 pixels × 3 bits = 1,200 bits) → out: class logits / dataset: **MNIST**. Note that the "4-arm comparison of connection schemes" in the table was run not on MNIST but on **toy Boolean functions** (xor3, parity3n and others)
+- **Converted student (adder-tree lowering)** — in: MNIST images. A pruned, int4-quantized MLP is lowered exactly into a LUT circuit via popcount adder trees → out: the argmax class / dataset: **MNIST** (transferred to Fashion-MNIST for 0.8196)
+- **Converted student (native conversion)** — in: MNIST images. The teacher's hidden binary activations (300 bits / 100 bits) become the per-layer training signal → out: 10 classes / dataset: **MNIST**
+
+</details>
+
+## 7. Experimental branches
+
+Lines of work run on experimental branches before entering the mainline. The details of the
+**11 lines and 81 configurations** (configuration-variation tables, the reasons behind the negative
+results, wandb groups) are in
+[Models from the experimental branches](/en/explanation/results/experimental-models/).
+
+| Line | Task | Representative model | Headline accuracy | In one line | World-first |
+|---|---|---|---|---|---|
+| Pure DLGN / input bypass | Image classification (MNIST 20×20) | Pure DLGN k1000 × 4 layers (4,000 gates) | MNIST 20×20 hard **0.8994** | Clever fixed wiring never once beat a plain DLGN at an equal budget | — |
+| Hybrid (NN/CNN front-end + DLGN back-end) | Image classification (CIFAR-10) | HYBRID-2 (CNN + DLGN diffusion) | CIFAR-10 hard **0.7864** | +4.39pt over a CNN+MLP control. The binarization interface costs −0.01pt | — |
+| Back-end scaling | Image classification (CIFAR-10) | 61M-gate back-end | CIFAR-10 hard 0.7808 (100k gates was best) | Inverse scaling. On a CNN front-end's turf the back-end saturates at about 1,000 gates | — |
+| NN output layer (inverse hybrid) | Image classification (MNIST 20×20) | sandwich (NN at both ends) | MNIST 20×20 hard **0.9731** | +7.5pt from lifting the `GroupSum` readout constraint alone | — |
+| LUT6 vs LUT2 (parameterization) | Image classification (MNIST 20×20) | 2,000 LUT6 independent (1 layer) | MNIST 20×20 hard **0.95040** (mean of 3 seeds) | The real cause is softmax's double simplex (gradients at 1/446) | — |
+| Deep diffusion (shape × bypass × wiring) | Image classification (MNIST 20×20) | const + raw-input / interface bypass | MNIST 20×20 hard **0.9838** | +8.82pt over the paper configuration (pure DLGN) at an equal budget of 4,000 gates. The ceiling is 0.983 | — |
+| Checkerboard mixed conv | Image classification (CIFAR-10) | cyc9-phase (9 blocks) | CIFAR-10 hard **0.8512** | A new record for the hybrid line. Ties the all-CNN model with half the GPU arithmetic | — |
+| Transformer-embedded / ReZero | Next-character prediction (shakespeare-char) | LUT2 softmax + rezero | shakespeare-char val ppl **5.37** | What worked was neither the residual nor LayerNorm but the zero-init of α | — |
+| Akiho Propagation (AP, BP-free) | Image classification (MNIST 20×20) | ap1-ap-d2 / ap1-bp-d2 | MNIST 20×20 hard **0.8403** (BP 0.9150) | AP is consistently 6–8pt below BP. OR residuals alone are catastrophic under AP specifically (−42.7pt) | — |
+| Task extension (U-Net) | Per-pixel labeling, i.e. segmentation (mnist-mask) | u1-seg-mnist (with skips) | mnist-mask best IoU **0.8203** | A decoder plus skips is +16.24pt on dense prediction but −5 to −12pt on classification — the sign flips | **🟡** |
+| Task extension (VAE) | Compressing, reconstructing and generating images (binarized MNIST) | v1-logic-n6 (LUT6 + indep + higher lr) | binarized MNIST test ELBO **142.85** (3 seeds) | Binarizing the latent is cheap at +3.5 nat; turning the network itself into logic is expensive at +38 to +39.75 nat | **S1** |
+| Task extension (DenseNet) | Image classification (MNIST) | d1-mnist-pyr / d1-mnist-dense | MNIST hard **0.9679** / 0.9647 (plain 0.7833) | Dense connections are worth a real +18.1pt, but at an equal budget they do not catch the pyramid shape | **S3** |
+| FPGA gate budget and power | (Not a model — an estimate of circuit size and power) | (Web survey. Not measured) | Published value: FPGN-6-L reaches CIFAR-10 76.72% with 434k LUTs | Changing the representation (moving to 6-LUTs) is cheaper than adding gates | — |
+
+:::note[About the numbers from the experimental branches]
+The table above is transcribed from each experimental branch's progress records and from wandb, and
+**most rows are a single seed**. Equal-gate-budget comparisons are not equal-parameter comparisons,
+and every FPGA number is theoretical (no measurement from Vivado synthesis has been done).
+For hybrids with a floating-point NN in the front-end, **a comparison that lines up gate counts
+alone against literature where the whole network is logic gates does not hold**.
+:::
+
+## Read next
+
+- [Models from the experimental branches](/en/explanation/results/experimental-models/) — the details behind section 7 above, and the reasons for the negative results
+- [Auditing the "world-first" claims](/en/explanation/results/world-firsts/) — the basis for the world-first badges above
+- [How far logic gates get, architecture by architecture](/en/explanation/results/architecture-survey/) — separating the achieved from the unachieved
+- [Benchmarks](/en/reference/benchmarks/) — the single source of truth for the numbers (with conditions and environments)
+- [All tutorials](/en/tutorials/) — the scaled-down versions you can rerun yourself
+
+{/*
+Maintenance policy: this page is a hand-written index. Once it lists more than 60 models,
+reconsider moving to generating it mechanically from the implementation (models/ and experiments/)
+and the benchmark tables.
+The "What it solves" column and the collapsed input/output and dataset notes are grounded in the
+implementation (models/ and experiments/), tutorials/ and reference/benchmarks.mdx. When a model is
+added or changed, update both.
+*/}
+
+{/* i18n:source=reference/model-zoo.mdx hash=abb581f98e4d */}

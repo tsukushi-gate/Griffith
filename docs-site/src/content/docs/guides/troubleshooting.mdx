@@ -1,0 +1,481 @@
+---
+title: 'トラブルシューティング'
+description: '実際に出るエラーメッセージから引ける索引。導入・テスト・学習・HDL・エディタ・デプロイでよく踏む詰まりを、症状 → 原因 → 対処の順に並べる。'
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+**出たメッセージをそのまま探す**ためのページ。見出しは実際に画面へ出る文字列そのもので、
+各項目は **症状 → 原因 → 対処** の順に固定してある。ブラウザの検索(Cmd/Ctrl+F)に
+エラー文の一部を貼れば該当箇所へ飛べる。
+
+:::note[まず確認すること]
+多くの詰まりは次の 3 つに集約される。
+
+1. **extras の指定漏れ** — `uv sync --extra dev --extra cpu` を通したか
+2. **見ている精度が soft か hard か** — 回路としての実力は hard のみ([学習曲線の見方](/guides/training-curves/))
+3. **パラメータ化と fan-in の組合せ** — N≥4 で `softmax` を使っていないか([パラメータ化を選ぶ](/guides/parameterization/))
+:::
+
+## 導入・環境
+
+### `ModuleNotFoundError: No module named 'torch'`
+
+**症状** — `import griffith_logic` や `uv run python examples/01_xor.py` の時点で落ちる。
+
+**原因** — `torch` / `torchvision` はプラットフォームごとに解決先インデックスが異なるため、
+本パッケージの**コア依存には入っていない**。extras を指定しなかった場合や、
+`pip install -e .` だけを実行した場合に torch が入らない。
+
+**対処** — extras を明示して同期する。
+
+```bash
+uv sync --extra dev --extra cpu     # Mac / Linux CPU
+uv sync --extra dev --extra cu128   # Linux CUDA(12.8)
+```
+
+pip で使う場合は [公式インデックス](https://pytorch.org/get-started/locally/)から
+torch を先に入れてから `pip install -e .` する。詳細は[インストール](/getting-started/installation/)。
+なお `editor` extra 単体には torch が含まれないので、`cpu` / `cu128` と併記する必要がある。
+
+### `uv sync` が `cpu` と `cu128` の同時指定で解決に失敗する
+
+**症状** — `--extra cpu --extra cu128` を両方付けると依存解決エラーで止まる。
+
+**原因** — `pyproject.toml` の `[tool.uv] conflicts` で、この 2 つは
+[conflicting extras](https://docs.astral.sh/uv/concepts/projects/dependencies/#conflicting-dependencies)
+として **どちらか一方しか選べない**よう宣言されている。
+
+**対処** — 環境に応じて片方だけを選ぶ。Mac / CI は `cpu`、GPU 訓練機は `cu128`。
+他の extras(`dev` / `editor` / `cloud` …)は自由に併記できる。
+extras を落として `uv sync` し直すと venv が壊れることがあるので、**毎回同じ extras 一式を指定する**のが安全。
+
+### `[magicdelta CUDA] CUDA未対応: Pythonフォールバックを使用`
+
+**症状** — 学習開始時に標準出力へこの行が出る。
+
+**原因** — `griffith_logic/cuda/__init__.py` は起動時に `torch.cuda.is_available()` を見て、
+偽なら CUDA カーネルをロードせず **Python フォールバック実装**に切り替える。
+Mac(MPS)や CPU 環境ではこれが**正常な表示**。CUDA 機で出る場合は torch 自体が
+CPU ビルド(= `--extra cpu` で同期した)であることがほとんど。
+
+**対処** — エラーではないので、Mac / CPU では無視してよい。GPU で速度を出したいのに出る場合は
+`uv sync --extra dev --extra cu128` で入れ直し、`torch.cuda.is_available()` が `True` を返すか確認する。
+
+### `[magicdelta CUDA] コンパイル失敗 — Pythonフォールバック: ...`
+
+**症状** — CUDA は使えているのに、カーネルの JIT コンパイルだけが失敗して上記が出る。
+
+**原因** — `torch.utils.cpp_extension.load` による JIT ビルドが失敗している(nvcc やビルドツールチェイン、
+書き込み可能なキャッシュディレクトリの不足など)。行末に元の例外メッセージがそのまま付く。
+
+**対処** — 行末の例外文が一次情報なのでまずそれを読む。フォールバックが効いているので
+**学習は動く**(遅くなるだけ)。急ぎでなければ、動作確認を優先して先へ進んでよい。
+
+:::tip[古いバイナリを掴む事故は起きない]
+拡張名にはソース内容の SHA-256 ハッシュが埋め込まれている。ソースを変えれば別名になるので、
+タイムスタンプが保存されないマウント環境(Modal 等)でも再コンパイルが正しく走る。
+:::
+
+## テストが「走らない」
+
+### `4 passed, 20 deselected` — HDL テストを指定したのに走らない
+
+**症状** — `uv run pytest tests/hdl/ -q` を実行したのに、ほとんどのテストが deselected になる。
+
+**原因** — `pyproject.toml` の既定 `addopts` が
+`-m 'not slow and not paper and not hdl and not hdl_vhdl'` になっており、
+**重いマーカーは既定で除外**される。パスを指定しても、マーカーによる除外は解除されない。
+
+**対処** — マーカーを明示的に指定する。
+
+```bash
+uv run pytest -m hdl -q        # Verilog 等価性
+uv run pytest -m hdl_vhdl -q   # VHDL 等価性
+make hdl                       # = pytest -m "hdl or hdl_vhdl"
+uv run pytest -m paper -q      # 論文再現(分単位)
+make test-all                  # slow も含める(hdl / paper は除外のまま)
+```
+
+### `SKIPPED ... iverilog未導入` / `SKIPPED ... ghdl未導入`
+
+**症状** — `-m hdl` / `-m hdl_vhdl` を指定しても全件が skip になる
+(`-rs` を付けると `SKIPPED [5] tests/hdl/test_vhdl_equivalence.py:36: ghdl未導入` のように理由が出る)。
+
+**原因** — HDL 等価性テストは外部シミュレータを呼ぶ。`iverilog_available()` /
+`ghdl_available()` が偽のとき `pytest.mark.skipif` で自動 skip される
+(**環境を壊さないための設計**であって、失敗ではない)。
+なお `iverilog_available()` は **`iverilog` と `vvp` の両方**が PATH にあることを要求する。
+`iverilog` だけ入れて `vvp` が無い環境では skip のままになる。
+
+**対処** — Verilog 側は簡単に入る。
+
+```bash
+brew install icarus-verilog        # macOS
+sudo apt-get install -y iverilog   # Debian / Ubuntu
+```
+
+VHDL(ghdl)は事情が違う。**macOS の Homebrew 版 ghdl は破損しておりビルドできないことが
+実測で確認されている**ため、ローカル導入を試みず CI / コンテナ経路で検証するのが公式運用である。
+ローカルで `hdl_vhdl` が 1 件も走らないのは**想定どおり**([HDLエクスポート](/guides/hdl-export/))。
+
+### `AssertionError: ...: 非有限値を検出 (NaN=..., inf=..., shape=...)`
+
+**症状** — 自作レイヤのテストがこのアサーションで落ちる。
+
+**原因** — 共通ヘルパーが forward / backward の出力に NaN / inf が混じっていないかを毎回検査している。
+飽和した初期化、0 除算(τ=0 など)、対数・除算を含む自作関数が原因になりやすい。
+
+**対処** — まず float64 で `torch.autograd.gradcheck` を通し、
+`core/reference.py` の素朴な参照実装と `1e-10` で突き合わせる。許容誤差の定数は
+`tests/conftest.py` に集約されているので、**個々のテストで閾値を書かない・緩めない**
+([テスト体系](/contributing/testing/))。
+
+## 学習が思うように進まない
+
+### hard 精度だけが極端に低い(soft 0.803 → hard 0.211)
+
+**症状** — `test_acc(soft)` は高いのに `test_acc`(hard)が壊滅する。HDL に焼くと使い物にならない。
+
+**原因** — **離散化ギャップ**。連続緩和の真理値表エントリが 0.5 付近に密集したまま精度を稼いでおり、
+丸めた瞬間に「どのゲートなのか」が決まらず崩れる。
+[BinaryBrain互換API](/tutorials/binarybrain/)の短縮レシピが実例で、
+連続の真理値表では eval acc **0.803** だが、エントリを丸めると **0.211** まで落ちる
+(BatchNorm 統計を再較正しても 0.632 止まり)。
+
+**対処** — 打ち手は 4 つ。
+
+1. **エポックを増やす** — 正常な収束では学習量とともにギャップは縮む
+2. **パラメータ化を変える** — `warp` は離散化ギャップがほぼゼロ(MNIST N=2 実測 **−0.06pp**、hard が soft を上回る)
+3. **選択を `hard_st` にする** — 訓練 = 推論にしてギャップを構造的に 0 にする
+4. **入力を 0/1 に寄せる** — 下記「バイリニア補間」の項を参照
+
+判断の手順は[学習曲線の見方](/guides/training-curves/)、方式の選択は
+[パラメータ化を選ぶ](/guides/parameterization/)、ギャップが出ない構成の実例は [DWN](/tutorials/dwn/)。
+
+:::caution[学習配線を使っているとき]
+配線自体を学習する構成では、soft は良好なのに **hard 精度だけが崩壊**することがある。
+**第 1 層だけ学習配線にして残りは固定**するのが定石(DWN 論文自身の推奨でもある)。
+:::
+
+### soft は伸びるのに hard が 94% 台で頭打ちになる(N≥4 で `softmax`)
+
+**症状** — fan-in を 4 や 6 に上げたのに、hard 精度が N=2 の構成より低い。
+エポックを増やしても改善しない。
+
+**原因** — **表現力の構造的な欠落**(勾配消失ではない)。N≥4 の `softmax` は 16 ゲート表ではなく
+$2^N$ エントリ上の単体(合計 1)になるため、離散化(確率 > 0.5)で立てられるビットは高々 1 個 ——
+つまり hard 表として作れるのは **単一 minterm か恒偽(FALSE)だけ**である。
+パススルー・OR・XOR といった日常的な関数が表現できない。
+MNIST・6層・50エポックの実測で softmax N=4 は hard **94.54%** / ギャップ 1.12pp にとどまり、
+同条件の warp N=4(**95.50%** / 0.14pp)に劣る。同じ実験で test_acc 95% への到達エポックは
+softmax N=2 が 5、warp N=4 が 9 で、**softmax N=4 は最後まで到達しなかった**。
+
+**対処** — **N=2 は `softmax`、N≥4 は `independent`(または `warp`)** に切り替える。
+表現力の欠落は学習量では埋まらない。
+
+```bash
+uv run griffith train configs/recipes/dlgn_mnist_quick.yaml \
+    model.n_inputs=6 model.parameterization=independent optim.lr=0.3
+```
+
+### `independent` に替えたら loss がまったく動かない
+
+**症状** — 損失も精度も初期値から動かない。実測では 10 エポック回しても soft 精度が
+0.1217 → 0.1217 と 1 桁目すら変わらなかった。
+
+**原因** — `independent` はエントリごとの sigmoid で、飽和気味の初期化と深い直列合成が
+組み合わさると **勾配が急速に減衰する**。実測では全層の勾配ノルムが $10^{-5}$ 程度まで落ち、
+既定の lr=0.02 では学習が始まらなかった。
+
+**対処** — **まず学習率を 1 桁上げて切り分ける**(0.01 → 0.1〜0.3)。
+`lr ≥ 0.3` で学習が進むことを確認済み。学習率で動くなら勾配減衰が原因と確定できる。
+
+### GroupSum の τ が小さすぎて softmax が飽和し、学習が進まない
+
+**症状** — 損失が下がりきらない。ロジットが飽和して softmax がほぼ one-hot に張り付き、
+勾配が痩せて精度が動かない。
+
+**原因** — `GroupSum(k, tau)` は最終層の出力をクラスごとに合計して τ で割るだけの層だが、
+**τ はロジットのスケールそのもの**である。`GroupSum` の**コンストラクタ既定値は `tau=1.0`**
+なので、明示指定を忘れると群和がそのままロジットになり、クラス数やゲート数が増えるほど飽和する。
+実運用でも、終端 `group_sum` の τ=1.0 が softmax 飽和を招いて学習が進まない事例が記録されている
+(τ=4.0 に上げて全パラメータ化で hard acc 100% が回復した)。逆に τ が大きすぎると
+ロジットが潰れて勾配が痩せる。
+
+$$
+\text{logit}_c = \frac{1}{\tau}\sum_{i \in \text{group}_c} y_i
+$$
+
+**対処** — **τ を必ず明示する**。MNIST 系は 10 前後から始める(k=8000・6層・MNIST の実測で、
+経験則 $\tau=\sqrt{k/C}\approx 28.3$ より **固定値 τ=10 の方が約 1.0pt 高い**)。CIFAR 系は 100 前後。
+相場表は[学習を回す](/guides/training/)。
+
+```python
+GroupSum(k=10, tau=10.0)   # tau は既定 1.0 のまま使わない
+```
+
+### `ニューロン数(...)はクラス数(...)で割り切れる必要があります`
+
+**症状** — モデル構築時にこの例外で止まる。
+
+**原因** — `GroupSum` は最終層の出力を**クラス数ぶんに均等分割**して合計する。
+ゲート数 $k$ がクラス数で割り切れないと分割できない。
+
+**対処** — 最終層の出力幅をクラス数の倍数にする(MNIST 10 クラスなら 2000 / 8000 / 16000 など)。
+
+### `n_inputs は 2, 4, 6 のいずれか: 3`
+
+**症状** — `LutLayer` の構築時に落ちる。
+
+**原因** — fan-in は **2 / 4 / 6 のみ**をサポートする(それぞれ difflogic 互換 / LUT4 / FPGA の LUT6 に対応)。
+
+**対処** — 2, 4, 6 のいずれかを選ぶ。選び方は[パラメータ化を選ぶ](/guides/parameterization/)。
+
+### `gumbel_noise は parameterization='softmax' のみ対応です`
+
+**症状** — `gumbel_noise=True` を `independent` などと組み合わせると落ちる。
+
+**原因** — Gumbel 平滑化は softmax の分布に対する操作なので、`softmax` パラメータ化専用である。
+`hard_st` との併用もできない。同様に `selection` は `softmax` / `warp` のみ対応で、
+それ以外だと `...はsoftmax/warpパラメータ化のみ対応: ...` が出る。
+
+**対処** — Gumbel でギャップを詰めたいなら `softmax`(N=2)か、
+Walsh–Hadamard 係数を Gumbel 平滑化する `warp`(N=4/6)を使う。
+
+### 入力を `Resize` で縮小していて hard 精度だけ 2pt 低い
+
+**症状** — soft 精度は参照実装とほぼ同じ(差 0.5%)なのに、hard 精度だけ 2.1% 低い。
+
+**原因** — **バイリニア補間**。DLGN は入力が 0/1 に近いことを前提にしている。
+`torchvision.transforms.Resize((20, 20))` は補間で 0.25 / 0.75 のような中間値を大量に作るため、
+ゲート間の出力差が縮んで学習シグナルが弱まり、評価時に `round()` しても失われた情報は戻らない。
+difflogic との精度差(test 96.6% 対 97.4%)を追った結果、これが**主因**だった。
+
+**対処** — 縮小には補間ではなく **クロップ(ボーダー除去)** を使う。
+
+```python
+# NG: 補間で中間値が大量発生する
+transforms.Compose([transforms.Resize((20, 20)), transforms.ToTensor()])
+
+# OK: 画素値と空間関係を保持する
+transforms.Compose([transforms.ToTensor(), MNISTRemoveBorderTransform()])
+```
+
+修正後は difflogic との差が 0.1〜0.2%(シード差の範囲)まで縮んだ。
+新しいデータセットを足すときは、**入力値のヒストグラムが 0/1 に集中しているか**を必ず確認する。
+方式ごとの相性は crop ◎ / 最近傍 △ / バイリニア ✗ / バイキュービック ✗。
+
+## HDL エクスポート
+
+### `NotImplementedError: conv1: conv2dノードはHDL直接生成不可。export/lowering.lower_to_primitives(graph) を先に適用すること`
+
+**症状** — 畳み込みを含むモデルを Verilog / VHDL 化しようとすると、この例外で止まる
+(VHDL 側も同文)。
+
+**原因** — HDL 生成器は `conv2d` / `or_pool2d` といったネイティブノードを**明示的に拒否**する。
+これらは論理プリミティブへ展開してからでないと回路にできない。
+
+**対処** — lowering を先に通す。`examples/05` が実例。
+
+```python
+from griffith_logic.export.lowering import lower_to_primitives
+
+graph = lower_to_primitives(graph)   # conv2d / or_pool2d → lut_layer 列
+```
+
+### `NotImplementedError: HDL未対応ノード型: <型名>`
+
+**症状** — lowering を通した後も、特定のノード型で生成が止まる。
+
+**原因** — 実数を返すノードなど、**ブール回路として表現できない構成**が IR に残っている。
+
+**対処** — 該当層を論理側に寄せるか、**その層より前で切って export する**。
+`validate(graph, target='hdl')` が事前に警告を出すので、生成前に確認するとよい
+([IRを扱う](/guides/ir/) / [HDLエクスポート](/guides/hdl-export/))。
+
+### HDL の出力が PyTorch と一致しない
+
+**症状** — 3段等価性(PyTorch hard eval ⇔ IR simulate ⇔ HDL シミュレーション)のうち、
+PyTorch との比較だけが合わない。
+
+**原因** — 比較対象が **soft(学習時)の出力**になっている。HDL は離散回路なので、
+突き合わせるべきは `model.eval()` の hard eval である。
+
+**対処** — `model.eval()` を呼んでから比較する。
+なお等価性が保証するのは **IR と実機のビット一致**であって、
+**学習時の連続値モデルと離散回路の精度が一致することは保証しない**。
+焼く前に必ず hard eval の精度を確認する([FPGAに焼く](/guides/fpga/))。
+
+## ビジュアルエディタ
+
+### `INFO: connection rejected (400 Bad Request)` — 学習チャートが step 0 のまま更新されない
+
+**症状** — 学習中の acc / loss チャートが step 0 から動かない。一方で
+セッション表・RUN 履歴など **REST 駆動の UI は正常に更新される**。
+バックエンドログに約 1 秒間隔で `connection rejected (400 Bad Request)` が出続け、
+`connection open` は一度も出ない。vite 側には `ws proxy error: write EPIPE` が出る。
+**シークレットウィンドウでは正常動作する**。
+
+**原因** — **localhost の Cookie 汚染 × WebSocket ハンドシェイクの行長上限**。
+Cookie はポートを区別せずホスト単位で送られるため、同じ localhost で開発している
+**別プロジェクトの巨大な認証 Cookie** がエディタの WS ハンドシェイクにも乗る。
+`websockets` のハンドシェイク解析は **1 行 8192 バイト上限**(`MAX_LINE_LENGTH`)で、
+超えると `SecurityError: line too long` → 400 で拒否する(9KB の Cookie を付けた curl で再現済み)。
+REST 側は別のパーサ(行長上限が大きい)なので無症状 —— この非対称性が切り分けを難しくする。
+
+**対処** — 本体側は vite の `/ws` proxy で Cookie ヘッダを除去する修正済み
+(学習 WS は Cookie を使わないため安全。E2E 回帰テストあり)。それでも出る場合は次を確認する。
+
+- DevTools の Network → WS でリクエストヘッダの **Cookie 総サイズ**を見る
+- `WEBSOCKETS_MAX_LINE_LENGTH` を一時的に上げて切り分ける
+- proxy を通さない直結構成(`VITE_EDITOR_WS_BASE_URL`)は保護対象外。localhost 直結なら proxy 経由に戻す
+
+:::caution[「シークレットで直る」= 拡張が原因、ではない]
+シークレットウィンドウは**拡張の無効化と Cookie の空**を同時に変える。
+片方だけの証拠にはならないので、両方を候補に残して DevTools の実観測で確定させる。
+なお uvicorn の WS ステータスで層を切り分けられる:
+**400 = ハンドシェイク不正(アプリ到達前)/ 403 = ルート不一致 / accept 後のクローズコード(4004 等)= アプリ層**。
+:::
+
+## デバイス(CUDA / MPS)
+
+### 意図しないデバイスで学習が走る
+
+**症状** — CPU で回したいのに MPS が使われる、あるいはその逆。
+
+**原因** — デバイスは **`cuda` → `mps` → `cpu` の順で自動検出**される。
+
+**対処** — CLI / 実験スクリプトはデバイス指定を受け取るので明示する。
+
+```bash
+uv run griffith train configs/recipes/dlgn_mnist_quick.yaml run.device=cpu
+```
+
+### MPS なのに CUDA 機より桁違いに遅い
+
+**症状** — Apple Silicon で大きめの構成を回すと極端に遅い。
+
+**原因** — **MPS では CUDA カーネルが使われず Python 実装で動く**。
+また fan-in を上げると基底数が $2^N$ で増える(N=2 は 4 基底、N=6 は 64 基底で約 16 倍)ため、
+**N=6 の構成はローカル MPS では非現実的**である。
+
+**対処** — ローカル MPS は 1 万ゲート級のスモークに留め、規模を出すなら
+[クラウド GPU](/guides/cloud-gpu/) を使う。MPS で回すなら fan-in を 2 に落とす。
+
+### MPS で処理がハングして戻ってこない
+
+**症状** — 変換・回復(recover)まわりの処理が MPS 上で停止する。
+
+**原因** — **既知の未解決問題**として記録されている(優先度 P2)。
+
+**対処** — その処理だけ **CPU にフォールバックする**のが現状の回避策。
+
+### MPS で乱数シードを指定しても再現しない
+
+**症状** — Mac(MPS)でシードを固定したのに生成結果が一致しない。
+
+**原因** — `torch.Generator(device='mps')` は使えないため、シード付き生成では
+**generator だけ CPU 側に置く**実装になっている。デバイス間で乱数列が一致しないのは仕様。
+
+**対処** — 厳密な再現比較は**同一デバイスで**行う。CPU と MPS / CUDA の結果をビット単位で
+突き合わせることはできない。回路としての一致を見たいなら hard eval と IR simulate を比べる。
+
+## デプロイ
+
+デプロイキット(バンドル → C / CUDA / Metal / Web、ESP32、iPhone)で踏みやすい詰まり。
+機種ごとの詳しい表は各ページにあるので、ここでは症状から入口を引けるようにする。
+
+### ``region `dram0_0_seg' overflowed by ... bytes`` — ESP32 のビルドが DRAM 超過で止まる
+
+**症状** — `idf.py build` が最後のリンクで ``ld: region `dram0_0_seg' overflowed by N bytes`` を出して失敗する。
+
+**原因** — 作業領域 `MDL_CTX_BYTES`(`model.h` のマクロ)と入力の展開バッファが、無印 ESP32 の静的 DRAM(180,736 B)に収まらない。
+顔検出(畳み込み 128px)は `MDL_CTX_BYTES` だけで 1,544,000 B あり、PSRAM なしの ESP32 には載らない。
+行動認識・MNIST は載るが、`--dense-flat`(既定の `auto`)で平坦化すると信号表のぶん `MDL_CTX_BYTES` が増える。
+
+**対処** — まず `-DMDL_NO_DEFAULT_CTX` が効いているか(同じ領域を二重に確保していないか)を確かめる。
+平坦化で溢れたなら `gen_model.py --dense-flat off` で作り直す。それでも足りなければ小さいモデルにする。
+詳しくは [ESP32 に載せる](/guides/deploy-esp32/#顔検出が載らない理由) と同ページのトラブルシューティング表を参照。
+
+### `C ⇔ simulate が一致しない` — 生成 C のスコアが `ir/simulate.py` と食い違う
+
+**症状** — `griffith deploy verify-c` が `C ⇔ simulate が一致しない(サンプル..、経路=..)` で失敗する。
+実機やシミュレータの `SAMPLE` 行・`score_hash` がホストと違う。
+
+**原因** — 生成物の取り違えが大半である。別バンドルの `model/` と `samples.h` の混在、古い生成物の再利用、
+`--dense-flat` の有無をホストと実機でそろえていない、など。回路そのものの食い違いは、`verify-c` が整数厳密一致で検出する。
+
+**対処** — 同じバンドル・同じ `--dense-flat` で生成し直す。`verify-c` の `-n` を増やして再現するかを見る。
+デバイス側の結果とホストの `SAMPLE` 行(`pred` / `exp` / `h`)を突き合わせる手順は [ESP32 に載せる](/guides/deploy-esp32/#3-ログを取る) と
+[デプロイキット クイックスタート](/guides/deploy-quickstart/) にある。
+
+### `runtime/web/dist` が無い — `codegen-web` が失敗する
+
+**症状** — `griffith deploy codegen-web` が ``runtime/web/dist が無い。先に `make web-runtime` `` で止まる。
+
+**原因** — Web ランタイム(TypeScript 製)のビルド済み成果物 `runtime/web/dist` が無い。リポジトリを clone しただけでは生成されていない。
+
+**対処** — リポジトリ直下で `make web-runtime` を実行してから、`codegen-web` をやり直す(Node.js が要る)。
+手順は [Web(ブラウザ)に載せる](/guides/deploy-web/) を参照。
+
+### `dense-flat(off): 不採用` — CUDA / Metal では既定で平坦化されない
+
+**症状** — 同じバンドルでも、`codegen-c` / `codegen-web` では `dense-flat(auto): 採用` と出て平坦化されるのに、
+`codegen-cuda` / `codegen-metal` / `verify-metal` では `dense-flat(off): 不採用 — off 指定(従来経路)` と出て平坦化されない。
+
+**原因** — 平坦ネットリスト `lut_flat` は C / CUDA / Metal / Web のすべてで実行できるが、**既定がターゲットで違う**。
+C(`codegen-c` / `verify-c`)は削減率 25% 以上なら、Web(`codegen-web` / `verify-web`)は 2 入力 `lut_layer` の列があれば常に、既定(`auto`)で平坦化する。
+CUDA / Metal は既定が `off`(opt-in)である。Metal の実測で、大きいモデルを batch 128 以上で流すと平坦化で 0.47〜0.71 倍に遅くなったためである。
+
+**対処** — GPU で平坦化を試すなら `--dense-flat auto`(削減率 25% 以上で採用)か `--dense-flat on` を付け、既定(off)と速度を比べてから選ぶ。
+`bundle --dense-flat` で焼き込んだバンドルは、どのターゲットでもそのまま平坦ネットリストとして実行される。
+条件と実測は [GPU(CUDA / Metal)で動かす](/guides/deploy-gpu/) と [圧縮と最適化の一覧](/reference/deploy-optimizations/) にある。
+
+### `duplicate symbol` — iPhone アプリに複数のモデルを入れるとリンクで失敗する
+
+**症状** — Xcode のリンク時に、`mdl_infer_ctx` などの `duplicate symbol` が出る。
+
+**原因** — 複数モデルの `model.c` を、そのまま同じアプリに直接リンクしている。どのモデルも同じ名前のシンボルを公開する。
+
+**対処** — `examples/31_deploy_ios/gen_model.py` でモデルを取り込み直す。モデルごとに `<name>_unit.c`(unity ラッパ + `#define` によるシンボル名置換)が作られ、
+別々の翻訳単位として衝突なしにリンクされる。署名・`Untrusted Developer` など他の症状は [iPhone に載せる](/guides/deploy-ios/#トラブルシューティング) の表を参照。
+
+### `implicit declaration of function 'clock_gettime'` — Linux で `-std=c99` のホスト版がビルドできない
+
+**症状** — ESP32 デモの `main.c` を `cc -std=c99 -O2 -DHOST_BUILD ...` でホストビルドすると、Linux(glibc)で
+`clock_gettime` や `CLOCK_MONOTONIC` が未宣言というエラーになる。
+
+**原因** — `-std=c99` では glibc が POSIX の関数・定数を隠す。macOS では起きない。
+
+**対処** — 現在の `examples/30_deploy_esp32/main/main.c` は、ホストビルド時に `_POSIX_C_SOURCE 199309L` を自分で定義するので、この問題は起きない。
+古い `main.c` を使っているか、自作のドライバで同じエラーが出たら、`#include` の前に `#define _POSIX_C_SOURCE 199309L` を足すか、`-D_POSIX_C_SOURCE=199309L` を渡す。
+
+### `idf.py: command not found` / `Cannot import module "click"` — ESP-IDF の環境が有効でない
+
+**症状** — `idf.py` が見つからない。あるいは `idf.py` が `Cannot import module "click"` で落ちる。
+
+**原因** — そのシェルで ESP-IDF の環境を有効にしていない(`export.sh` はシェルごとに必要)。`click` のエラーは、`python3` が IDF 用の venv と別バージョンのときに出る。
+
+**対処** — `. ~/esp/esp-idf/export.sh` を実行してから `idf.py` を使う。`click` のエラーは、IDF の venv の `bin` を `PATH` の先頭に置いてから `export.sh` を実行する
+(詳しくは `examples/30_deploy_esp32/README.md` のトラブルシュート表)。
+
+### `Permission denied: '/dev/ttyUSB0'` / `Failed to connect` — シリアルポートに書き込めない
+
+**症状** — `idf.py flash` や `scripts/esp32_capture.py` が、ポートを開けない、または ESP32 に接続できない。
+
+**原因** — Linux では、ユーザーがシリアルポートの所有グループ(多くは `dialout`)に入っていない。
+他のプロセス(`idf.py monitor` など)がポートを掴んでいる、ポート名が違う、データ線のない充電専用ケーブル、のいずれかも多い。
+
+**対処** — Linux なら `sudo usermod -aG dialout $USER` を実行して、ログインし直す。
+ポート名は macOS が `/dev/cu.usbserial-*`、Linux が `/dev/ttyUSB0` などである。他のプロセスがポートを掴んでいないかと、ケーブルを確かめる。
+ボードによっては BOOT ボタンを押しながら書き込みを始める。残りは [ESP32 に載せる](/guides/deploy-esp32/#トラブルシューティング) の表にある。
+
+## それでも解決しないとき
+
+<CardGrid>
+  <LinkCard title="学習曲線の見方" href="/guides/training-curves/" description="soft と hard の差から、離散化ギャップ・過学習・崩壊を切り分ける。" />
+  <LinkCard title="パラメータ化を選ぶ" href="/guides/parameterization/" description="N=2 は softmax、N≥4 は independent。表現力の欠落は学習量では埋まらない。" />
+  <LinkCard title="学習を回す" href="/guides/training/" description="学習率・τ・ゲート数・層数の相場表と、規模ごとの所要時間。" />
+  <LinkCard title="よくある質問" href="/explanation/faq/" description="GPU 不要の意味、difflogic との違い、向くタスク・向かないタスク。" />
+</CardGrid>

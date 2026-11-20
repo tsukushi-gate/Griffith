@@ -1,0 +1,265 @@
+---
+title: 'Run on GPU (CUDA / Metal)'
+description: 'How to generate CUDA / Metal sources from a bundle and call them from host code. The automatic optimization selection (decision table), the cases where a GPU is slower at batch=1, integer-match verification with verify-metal, and how to verify CUDA on an NVIDIA machine.'
+---
+
+The deploy kit also generates **CUDA (NVIDIA GPU)** and **Metal (Apple GPU)** sources from the same bundle.
+This page covers how to use the generation commands, how to call the result from host code, how optimizations are
+**selected automatically**, and how to verify before shipping. Up to making the bundle, it is the same as the
+[Quickstart](/en/guides/deploy-quickstart/).
+
+:::tip[Know this first]
+**At batch=1, a GPU is not necessarily faster than C.** Feeding a small model one sample at a time is dominated by GPU launch overhead.
+A GPU pays off when you push a lot through at once (large batch). If speed is the goal, measure on your own model first.
+:::
+
+## Generation commands
+
+```bash
+uv run griffith deploy codegen-cuda  model.bundle.json -o out_cuda  --batch 256
+uv run griffith deploy codegen-metal model.bundle.json -o out_metal --batch 256
+```
+
+The two take almost the same flags (all of them are in the [griffith CLI](/en/reference/cli/#griffith-deploy)). The commonly used ones:
+
+| Flag | Meaning |
+|---|---|
+| `-o, --output DIR` | Output directory (required) |
+| `--batch N` | The **maximum** number of samples in flight (default 1). The number you run at call time can be anything from 1 to N. Device memory scales with this |
+| `--no-auto` | Turn off automatic optimization selection (below) |
+| `--dense-flat auto\|on\|off` | Whether to generate dense as a flattened netlist (`lut_flat`) (default `off` = do not flatten; `auto` = flatten when the reduction is 25% or more; see "Flattening (opt-in)" below) |
+| `--dense-fuse` / `--dense-packed` | **Explicitly** enable a dense-model optimization (no flattening when given) |
+| `--conv-engine split\|combined` | Explicitly choose how conv2d is executed |
+| `--n-streams N` | Stream pipelining (opt-in, below) |
+| `--conv-codegen` | Per-conv2d model-specialized kernels (opt-in, below) |
+| `--no-runtime` | Do not copy the runtime |
+
+### What gets generated
+
+Here is the real output for the XOR bundle (1,954 B). File sizes vary with the bundle and the version.
+
+```
+$ griffith deploy codegen-metal x.bundle.json -o xm
+dense-flat(off): 不採用 — off 指定(従来経路)
+md deploy codegen-metal: auto-config conv_engine='split' dense_fuse=False dense_packed=False
+  xm/model_metal.mm (69,808B)
+  xm/mdl_metal.h (ランタイム)
+  xm/mdl_metal.mm (ランタイム)
+ビルド例: clang++ -std=c++17 -O2 -fobjc-arc -I. -framework Metal -framework Foundation model_metal.mm mdl_metal.mm your_main.mm -o app
+  (シェーダは実行時にコンパイルするので metal ツールチェーン不要)
+
+$ griffith deploy codegen-cuda x.bundle.json -o xc --batch 256
+dense-flat(off): 不採用 — off 指定(従来経路)
+griffith deploy codegen-cuda: auto-config conv_engine='split' dense_fuse=True dense_packed=False
+  xc/model_cuda.cu (5,885B)
+  xc/mdl_cuda.h (ランタイム)
+  xc/mdl_cuda.cu (ランタイム)
+  xc/mdl_gpu_kernels.h (ランタイム)
+ビルド例: nvcc -O2 -arch=sm_89 -I. model_cuda.cu mdl_cuda.cu your_main.cu -o app
+```
+
+(The command's own messages are printed in Japanese; `ランタイム` means "runtime".)
+
+| Target | Generated files | What the build needs |
+|---|---|---|
+| Metal | `model_metal.mm` (model + shaders), `mdl_metal.h` / `mdl_metal.mm` (runtime) | `clang++` on macOS (the Xcode metal toolchain is **not** needed; shaders are compiled from source at run time) |
+| CUDA | `model_cuda.cu` (model), `mdl_cuda.h` / `mdl_cuda.cu` / `mdl_gpu_kernels.h` (runtime) | `nvcc`. Set `-arch` to your GPU's compute capability (`sm_89` is an example) |
+
+The kernel math is shared between CUDA and Metal (`runtime/gpu/mdl_gpu_kernels.h`);
+only the address-space differences are absorbed by macros.
+
+## Calling it from host code
+
+The generated `model_metal.mm` / `model_cuda.cu` exposes these C functions to the host (`extern "C"`).
+Internal initialization (allocating the device and buffers; compiling shaders on Metal) runs on the first inference call, so you do not call `init` yourself.
+
+| | Metal | CUDA |
+|---|---|---|
+| Inference (up to N samples at once) | `mdl_metal_infer_batch(bits, scores, n)` | `mdl_cuda_infer_batch(bits, scores, n)` |
+| One sample | `mdl_metal_infer(bits, scores)` | `mdl_cuda_infer(bits, scores)` |
+| Input width / output width / max batch | `mdl_metal_input_width()` / `_output_width()` / `_max_batch()` | `mdl_cuda_input_width()` / `_output_width()` / `_max_batch()` |
+| Image models (preprocessing included) | `mdl_metal_infer_image_batch(image, scores, n)` | `mdl_cuda_infer_image_batch(image, scores, n)` |
+| Cleanup | `mdl_model_shutdown()` | `mdl_cuda_shutdown()` |
+
+The arguments have the same shape for both.
+
+- `bits` is a host `unsigned char` array of `n x input_width` values, each 0 or 1 (samples laid out back to back)
+- `scores` is a host `int` array of `n x output_width` values (for classification, one score per class; the largest is the prediction)
+- The return value is `0` on success, and `-1` if `n` exceeds the maximum you set with `--batch`
+
+Here is the minimal driver I actually ran (it pushes the 4 XOR patterns **in a single call**; generated with `--batch 4`).
+
+```cpp
+// main.mm — the Metal version. For CUDA, rename the functions to mdl_cuda_* and build as .cu
+#include <stdio.h>
+extern "C" {
+int mdl_metal_infer_batch(const unsigned char *input_bits, int *scores, int n);
+void mdl_model_shutdown(void);
+}
+int main(void) {
+  unsigned char bits[4 * 2] = {0,0, 0,1, 1,0, 1,1};
+  int scores[4 * 2];
+  if (mdl_metal_infer_batch(bits, scores, 4) != 0) return 1;
+  for (int i = 0; i < 4; i++)
+    printf("xor(%d,%d) scores=%d,%d\n", bits[2*i], bits[2*i+1], scores[2*i], scores[2*i+1]);
+  mdl_model_shutdown();
+  return 0;
+}
+```
+
+```
+$ clang++ -std=c++17 -O2 -fobjc-arc -I. -framework Metal -framework Foundation \
+    model_metal.mm mdl_metal.mm main.mm -o app && ./app
+xor(0,0) scores=8,1
+xor(0,1) scores=0,8
+xor(1,0) scores=0,8
+xor(1,1) scores=8,1
+```
+
+The scores are the same as in the C version of the XOR example (see the [Quickstart](/en/guides/deploy-quickstart/)).
+
+:::note[Calling from CUDA]
+Build the CUDA version as a `.cu` file with `nvcc` (the header uses `cuda_runtime.h`). The public functions have the shapes in the table above;
+a real call site is in the driver inside `scripts/verify_cuda_remote.py`.
+:::
+
+## Optimizations are chosen automatically
+
+Whether a GPU optimization helps **depends on the model's shape and the batch size**. The same optimization can make some models slower.
+So `codegen-cuda` / `codegen-metal` **turn an optimization on automatically only under conditions where it is measured to win** (the default).
+The result and its reasons are left in two places: one line on standard output at generation time, and a `/* auto-config ... */` comment at the top of the generated source.
+
+The `auto-config ...` line in the output above is exactly that. For the XOR above, CUDA at `--batch 256` picks `dense_fuse=True` automatically (batch is 32 or more and there is a chain of dense layers that can be fused).
+If you flatten it with `--dense-flat auto` (22 → 3 gates), the same `--batch 256` gets `dense_fuse=False` (no `lut_layer` chain is left to fuse).
+For Metal at `--batch 1`, `dense_fuse=False`, and the reason (batch is below 32) is written in the comment at the top of the source.
+
+### Decision table
+
+| Optimization | Default | Turned on automatically when | Basis |
+|---|---|---|---|
+| **conv_engine** `split` to `combined` | `split` | If any conv2d node has `max_slots_per_oc` above 8, the whole model switches to `combined` | On a 1.6M-gate detection model, generating with `split` fails with 9 > 8; `combined` works |
+| **dense_fuse** | OFF | When not flattened (the default `--dense-flat off`, or a reduction under 25% with `auto`), `batch >= 32` **and** a fusable chain exists (consecutive dense layers plus a final group_sum fit in shared memory) | On 4 models on Apple M3: 1.11-1.34x at batch=1, 1.20-2.01x at batch 32 and above, stably faster. On CUDA, 1.57-1.58x at batch 128 |
+| **dense_packed** | OFF | When not flattened, `dense_fuse` is not turned on automatically, the model is eligible (non-image input, main path is only dense and group_sum), **and** `batch >= 128` | At batch=32 several models get slower on both CUDA and Metal (0.878-0.891x on CUDA, 0.887x on Metal). At 128 the slowdown mostly disappears |
+| **decode megakernel** (RDDLGN generation) | **ON** | Always on when the model fits. If it does not fit, it falls back to the older path automatically | Every measurement was positive (Metal 1.61-2.10x, CUDA 1.71-2.34x) with no slowdown case, so it is on by default with no batch condition |
+| **n_streams** | OFF (opt-in) | **Never turned on automatically** | 0.66x slowdown on some Metal models. On CUDA, 0.878x at batch=1 and at most 1.058x |
+| **conv_codegen** | OFF (opt-in) | **Never turned on automatically** | End-to-end speed barely changes (1.00-1.04x) while the generated code grows 1.78-6.65x |
+
+The numbers come from `docs/guides/deploy-optimization.md` in the repository and the measurement files it lists (under `results/deploy/`).
+
+`dense_fuse` and `dense_packed` cannot be combined. When both conditions hold, `dense_fuse` wins because it came out ahead in the measurements
+(on 4 HAR-style models at batch=256 on Apple M3, `dense_fuse` was ahead on all four).
+For models where `dense_fuse` cannot be used (for example a layer width over the shared-memory limit), `dense_packed` is the fallback.
+
+### When picking a GPU at batch=1 makes things slower
+
+- **dense_fuse is not turned on automatically at batch=1.** In the Metal measurement (`har_dlgn_k6000_gumbel`, Apple M3), batch=1 was 0.81x, a **slowdown**; batch=32 was 1.91x and batch=128 was 2.51x (from the `--dense-fuse` help text).
+- **dense_packed cannot amortize its cost at small batch.** Packing 32 samples into one word does not pay back when there are few samples, and some models get slower even at batch=32.
+- **n_streams is 0.878x on CUDA at batch=1.** The duplicated buffers for pipelining weigh on a small model.
+
+In short, **if you want low latency one sample at a time, measure C (CPU) first.** Choose a GPU for pushing batches through.
+
+### Overriding the automatic selection
+
+```bash
+# Default (automatic ON): optimizations are applied when the measured conditions hold
+griffith deploy codegen-cuda model.bundle.json -o out --batch 256
+
+# Back to the old behavior (no automatic selection: conv_engine=split, dense_fuse / dense_packed OFF)
+griffith deploy codegen-cuda model.bundle.json -o out --batch 256 --no-auto
+
+# Set things explicitly (an explicit value always beats the automatic decision)
+griffith deploy codegen-cuda  model.bundle.json -o out --batch 256 --dense-fuse
+griffith deploy codegen-metal model.bundle.json -o out --conv-engine combined
+```
+
+- **`--no-auto`**: do not use the decision table. Anything you did not set explicitly keeps the value from before automatic selection existed (`conv_engine=split`, `dense_fuse` / `dense_packed` OFF). Use it when you want the **generated output pinned** (comparison experiments, reproducibility).
+- **An explicit setting always wins**: with `--dense-fuse`, it is on even if the batch does not meet the condition. Without it, the automatic selection decides. To **turn `dense_fuse` off**, use `--no-auto`.
+- **`--n-streams` and `--conv-codegen` are never turned on automatically.** As the table says, the conditions where they help could not be pinned down (or they are not worth it). Measure first, then add them yourself.
+
+## Relation to circuit compression
+
+Now, `griffith deploy bundle` automatically applies a **lossless sweep** that reduces the gate count of dense models (default `--compress fast`).
+This is **baked into the bundle**, so it helps every target: CUDA, Metal, C, and Web (the XOR above goes from 32 to 22 gates).
+
+### Flattening (`--dense-flat`, opt-in)
+
+`--dense-flat` (`lut_flat`, a flattened netlist with pass-throughs, constants and duplicates folded away) **also runs** on CUDA / Metal.
+The GPU side reorders the gates into levels (by dependency depth) at generation time and evaluates the gates of a level in parallel.
+If the signal table fits in shared memory (Metal 32KB / CUDA 48KB), it becomes a single launch with one sample per threadgroup (`fused`).
+
+However, the default of `codegen-cuda` / `codegen-metal` / `verify-metal` is **`--dense-flat off` (no flattening)**: unlike C and Web, they do not flatten automatically,
+because there are conditions under which flattening makes the GPU slower (see the caution below). To use it, pass `--dense-flat auto` (try flattening right before generation and adopt it if the effective gate reduction is 25% or more)
+or `--dense-flat on` (always adopt it). Neither changes the bundle.
+If you pass `--dense-fuse` / `--dense-packed` explicitly, they do not flatten, because those assume a `lut_layer` chain.
+A bundle with `lut_flat` baked in by `bundle --dense-flat` runs as a flattened netlist on the GPU too, regardless of this default.
+
+:::caution[When flattening makes the GPU slower]
+On Metal on an Apple M3, measuring HAR k600 / k2400 / k6000 at batch 32-4096, the gates roughly halve, yet against the best without flattening
+(`dense_fuse` / `dense_packed`) it reached 1.02-1.10x on k600, 0.85-1.15x on k2400 and 0.47-0.71x on k6000 at batch 128 and above (1.02x at batch 32)
+(on the GPU, the fixed cost of launches and transfers dominates over the gate count).
+In other words, **a large model (tens of thousands of gates) run at batch 128 or more can drop to about half the speed when flattened**. Small models or batches around 32 are about the same or slightly faster.
+Flattening means the automatically selected `dense_fuse` / `dense_packed` are no longer used, so when you try it,
+compare the default (off) against `--dense-flat auto` with `scripts/bench_dense_gpu.py` before choosing. The CUDA `lut_flat` path has not been run or measured on real NVIDIA hardware (only a syntax check of the generated code; to check it, use `scripts/verify_cuda_remote.py --dense-flat on`).
+The figures of how levels are formed and of the measurements are in "Flattening on the GPU" of [Compression and Optimizations](/en/reference/deploy-optimizations/).
+:::
+
+## Verifying before you ship
+
+For every target, the reference is the integer output of `ir/simulate.py` (a plain numpy implementation). Ship only after confirming that the generated code does not differ by a **single bit**.
+
+### Metal: `verify-metal`
+
+It needs macOS, an Apple GPU, and `clang++`. It builds the generated Metal, runs it, and compares against `simulate`.
+This is the result on an Apple M3 Mac for the XOR bundle (it took about 4.7 seconds, most of it `uv` and build startup).
+
+```
+$ uv run griffith deploy verify-metal x.bundle.json --dense-flat auto
+Metal等価性検証: x.bundle.json(サンプル3件、conv_codegen=False, dense_fuse=False)
+  dense-flat(auto): 採用 — 実効ゲート 22 → 3(削減率 86.4%)。削減率が閾値以上(86.4% >= 25%)
+md deploy codegen-metal: auto-config conv_engine='split' dense_fuse=False dense_packed=False
+  サンプル1/3: 一致(2要素)
+  サンプル2/3: 一致(2要素)
+  サンプル3/3: 一致(2要素)
+一致: 経路=bits + dense-flat(lut_flat) 出力2要素 × 3サンプル(整数厳密、ゴールデンは元バンドルIRのsimulate)
+```
+
+(`一致` means "match"; `サンプル` means "sample".) Here `--dense-flat auto` is passed to check the flattened path (with the default off, it does not flatten and verifies the same conventional path as the `codegen-metal` default).
+Change the sample count with `-n` and the random seed with `--seed`. Adding `--dense-fuse` / `--conv-codegen` verifies those generation options.
+If the final `一致` line appears, it passed; on a mismatch it stops with an exception.
+
+:::note[About larger models]
+Only XOR was run here. The MNIST image model needs a data download to train, so it was not run when this page was written.
+For real models, confirm integer match with `verify-metal`, then measure your own model and batch with `scripts/bench_deploy.py`.
+:::
+
+### CUDA: verify on a remote NVIDIA machine
+
+`codegen-cuda` only generates code; there is no subcommand equivalent to `verify-cuda`. For when you have no NVIDIA GPU locally,
+`scripts/verify_cuda_remote.py` **builds and runs on a GPU machine over ssh and compares against `simulate`**.
+
+```bash
+uv run python scripts/verify_cuda_remote.py \
+    --host user@gpu-host \
+    --models har_dlgn_k600_gumbel --arch sm_89
+```
+
+The script generates the bundle and CUDA source from the model, rsyncs it together with the runtime, builds with `nvcc` remotely,
+runs on random inputs (both the bit-vector and raw-image paths), and compares against `simulate` **as exact integers**.
+
+- It needs **a machine with an NVIDIA GPU and `nvcc` that you can ssh into**. It cannot be run on a Mac without one.
+- Pass `--models` names from `tools/webbench/public/models/`. Set `--arch` to your GPU's compute capability (default `sm_89`).
+- Add `--bench` to also measure performance. `--batch` sets the maximum number of samples at generation time.
+- Add `--dense-flat on` (or `auto`) to verify the flattened CUDA path (`lut_flat`). The default is `off`, the same as `codegen-cuda`.
+- The stream version (`--n-streams`) is verified by `scripts/verify_cuda_stream_remote.py`.
+
+The verified GPUs and CUDA versions are in [Platform support](/en/reference/platform-support/#gpu-cuda).
+
+## What to read next
+
+- [Deploy Kit Quickstart](/en/guides/deploy-quickstart/) — making a bundle and reaching a C executable
+- [Deploy your own model](/en/guides/deploy-your-model/) — from a trained model to Python / C / GPU
+- [griffith CLI](/en/reference/cli/#griffith-deploy) — every `griffith deploy` subcommand and flag
+- [Platform support](/en/reference/platform-support/) — how far each target is verified
+- [Bundle specification](/en/reference/deploy-bundle/) — the bundle format and `about.compress`
+
+{/* i18n:source=guides/deploy-gpu.mdx hash=042b3cb3b436 */}

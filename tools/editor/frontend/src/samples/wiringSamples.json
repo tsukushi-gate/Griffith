@@ -1,0 +1,53 @@
+{
+  "adder2_rot16": {
+    "dataset": "logic:adder2",
+    "in_width": 4,
+    "out_width": 3,
+    "input_encoding": "bits: a0,a1,b0,b1",
+    "output_semantics": "bits: s0,s1,carry",
+    "recipe": null,
+    "layers": [
+      { "out_width": 16, "n_inputs": 2, "connections": "rot", "wiring": { "s_a": 0, "s_b": 2 } },
+      { "out_width": 16, "n_inputs": 2, "connections": "rot", "wiring": { "s_a": 0, "s_b": 1 } },
+      { "out_width": 16, "n_inputs": 2, "connections": "rot", "wiring": { "s_a": 0, "s_b": 2 } },
+      { "out_width": 16, "n_inputs": 2, "connections": "rot", "wiring": { "s_a": 0, "s_b": 4 } },
+      { "out_width": 16, "n_inputs": 2, "connections": "rot", "wiring": { "s_a": 0, "s_b": 8 } },
+      { "out_width": 3, "n_inputs": 2, "connections": "rot", "wiring": { "s_a": 0, "s_b": 8, "step": 5 } }
+    ],
+    "group_sum": null
+  },
+  "mnist_rot1000": {
+    "dataset": "mnist",
+    "in_width": 784,
+    "out_width": 10,
+    "input_encoding": "binary_threshold_0.5",
+    "output_semantics": "class_scores",
+    "recipe": "configs/recipes/fmc_w1000_rot.yaml",
+    "layers": [
+      { "out_width": 1000, "n_inputs": 2, "connections": "rot", "wiring": { "s_a": 1, "s_b": 28 } },
+      { "out_width": 1000, "n_inputs": 2, "connections": "rot", "wiring": { "s_a": 0, "s_b": 6 } },
+      { "out_width": 1000, "n_inputs": 2, "connections": "rot", "wiring": { "s_a": 0, "s_b": 30 } },
+      { "out_width": 1000, "n_inputs": 2, "connections": "rot", "wiring": { "s_a": 0, "s_b": 150 } },
+      { "out_width": 1000, "n_inputs": 2, "connections": "rot", "wiring": { "s_a": 0, "s_b": 750 } },
+      { "out_width": 1000, "n_inputs": 2, "connections": "rot", "wiring": { "s_a": 0, "s_b": 500 } }
+    ],
+    "group_sum": { "k": 10, "tau": 3.75 }
+  },
+  "mnist_bf4_1000": {
+    "dataset": "mnist",
+    "in_width": 784,
+    "out_width": 10,
+    "input_encoding": "binary_threshold_0.5",
+    "output_semantics": "class_scores",
+    "recipe": "configs/recipes/fmc_w1000_bf4.yaml",
+    "layers": [
+      { "out_width": 1000, "n_inputs": 4, "connections": "rot_n", "wiring": { "shifts": [0, 1, 2, 3], "step": 4 } },
+      { "out_width": 1000, "n_inputs": 4, "connections": "butterfly", "wiring": { "stride": 1 } },
+      { "out_width": 1000, "n_inputs": 4, "connections": "butterfly", "wiring": { "stride": 4 } },
+      { "out_width": 1000, "n_inputs": 4, "connections": "butterfly", "wiring": { "stride": 16 } },
+      { "out_width": 1000, "n_inputs": 4, "connections": "butterfly", "wiring": { "stride": 64 } },
+      { "out_width": 1000, "n_inputs": 4, "connections": "butterfly", "wiring": { "stride": 256 } }
+    ],
+    "group_sum": { "k": 10, "tau": 3.75 }
+  }
+}

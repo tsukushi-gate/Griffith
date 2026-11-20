@@ -1,0 +1,28 @@
+# IWP-1: OP(Original Parametrization = 16ゲートsoftmax)アーム / MNIST k=8000×4層。
+# 対になるIWPアーム: iwp1_mnist_8k_iwp.yaml
+#   → 両者で異なるのは model.parameterization / estimator / residual_init のみ。
+#     lr・batch_size・epochs・k・layers・n_inputs・tau・seed は完全に一致させること。
+# 実行: uv run python experiments/bench_iwp.py --task mnist8k --arm both --seeds 0 1 2
+# seedはランチャ側で3本(0/1/2)振る前提。ここには既定値を1つだけ書く。
+data:
+  name: mnist
+  batch_size: 128
+model:
+  kind: dlgn
+  k: 8000
+  layers: 4
+  n_inputs: 2
+  parameterization: softmax  # OP: 16ゲートのsoftmax加重(difflogic方式)
+  tau: 10.0
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 8
+  eval_interval: 234  # 468 step/epoch の約1/2。k=8000は評価コストが高いので粗め
+  seed: 0
+  wandb: false  # 有効化するには wandb: true と WANDB_API_KEY を設定
+# 期待メトリクス: k=2000×3層(dlgn_mnist_quick.yaml)の実績閾値 0.90 を下限として流用。
+# k=8000×4層の実測値がまだ無いため、容量が大きいことを理由に閾値を上げることはしない。
+expected_metrics:
+  hard_acc_min: 0.90

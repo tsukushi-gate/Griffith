@@ -1,0 +1,124 @@
+---
+title: 'HDLエクスポートと等価性検証'
+description: '学習済みモデルを IR 経由で Verilog/VHDL に落とし、iverilog / ghdl で「元のモデルと完全に同じ回路であること」を確かめる手順。'
+---
+
+学習が終わったモデルを **Verilog / VHDL** に落とし、それが元のモデルと **ビット単位で完全に同じ** で
+あることを確かめるまでの手順をまとめる。背景(なぜ IR を経由するのか)は
+[アーキテクチャ全体像](/explanation/architecture/) を参照。
+
+## 3段等価性 — 何を保証するのか
+
+生成した HDL が「たぶん合っている」では焼く価値がない。本ライブラリは同じ回路を
+**3 つの独立した経路** で実行し、全ベクトルで一致することを検証する。
+
+```
+PyTorch hard eval  ⇔  ir/simulate.py(numpy golden)  ⇔  HDL シミュレーション
+```
+
+| 経路 | 実体 | 役割 |
+|---|---|---|
+| PyTorch hard eval | `model.eval()` した torch モデル | 学習側の真実 |
+| simulate | `ir/simulate.py`(numpy でビット厳密) | **golden model**(照合の基準) |
+| HDL シミュレーション | iverilog(Verilog)/ ghdl(VHDL) | 生成物の真実 |
+
+この 3 つが一致して初めて「HDL は元のモデルと等価」と言える。
+
+## まず動かす — examples の 2 本
+
+理屈より先に、自己検証つきの実行可能サンプルを流すのが速い。どちらも 1 分以内に終わり、
+末尾の assert が期待結果を自己検証する。
+
+```bash
+# 全結合 DLGN: 学習 → IR → Verilog → iverilog 照合
+uv run python examples/04_export_hdl.py
+
+# 論理ゲート畳み込み CNN: IR unroll(lowering)→ Verilog/VHDL → 照合
+uv run python examples/05_cnn_export_hdl.py
+```
+
+| サンプル | 内容 | 期待結果 |
+|---|---|---|
+| `examples/04_export_hdl.py` | 学習済みモデル → IR → Verilog + iverilog 照合 | IR 予測 = 正解、照合 ALLPASS |
+| `examples/05_cnn_export_hdl.py` | CNN → IR unroll → Verilog/VHDL + 照合 | simulate 予測一致 100%、照合 ALLPASS |
+
+`05` が示すとおり、畳み込みを含むモデルは **lowering(`conv2d` / `or_pool2d` を `lut_layer` 列へ展開)**
+を通してから HDL 化する。HDL 生成器はネイティブな conv ノードを含む IR を明示的に拒否する。
+
+## シミュレータの導入
+
+### iverilog(Verilog / ローカル導入可)
+
+```bash
+brew install icarus-verilog   # macOS
+sudo apt-get install -y iverilog   # Debian/Ubuntu
+```
+
+`iverilog` と `vvp` の両方が PATH にあれば検証が走る。未導入の環境では
+`hdl` マーカーのテストが **自動 skip** されるため、ローカルが壊れることはない。
+
+### ghdl(VHDL / ローカル導入は非推奨)
+
+:::caution
+**ghdl はローカルではなく CI / クラウド(Modal)コンテナで検証するのが公式運用**。
+macOS の Homebrew Cask 版 ghdl は破損しておりビルドできないことが実測で確認されている。
+ローカル導入を試みず、コンテナ経路を使うこと。
+:::
+
+ghdl 未導入の環境では `hdl_vhdl` マーカーのテストが自動 skip される。
+
+## 実行方法
+
+### テストスイートとして回す
+
+`tests/hdl/` に 2 つのマーカーで定義されている。既定の `addopts` はこれらを除外するため、
+**明示的に指定したときだけ** 実行される。
+
+| マーカー | 対象 | 必要なシミュレータ |
+|---|---|---|
+| `hdl` | Verilog 等価性 | iverilog |
+| `hdl_vhdl` | VHDL 等価性 | ghdl |
+
+```bash
+make hdl                       # = pytest -m "hdl or hdl_vhdl"
+uv run pytest -m hdl -q        # Verilog のみ(iverilog が無ければ skip)
+uv run pytest -m hdl_vhdl -q   # VHDL のみ(ghdl が無ければ skip)
+```
+
+### スクリプトで生成 + 照合する
+
+```bash
+# チェックポイント/IR から Verilog を生成し、golden(simulate)と照合する
+uv run python scripts/export_hdl.py model.json -o out/ --verify
+
+# VHDL も同時に生成して照合(ghdl 導入環境のみ VHDL 側が走る)
+uv run python scripts/export_hdl.py model.json -o out/ --format both --verify
+```
+
+`--verify` は等価性検証(段 7)まで実行する。対応するシミュレータが未導入の場合、その言語の照合だけが
+スキップされ、標準出力にその旨が表示される(エラーにはならない)。
+
+### 統一 CLI で変換だけする
+
+```bash
+uv run griffith export-hdl model.json --lang verilog -o out/model.v
+uv run griffith export-hdl model.json --lang vhdl   -o out/model.vhdl
+```
+
+`griffith export-hdl` は **IR → HDL 変換のみ** を行い、シミュレータ照合はしない。
+照合まで必要なら `scripts/export_hdl.py --verify` を使う。
+
+## つまずきどころ
+
+| 症状 | 原因 | 対処 |
+|---|---|---|
+| HDL 生成が IR を拒否する | `conv2d` / `or_pool2d` などネイティブノードが残っている | lowering(段 5)を先に通す。`examples/05` が実例 |
+| `validate` が警告を出す | HDL では表現できない構成(実数を返すノード等)が混ざっている | 該当層を論理側に寄せるか、その層より前で切って export する |
+| ローカルで VHDL テストが 1 件も走らない | ghdl 未導入 | 想定どおり(自動 skip)。コンテナ経路で検証する |
+| 精度が torch と合わない | soft(学習時)の出力と比較している | 比較対象は必ず `model.eval()` の **hard eval**([DLGN の soft/hard](/explanation/dlgn/)) |
+
+## 次に読む
+
+- [アーキテクチャ全体像](/explanation/architecture/) — 8 段データフローの中での位置づけ
+- [FPGA実機へ焼く](/guides/fpga/) — 生成した HDL を実際のボードで動かす
+- [HDLへエクスポート(チュートリアル)](/tutorials/hdl-export/) — 手を動かしながらの導入

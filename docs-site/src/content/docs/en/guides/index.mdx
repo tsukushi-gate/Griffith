@@ -1,0 +1,65 @@
+---
+title: 'Guides'
+description: 'Task-oriented how-tos covering training, parameterization, IR, HDL export, deployment (C/CUDA/Metal/Web, ESP32, iPhone), FPGA deployment, and the visual editor.'
+sidebar:
+  order: 0
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+**How-tos you look up by what you want to do.** The reasoning behind them lives in [Explanation](/en/explanation/),
+the full argument lists in the [Reference](/en/reference/api/), and runnable examples in the [Tutorials](/en/tutorials/).
+
+## Start here
+
+The learning roadmap decides where to start across the whole site (it also carries the lookup table
+from common architecture names — RNN/CNN/Transformer — to the tutorials here).
+If you are unsure which architecture, parameterization, or learning rule to pick, the selection guide is the fastest route.
+Coming from PyTorch, start from the mapping table and pick up only the differences.
+
+<CardGrid>
+  <LinkCard title="Learning roadmap (where to start)" href="/en/guides/roadmap/" description="Four routes — ML beginner, PyTorch user, FPGA engineer, researcher — plus a lookup table from architecture names to tutorials." />
+  <LinkCard title="What should I use? (selection guide)" href="/en/guides/choosing/" description="Decide all four choices — architecture, parameterization, fan-in N, and learning rule — from your task and constraints, in a single page." />
+  <LinkCard title="Mapping table for PyTorch users" href="/en/guides/from-pytorch/" description="nn.Linear to LutLayer, how model.eval() differs, and other places where PyTorch intuition does not carry over." />
+</CardGrid>
+
+## Train
+
+<CardGrid>
+  <LinkCard title="Run training" href="/en/guides/training/" description="The two paths — the CLI (griffith train) and the Python API (run_training) — plus typical hyperparameter ranges." />
+  <LinkCard title="Reading training curves" href="/en/guides/training-curves/" description="The wandb logging conventions and how to read soft vs. hard accuracy. Spot discretization gaps and collapse from the curves." />
+  <LinkCard title="Choosing a parameterization" href="/en/guides/parameterization/" description="softmax / independent / iwp / raw / warp compared, and why the answer changes between N=2 and N>=4." />
+  <LinkCard title="Cloud GPU" href="/en/guides/cloud-gpu/" description="When to use local CPU / MPS / CUDA, and how to send large training jobs to the cloud." />
+</CardGrid>
+
+## Turn it into a circuit
+
+<CardGrid>
+  <LinkCard title="Working with IR" href="/en/guides/ir/" description="Extract a trained model into IR (JSON), then validate, simulate, and save it." />
+  <LinkCard title="HDL export and equivalence checking" href="/en/guides/hdl-export/" description="Generate Verilog/VHDL and confirm with iverilog / ghdl that it is the same circuit as the original model." />
+</CardGrid>
+
+## Deploy
+
+There are two roads: running a trained model **as software** on devices you already have (the deploy kit), and burning it onto an FPGA **as a circuit**.
+Both start from the same IR and are verified by integer-exact agreement with the same golden model.
+
+<CardGrid>
+  <LinkCard title="Deploy Kit Quickstart" href="/en/guides/deploy-quickstart/" description="Go from an IR to a zero-dependency C executable on XOR, end to end. Plus the branches to CUDA / Metal / Web." />
+  <LinkCard title="Deploy your own model" href="/en/guides/deploy-your-model/" description="Take a trained torch model through IR → bundle → C / Web / GPU. Also: running a bundle from Python, and how CLI and Python API defaults differ." />
+  <LinkCard title="Prepare demo models" href="/en/guides/deploy-models/" description="How to turn the three models MNIST, activity recognition, and face detection from trained artifacts into deploy bundles." />
+  <LinkCard title="Run on ESP32" href="/en/guides/deploy-esp32/" description="Flash a microcontroller with ESP-IDF and check integer matching and latency from the UART log." />
+  <LinkCard title="Run on iPhone" href="/en/guides/deploy-ios/" description="Call the generated C from Xcode / SwiftUI, bundle several models, and build for the simulator and a real device." />
+  <LinkCard title="Run in the browser" href="/en/guides/deploy-web/" description="Run inference from a static page using the codegen-web WASM runtime and loadBundle." />
+  <LinkCard title="Run on GPU (CUDA / Metal)" href="/en/guides/deploy-gpu/" description="codegen-cuda / codegen-metal and the auto-selection table. Why GPUs lose at batch=1, and verify-metal." />
+  <LinkCard title="Deploying to a real FPGA" href="/en/guides/fpga/" description="Getting a Tang Nano 20K / DE0-CV board running: doctor, convert, build, flash." />
+</CardGrid>
+
+## Look and interact
+
+<CardGrid>
+  <LinkCard title="Visualizing circuits and wiring" href="/en/guides/wiring-visualization/" description="Turn a model into a gate-and-wiring diagram with plot_circuit. Large networks switch to an overview rendering automatically." />
+  <LinkCard title="Visual editor" href="/en/guides/editor/" description="Build, train, and evaluate logic-gate neural networks in the browser. All five tabs, walked through with screenshots." />
+</CardGrid>
+
+{/* i18n:source=guides/index.mdx hash=d38716d5d924 */}

@@ -1,0 +1,4326 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EditorApiSchemas",
+  "description": "griffith-logicエディタのWSフレーム/RESTレスポンス契約(tools/editor/backend/schemas.py から自動生成)",
+  "type": "object",
+  "properties": {
+    "ActivationsFrame": {
+      "$ref": "#/$defs/ActivationsFrame"
+    },
+    "ApDeltaFrame": {
+      "$ref": "#/$defs/ApDeltaFrame"
+    },
+    "CapabilityReason": {
+      "$ref": "#/$defs/CapabilityReason"
+    },
+    "CaptureConfigFrame": {
+      "$ref": "#/$defs/CaptureConfigFrame"
+    },
+    "CaptureInfo": {
+      "$ref": "#/$defs/CaptureInfo"
+    },
+    "ConnectionsConfig": {
+      "$ref": "#/$defs/ConnectionsConfig"
+    },
+    "ConvDLGNModelConfig": {
+      "$ref": "#/$defs/ConvDLGNModelConfig"
+    },
+    "ConvertPresetInfo": {
+      "$ref": "#/$defs/ConvertPresetInfo"
+    },
+    "ConvertStartRequest": {
+      "$ref": "#/$defs/ConvertStartRequest"
+    },
+    "ConvertStatus": {
+      "$ref": "#/$defs/ConvertStatus"
+    },
+    "CreateProjectRequest": {
+      "$ref": "#/$defs/CreateProjectRequest"
+    },
+    "DataConfig": {
+      "$ref": "#/$defs/DataConfig"
+    },
+    "DatasetConfigUpdate": {
+      "$ref": "#/$defs/DatasetConfigUpdate"
+    },
+    "DatasetInfo": {
+      "$ref": "#/$defs/DatasetInfo"
+    },
+    "DatasetSampleItem": {
+      "$ref": "#/$defs/DatasetSampleItem"
+    },
+    "DatasetSamplesResponse": {
+      "$ref": "#/$defs/DatasetSamplesResponse"
+    },
+    "DistillConfig": {
+      "$ref": "#/$defs/DistillConfig"
+    },
+    "EncodingPreviewRequest": {
+      "$ref": "#/$defs/EncodingPreviewRequest"
+    },
+    "EncodingPreviewResponse": {
+      "$ref": "#/$defs/EncodingPreviewResponse"
+    },
+    "EvalItem": {
+      "$ref": "#/$defs/EvalItem"
+    },
+    "EvalSource": {
+      "$ref": "#/$defs/EvalSource"
+    },
+    "EvaluateRequest": {
+      "$ref": "#/$defs/EvaluateRequest"
+    },
+    "EvaluateResponse": {
+      "$ref": "#/$defs/EvaluateResponse"
+    },
+    "GateDistributionFrame": {
+      "$ref": "#/$defs/GateDistributionFrame"
+    },
+    "GradFlowFrame": {
+      "$ref": "#/$defs/GradFlowFrame"
+    },
+    "GradFlowLayerTrace": {
+      "$ref": "#/$defs/GradFlowLayerTrace"
+    },
+    "HdlExportResponse": {
+      "$ref": "#/$defs/HdlExportResponse"
+    },
+    "HdlVerifyResponse": {
+      "$ref": "#/$defs/HdlVerifyResponse"
+    },
+    "HierarchyNode": {
+      "$ref": "#/$defs/HierarchyNode"
+    },
+    "HierarchyResponse": {
+      "$ref": "#/$defs/HierarchyResponse"
+    },
+    "HistoryCounts": {
+      "$ref": "#/$defs/HistoryCounts"
+    },
+    "HistoryIndex": {
+      "$ref": "#/$defs/HistoryIndex"
+    },
+    "HistoryIndexFrame": {
+      "$ref": "#/$defs/HistoryIndexFrame"
+    },
+    "HistoryLayerView": {
+      "$ref": "#/$defs/HistoryLayerView"
+    },
+    "HistoryStepView": {
+      "$ref": "#/$defs/HistoryStepView"
+    },
+    "LayerConnectionsConfig": {
+      "$ref": "#/$defs/LayerConnectionsConfig"
+    },
+    "LayerSummaryFrame": {
+      "$ref": "#/$defs/LayerSummaryFrame"
+    },
+    "LoweringView": {
+      "$ref": "#/$defs/LoweringView"
+    },
+    "MetricsFrame": {
+      "$ref": "#/$defs/MetricsFrame"
+    },
+    "ModelConfig": {
+      "$ref": "#/$defs/ModelConfig"
+    },
+    "NasIrResponse": {
+      "$ref": "#/$defs/NasIrResponse"
+    },
+    "NasStartRequest": {
+      "$ref": "#/$defs/NasStartRequest"
+    },
+    "NasStartResponse": {
+      "$ref": "#/$defs/NasStartResponse"
+    },
+    "NasStatusResponse": {
+      "$ref": "#/$defs/NasStatusResponse"
+    },
+    "NasTrialRow": {
+      "$ref": "#/$defs/NasTrialRow"
+    },
+    "NasTrialsResponse": {
+      "$ref": "#/$defs/NasTrialsResponse"
+    },
+    "NodeCapabilities": {
+      "$ref": "#/$defs/NodeCapabilities"
+    },
+    "OptimConfig": {
+      "$ref": "#/$defs/OptimConfig"
+    },
+    "PreflightBlocker": {
+      "$ref": "#/$defs/PreflightBlocker"
+    },
+    "PreflightResponse": {
+      "$ref": "#/$defs/PreflightResponse"
+    },
+    "ProjectSchema": {
+      "$ref": "#/$defs/ProjectSchema"
+    },
+    "PythonModelImportResponse": {
+      "$ref": "#/$defs/PythonModelImportResponse"
+    },
+    "RegConfig": {
+      "$ref": "#/$defs/RegConfig"
+    },
+    "ResourceEstimate": {
+      "$ref": "#/$defs/ResourceEstimate"
+    },
+    "RunConfig": {
+      "$ref": "#/$defs/RunConfig"
+    },
+    "RunSummary": {
+      "$ref": "#/$defs/RunSummary"
+    },
+    "SessionEndFrame": {
+      "$ref": "#/$defs/SessionEndFrame"
+    },
+    "SkippedItem": {
+      "$ref": "#/$defs/SkippedItem"
+    },
+    "StatsResponse": {
+      "$ref": "#/$defs/StatsResponse"
+    },
+    "StepMetrics": {
+      "$ref": "#/$defs/StepMetrics"
+    },
+    "TrainConfig": {
+      "$ref": "#/$defs/TrainConfig"
+    },
+    "TrainStatus": {
+      "$ref": "#/$defs/TrainStatus"
+    },
+    "TransferRequest": {
+      "$ref": "#/$defs/TransferRequest"
+    },
+    "TransferResponse": {
+      "$ref": "#/$defs/TransferResponse"
+    },
+    "U8Envelope": {
+      "$ref": "#/$defs/U8Envelope"
+    },
+    "UncertainGate": {
+      "$ref": "#/$defs/UncertainGate"
+    },
+    "UncertainGatesResponse": {
+      "$ref": "#/$defs/UncertainGatesResponse"
+    },
+    "UpdateProjectRequest": {
+      "$ref": "#/$defs/UpdateProjectRequest"
+    },
+    "VerifyAvailability": {
+      "$ref": "#/$defs/VerifyAvailability"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ActivationsFrame": {
+      "additionalProperties": false,
+      "description": "中間活性フレーム(monitor.build_activations、fullキャプチャ時)。",
+      "properties": {
+        "type": {
+          "const": "activations",
+          "type": "string"
+        },
+        "layer": {
+          "type": "string"
+        },
+        "step": {
+          "type": "integer"
+        },
+        "mean": {
+          "$ref": "#/$defs/U8Envelope"
+        },
+        "saturation": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "type",
+        "layer",
+        "step",
+        "mean",
+        "saturation"
+      ],
+      "type": "object"
+    },
+    "ApDeltaFrame": {
+      "additionalProperties": false,
+      "description": "AP法更新量フレーム(monitor.build_ap_delta)。",
+      "properties": {
+        "type": {
+          "const": "ap_delta",
+          "type": "string"
+        },
+        "layer": {
+          "type": "string"
+        },
+        "step": {
+          "type": "integer"
+        },
+        "delta_norm": {
+          "type": "number"
+        },
+        "delta": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/U8Envelope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "layer",
+        "step",
+        "delta_norm"
+      ],
+      "type": "object"
+    },
+    "CapabilityReason": {
+      "additionalProperties": false,
+      "description": "capabilityの可否とUI表示用理由。",
+      "properties": {
+        "capability": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "capability",
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "CaptureConfigFrame": {
+      "additionalProperties": false,
+      "description": "WS接続直後に送るcapture設定(monitor.build_capture_config)。",
+      "properties": {
+        "type": {
+          "const": "capture_config",
+          "type": "string"
+        },
+        "level": {
+          "type": "string"
+        },
+        "stride": {
+          "type": "integer"
+        },
+        "method": {
+          "type": "string"
+        },
+        "snapshot_bytes": {
+          "type": "integer"
+        },
+        "detail_max_elems": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "type",
+        "level",
+        "stride",
+        "method",
+        "snapshot_bytes",
+        "detail_max_elems"
+      ],
+      "type": "object"
+    },
+    "CaptureInfo": {
+      "additionalProperties": false,
+      "description": "capture level/stride のペア(TrainStatus.capture / HistoryIndex.capture)。",
+      "properties": {
+        "level": {
+          "type": "string"
+        },
+        "stride": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "level",
+        "stride"
+      ],
+      "type": "object"
+    },
+    "ConnectionsConfig": {
+      "additionalProperties": false,
+      "description": "規則配線の設定(先行実験)。文字列 'random' / 'unique' の代わりに指定する。\n\nkind:\n  rot — idx_a[g]=(g+s_a) mod in_dim, idx_b[g]=(g+s_b) mod in_dim。\n         s_a / s_b は**層数と同じ長さ**のリスト(層ごとのずらし量)。\n  perm — 2·out_dim スロットを前層出力が等回数使う均衡全射(層ごとに\n         run.seed から導いた generator で生成)。**s_a / s_b は無視される**\n         (レシピを `model.connections.kind=perm` の1行上書きで\n 置換配線へ切り替えられるようにするため)。\n  random_seeded — 'random' と同じ生成器を run.seed 由来の generator で\n 引く(先行実験)。s_a / s_b は無視される\n  random_uniform — 各スロット独立一様の無制約乱択(先行実験)。同上\n  per_layer — 層ごとに配線種を変える(先行実験)。**layers 必須**で、\n 長さは model.layers と一致していなければならない。s_a / s_b\n         (リスト)は使わず、各層の LayerConnectionsConfig が持つ\n\n構造化固定配線(全層を閉形式で決める。1 層ずつ指定したいときは\nper_layer の rot_n / butterfly / local1d / local2d を使う):\n  butterfly — 基数 = model.n_inputs。層 0 = gather(idx[m] = (g·n + m) mod in_dim、\n         n·k ≥ in_dim なら全入力を被覆)、層 l ≥ 1 = (g + m·stride_l) mod k。\n         strides(長さ layers−1)を省略すると n^(l−1)、order='desc' で逆順。\n 内部調査リポジトリの先行実験の BF6(n=6)/ BF4(n=4)\n  local1d — 層ごとの strides(長さ layers、**必須**)で (c_g + m·stride_l) mod in_dim。\n 先行実験候補 B。`core.connections.local1d_strides` が幾何級数列を作る\n  local2d — 層 0 は画像格子 grid(H, W)× bits_per_cell(サーモメータ z)を\n         layer0_offsets で読む(省略時: n_inputs == bits_per_cell なら自セル [(0,0)]、\n         n_inputs == 2·bits_per_cell なら右隣・下隣 [(1,0),(0,1)])。隠れ層は\n         ceil(√k) の正方トーラス格子に ring 列を assign(contig / stride)で割り当てる。\n 先行実験の L2D6 / L2D4 / 候補 C\nrot は step(層ごとの歩進のリスト、省略 = 全層 1。先行実験 rot2)を取る。\ndedupe(既定 false)は構造化配線の重複ピンを +1 ずらしで潰す(先行実験の build() 相当)。",
+      "properties": {
+        "kind": {
+          "enum": [
+            "rot",
+            "perm",
+            "random_seeded",
+            "random_uniform",
+            "per_layer",
+            "butterfly",
+            "local1d",
+            "local2d"
+          ],
+          "type": "string"
+        },
+        "s_a": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "s_b": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "step": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "layers": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/LayerConnectionsConfig"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "strides": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "order": {
+          "default": "asc",
+          "enum": [
+            "asc",
+            "desc"
+          ],
+          "type": "string"
+        },
+        "grid": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "bits_per_cell": {
+          "default": 1,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "layer0_offsets": {
+          "anyOf": [
+            {
+              "items": {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "type": "array"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "assign": {
+          "default": "contig",
+          "enum": [
+            "contig",
+            "stride"
+          ],
+          "type": "string"
+        },
+        "dedupe": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    "ConvDLGNModelConfig": {
+      "additionalProperties": false,
+      "description": "`model.kind='conv_dlgn'` の conv 部と頭部の形(内部調査リポジトリ先行実験\nConvLogicNet / cdlgn)。ゲートのパラメータ化・推定器・RI・GroupSum の τ と割当は\nModelConfig 側(parameterization / estimator / residual_init / ri_mu / ri_sigma /\nselection / tau / group_assign)を conv 木と頭部に共通で使う。\n\n  in_shape — 入力 (C, H, W)。要素数はデータの入力幅と一致すること\n                            (CIFAR-10 3 閾値は閾値 major で [9, 32, 32])\n  channels — conv 木ブロックの出力チャネル列(cdlgn k=32: [32, 128, 512, 1024])\n  sampler — 葉の読み座標。random(従来)/ random8(cdlgn 忠実)/\n                            cross5 / dilated8 / checker13(座標が (チャネル, 層) の計算可能関数)\n  kernel_size / tree_depth / padding — sampler=random のときだけ(他は腕ごとに固定)\n  input_channels_per_tree — 木 1 本が読む入力チャネル数(cdlgn num_chn)\n  downsample — orpool(stride-1 conv + OR プール 2×2)/ stride(stride-2 conv)\n  head_dims — 頭部の隠れ幅列(入力 flat を含まない)。省略で cdlgn 頭部則\n                            [10·flat, 5·flat, 2.5·flat] × head_scale\n  head_wiring — rot2(歩進付き rot、先行実験 rot2_schedule)/ random / unique",
+      "properties": {
+        "in_shape": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "type": "array"
+        },
+        "channels": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "sampler": {
+          "default": "random8",
+          "enum": [
+            "random",
+            "random8",
+            "cross5",
+            "dilated8",
+            "checker13"
+          ],
+          "type": "string"
+        },
+        "kernel_size": {
+          "default": 3,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "tree_depth": {
+          "default": 3,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "padding": {
+          "default": 1,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "input_channels_per_tree": {
+          "default": 2,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "downsample": {
+          "default": "orpool",
+          "enum": [
+            "orpool",
+            "stride"
+          ],
+          "type": "string"
+        },
+        "head_dims": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "head_wiring": {
+          "default": "rot2",
+          "enum": [
+            "rot2",
+            "random",
+            "unique"
+          ],
+          "type": "string"
+        },
+        "head_scale": {
+          "default": 1.0,
+          "exclusiveMinimum": 0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "in_shape"
+      ],
+      "type": "object"
+    },
+    "ConvertPresetInfo": {
+      "additionalProperties": false,
+      "description": "変換プリセット1件(GET /api/convert/presets、convert_presets.list_presets)。",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "dataset": {
+          "type": "string"
+        },
+        "teacher_hint": {
+          "type": "string"
+        },
+        "spec": {
+          "additionalProperties": true,
+          "type": "object"
+        }
+      },
+      "required": [
+        "name",
+        "label",
+        "description",
+        "dataset",
+        "teacher_hint",
+        "spec"
+      ],
+      "type": "object"
+    },
+    "ConvertStartRequest": {
+      "additionalProperties": false,
+      "description": "変換開始リクエスト(POST /api/convert/start)。\n\nsource: teacher指定('ckpt:<path>' 等、convert.teacher.resolve_teacherが解釈)。\ndataset: 較正/評価データセットキー(省略時はpreset既定)。空文字はpreset既定。\npreset: convert_presets のプリセット名(例 'mnist-intlower-v1')。\noverrides: ConvertPipelineSpecフィールドの部分上書き(空dict=上書きなし)。",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "preset": {
+          "type": "string"
+        },
+        "dataset": {
+          "default": "",
+          "type": "string"
+        },
+        "overrides": {
+          "additionalProperties": true,
+          "default": {},
+          "type": "object"
+        }
+      },
+      "required": [
+        "source",
+        "preset"
+      ],
+      "type": "object"
+    },
+    "ConvertStatus": {
+      "additionalProperties": false,
+      "description": "変換セッション状態(GET /api/convert/{cid}/status、convert.ConversionSession)。\n\nphase: preparing/pruning/quantizing/lowering/verifying/done/error/cancelled。\nprogress: 現phase内の進捗0-1。metrics: 各段acc・回路統計・学習曲線配列。\nhas_ir: done時にTrue(生成IRはSTATEへ反映済み、GET /api/models/current/irで取得)。",
+      "properties": {
+        "convert_id": {
+          "type": "string"
+        },
+        "phase": {
+          "type": "string"
+        },
+        "progress": {
+          "type": "number"
+        },
+        "metrics": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "has_ir": {
+          "type": "boolean"
+        },
+        "source": {
+          "type": "string"
+        },
+        "dataset": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "convert_id",
+        "phase",
+        "progress",
+        "metrics",
+        "error",
+        "has_ir",
+        "source",
+        "dataset"
+      ],
+      "type": "object"
+    },
+    "CreateProjectRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "DataConfig": {
+      "additionalProperties": false,
+      "description": "データセット設定。\n\nname: 'mnist' 等(VISION_DATASETS)または 'logic:xor' 等(LOGIC_DATASETS)\nparams: ローダへの追加引数(binarize_threshold / repeat / limit / root 等)",
+      "properties": {
+        "name": {
+          "default": "mnist",
+          "type": "string"
+        },
+        "batch_size": {
+          "default": 128,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "params": {
+          "additionalProperties": true,
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "DatasetConfigUpdate": {
+      "additionalProperties": false,
+      "properties": {
+        "split": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "seed": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "augmentation": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "encoding": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "type": "object"
+    },
+    "DatasetInfo": {
+      "additionalProperties": false,
+      "description": "データセットカタログの1件(GET /api/datasets、datasets.list_datasets)。",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "in_width": {
+          "type": "integer"
+        },
+        "out_width": {
+          "type": "integer"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "input_spec": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "output_spec": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "imported": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "label",
+        "in_width",
+        "out_width",
+        "kind"
+      ],
+      "type": "object"
+    },
+    "DatasetSampleItem": {
+      "additionalProperties": false,
+      "description": "1サンプル分の表示用データ。",
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "inputs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "outputs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "index"
+      ],
+      "type": "object"
+    },
+    "DatasetSamplesResponse": {
+      "additionalProperties": false,
+      "description": "GET /api/datasets/{id}/samples のレスポンス。",
+      "properties": {
+        "dataset_id": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "num_data": {
+          "type": "integer"
+        },
+        "num_columns": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        },
+        "page_size": {
+          "type": "integer"
+        },
+        "num_pages": {
+          "type": "integer"
+        },
+        "samples": {
+          "items": {
+            "$ref": "#/$defs/DatasetSampleItem"
+          },
+          "type": "array"
+        },
+        "class_distribution": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "class_distribution_approx": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "dataset_id",
+        "kind",
+        "num_data",
+        "num_columns",
+        "page",
+        "page_size",
+        "num_pages",
+        "samples",
+        "class_distribution"
+      ],
+      "type": "object"
+    },
+    "DistillConfig": {
+      "additionalProperties": false,
+      "description": "知識蒸留(C4)設定。\n\nTrainConfig.distill に設定されると、runner が classification タスクの学習を\nKD(convert/distill.make_distill_task)へ差し替える。省略(None)時は従来の\n素の分類学習(後方互換)。\n\nteacher: resolve_teacher(convert/teacher.py)の source 文字列\n    (例 'torchvision:resnet18' / 'ckpt:path.pt')\nalpha: hard(CE)項の重み(0=純KD/1=純CE)\ntemperature: KD温度 T(二重温度 τ_gs×T の T 成分。τ_gs はモデル側 GroupSum.tau)\nstandardize: KD項の両ロジットを Z-score 標準化するか\nkind: 'kl'(既定)または 'mse'(KL fallback)\nteacher_transform: TEACHER_TRANSFORMS のキー('none'/'mnist'/'cifar10'/'binarize05')。\n    teacher に渡す入力への正規化。teacher解決後に上書き適用する\ncache: teacherロジットをキャッシュ(data-teacher-cache/)するか。\n    False なら毎回再計算(fingerprint/params が同じでもロードしない)",
+      "properties": {
+        "teacher": {
+          "type": "string"
+        },
+        "alpha": {
+          "default": 0.5,
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        },
+        "temperature": {
+          "default": 4.0,
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "standardize": {
+          "default": false,
+          "type": "boolean"
+        },
+        "kind": {
+          "default": "kl",
+          "enum": [
+            "kl",
+            "mse"
+          ],
+          "type": "string"
+        },
+        "teacher_transform": {
+          "default": "none",
+          "type": "string"
+        },
+        "cache": {
+          "default": true,
+          "type": "boolean"
+        },
+        "pseudo_labels": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "teacher"
+      ],
+      "type": "object"
+    },
+    "EncodingPreviewRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "values": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "mode": {
+          "default": "binarize",
+          "type": "string"
+        },
+        "threshold": {
+          "default": 0.5,
+          "type": "number"
+        },
+        "bits": {
+          "default": 4,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "values"
+      ],
+      "type": "object"
+    },
+    "EncodingPreviewResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string"
+        },
+        "bits_per_value": {
+          "type": "integer"
+        },
+        "grid": {
+          "items": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "mode",
+        "bits_per_value",
+        "grid"
+      ],
+      "type": "object"
+    },
+    "EvalItem": {
+      "additionalProperties": false,
+      "properties": {
+        "index": {
+          "type": "integer"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "pred": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "label_bits": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "pred_bits": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "correct": {
+          "type": "boolean"
+        },
+        "soft_confidence": {
+          "type": "number"
+        },
+        "soft_margin": {
+          "type": "number"
+        },
+        "hard_soft_mismatch": {
+          "type": "boolean"
+        },
+        "input_bits": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "index",
+        "correct",
+        "soft_confidence",
+        "soft_margin",
+        "hard_soft_mismatch"
+      ],
+      "type": "object"
+    },
+    "EvalSource": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "pattern": "^(run|current)$",
+          "type": "string"
+        },
+        "run_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    "EvaluateRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/EvalSource"
+        },
+        "dataset": {
+          "type": "string"
+        },
+        "executor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "dataset_params": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "page": {
+          "default": 0,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "page_size": {
+          "default": 200,
+          "maximum": 2000,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "source",
+        "dataset"
+      ],
+      "type": "object"
+    },
+    "EvaluateResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "source_kind": {
+          "type": "string"
+        },
+        "dataset": {
+          "type": "string"
+        },
+        "executor": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "type": "string"
+        },
+        "num_classes": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "num_samples": {
+          "type": "integer"
+        },
+        "page": {
+          "type": "integer"
+        },
+        "page_size": {
+          "type": "integer"
+        },
+        "num_pages": {
+          "type": "integer"
+        },
+        "cached": {
+          "type": "boolean"
+        },
+        "on_demand": {
+          "type": "boolean"
+        },
+        "cap": {
+          "type": "integer"
+        },
+        "accuracy": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "num_correct": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "num_errors": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "num_mismatch": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "confusion": {
+          "anyOf": [
+            {
+              "items": {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "fingerprint": {
+          "type": "string"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/EvalItem"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "source_kind",
+        "dataset",
+        "executor",
+        "kind",
+        "num_classes",
+        "num_samples",
+        "page",
+        "page_size",
+        "num_pages",
+        "cached",
+        "on_demand",
+        "cap",
+        "accuracy",
+        "num_correct",
+        "num_errors",
+        "num_mismatch",
+        "confusion",
+        "fingerprint",
+        "items"
+      ],
+      "type": "object"
+    },
+    "GateDistributionFrame": {
+      "additionalProperties": false,
+      "description": "ゲート確率分布フレーム(monitor.build_gate_distribution)。\n\ndense: probs(u8エンベロープ)あり / aggregate: hist(argmaxヒスト)あり。",
+      "properties": {
+        "type": {
+          "const": "gate_distribution",
+          "type": "string"
+        },
+        "layer": {
+          "type": "string"
+        },
+        "step": {
+          "type": "integer"
+        },
+        "n_inputs": {
+          "type": "integer"
+        },
+        "parameterization": {
+          "type": "string"
+        },
+        "mode": {
+          "enum": [
+            "dense",
+            "aggregate"
+          ],
+          "type": "string"
+        },
+        "probs": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/U8Envelope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "hist": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "entropy_mean": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "layer",
+        "step",
+        "n_inputs",
+        "parameterization",
+        "mode",
+        "entropy_mean"
+      ],
+      "type": "object"
+    },
+    "GradFlowFrame": {
+      "additionalProperties": false,
+      "description": "誤差逆伝播トレースフレーム(gradcap.build_grad_flow)。\n\n履歴スナップショットのtrace(HistoryStepView.trace)も同形。",
+      "properties": {
+        "type": {
+          "const": "grad_flow",
+          "type": "string"
+        },
+        "step": {
+          "type": "integer"
+        },
+        "loss": {
+          "type": "number"
+        },
+        "layers": {
+          "items": {
+            "$ref": "#/$defs/GradFlowLayerTrace"
+          },
+          "type": "array"
+        },
+        "layer_grad_norm": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "type": "object"
+        }
+      },
+      "required": [
+        "type",
+        "step",
+        "loss",
+        "layers",
+        "layer_grad_norm"
+      ],
+      "type": "object"
+    },
+    "GradFlowLayerTrace": {
+      "additionalProperties": false,
+      "description": "grad_flowの1層分トレース(gradcap.build_grad_flow)。order昇順=損失側→入力側。",
+      "properties": {
+        "layer": {
+          "type": "string"
+        },
+        "order": {
+          "type": "integer"
+        },
+        "grad_out": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/U8Envelope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "grad_w": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/U8Envelope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "edge_grad": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/U8Envelope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "layer",
+        "order"
+      ],
+      "type": "object"
+    },
+    "HdlExportResponse": {
+      "additionalProperties": false,
+      "description": "HDLエクスポート(POST /api/export/hdl、hdl.export_hdl)。",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "filename": {
+          "type": "string"
+        },
+        "lang": {
+          "type": "string"
+        },
+        "estimate": {
+          "$ref": "#/$defs/ResourceEstimate"
+        }
+      },
+      "required": [
+        "source",
+        "filename",
+        "lang",
+        "estimate"
+      ],
+      "type": "object"
+    },
+    "HdlVerifyResponse": {
+      "additionalProperties": false,
+      "description": "HDL等価性検証(POST /api/export/hdl/verify、§4-3)。\n\navailableが偽(処理系未導入)のときpassedはNone。",
+      "properties": {
+        "available": {
+          "type": "boolean"
+        },
+        "passed": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "n_vectors": {
+          "type": "integer"
+        },
+        "stdout": {
+          "type": "string"
+        },
+        "lang": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "available",
+        "passed",
+        "n_vectors",
+        "stdout",
+        "lang"
+      ],
+      "type": "object"
+    },
+    "HierarchyNode": {
+      "additionalProperties": false,
+      "description": "Python由来モデルの階層表示ノード(L3/L2/L1/L0)。",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "shape": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "capabilities": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "boolean"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "lowering": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "paper_note": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "level",
+        "kind"
+      ],
+      "type": "object"
+    },
+    "HierarchyResponse": {
+      "additionalProperties": false,
+      "description": "GET /api/models/current/hierarchy のレスポンス。",
+      "properties": {
+        "levels": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/HierarchyNode"
+          },
+          "type": "array"
+        },
+        "paper_ref": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "dataset_presets": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "levels",
+        "mode",
+        "nodes"
+      ],
+      "type": "object"
+    },
+    "HistoryCounts": {
+      "additionalProperties": false,
+      "description": "TrainStatus.history のカウンタ(min/max_step, count)。",
+      "properties": {
+        "min_step": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_step": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "min_step",
+        "max_step",
+        "count"
+      ],
+      "type": "object"
+    },
+    "HistoryIndex": {
+      "additionalProperties": false,
+      "description": "履歴インデックス(GET /api/train/{sid}/history、history.HistoryStore.index)。",
+      "properties": {
+        "min_step": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_step": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stride": {
+          "type": "integer"
+        },
+        "keyframes": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "ram_bytes": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disk_bytes": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "capture": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CaptureInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "min_step",
+        "max_step",
+        "stride",
+        "keyframes",
+        "count"
+      ],
+      "type": "object"
+    },
+    "HistoryIndexFrame": {
+      "additionalProperties": false,
+      "description": "履歴インデックスのWSプッシュフレーム(RESTのHistoryIndexと同形+type)。",
+      "properties": {
+        "min_step": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_step": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "stride": {
+          "type": "integer"
+        },
+        "keyframes": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "ram_bytes": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "disk_bytes": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "capture": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CaptureInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "type": {
+          "const": "history_index",
+          "type": "string"
+        }
+      },
+      "required": [
+        "min_step",
+        "max_step",
+        "stride",
+        "keyframes",
+        "count",
+        "type"
+      ],
+      "type": "object"
+    },
+    "HistoryLayerView": {
+      "additionalProperties": false,
+      "description": "履歴ビューの1層分(main.py train_history_step。fieldsクエリで疎に載る)。",
+      "properties": {
+        "gate_ids": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "n_inputs": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "gate_distribution": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/U8Envelope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "grad_norm": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/U8Envelope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "act_mean": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/U8Envelope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "type": "object"
+    },
+    "HistoryStepView": {
+      "additionalProperties": false,
+      "description": "任意stepのスナップショットビュー(GET /api/train/{sid}/history/{step})。",
+      "properties": {
+        "resolved_step": {
+          "type": "integer"
+        },
+        "method": {
+          "type": "string"
+        },
+        "metrics": {
+          "$ref": "#/$defs/StepMetrics"
+        },
+        "layers": {
+          "additionalProperties": {
+            "$ref": "#/$defs/HistoryLayerView"
+          },
+          "type": "object"
+        },
+        "trace": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GradFlowFrame"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "resolved_step",
+        "method",
+        "metrics",
+        "layers"
+      ],
+      "type": "object"
+    },
+    "LayerConnectionsConfig": {
+      "additionalProperties": false,
+      "description": "1層分の配線指定(先行実験。`ConnectionsConfig.kind='per_layer'` の要素)。\n\nkind:\n  rot — (g+s_a) mod in_dim / (g+s_b) mod in_dim。**s_a / s_b 必須**\n                   (層ごとの単一値。リストではない)\n  stretched_rot — 基準位置を round(g·in_dim/out_dim) に引き伸ばした rot。\n                   **s_a / s_b 必須**。in_dim == out_dim では rot と一致\n  perm — 均衡全射(配線用 generator を消費)。s_a / s_b は無視\n  random_seeded — get_random_connections を配線用 generator で引く。同上\n                   (**均衡する**。無制約の乱択ではない。生成器の docstring 参照)\n  random_uniform — 各スロット独立一様の無制約乱択(配線用 generator)。同上\n\n構造化固定配線(乱数を引かない閉形式。移植元は内部調査リポジトリ\nexp075 / 先行実験):\n  rot_n — n 入力 rot: idx[m] = (g·step + shifts[m]) mod in_dim。\n                   **shifts 必須**(長さ = model.n_inputs)\n  butterfly — 循環 radix-n バタフライ 1 段: (g + m·stride) mod in_dim。\n                   **stride 必須**\n  local1d — 1D 局所窓: (c_g + m·stride) mod in_dim(c_g = 比例写像)。\n                   **stride 必須**\n  local2d — 2D 局所窓: 格子 grid(None = 正方)× bits_per_cell ビットのセルを\n                   offsets [(dx, dy), …] で読む。**offsets 必須**、\n                   len(offsets) · bits_per_cell == model.n_inputs\nrot / rot_n は step(歩進、既定 1。先行実験 rot2 の r)を取る。dedupe(既定 false)は\nrot_n / butterfly / local1d / local2d の重複ピンを +1 ずらしで潰す\n(rot 系・乱択系には適用しない = 既存レシピは不変)。",
+      "properties": {
+        "kind": {
+          "enum": [
+            "rot",
+            "stretched_rot",
+            "perm",
+            "random_seeded",
+            "random_uniform",
+            "rot_n",
+            "butterfly",
+            "local1d",
+            "local2d"
+          ],
+          "type": "string"
+        },
+        "s_a": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "s_b": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "step": {
+          "default": 1,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "shifts": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "stride": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "offsets": {
+          "anyOf": [
+            {
+              "items": {
+                "maxItems": 2,
+                "minItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "type": "array"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "grid": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "bits_per_cell": {
+          "default": 1,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "dedupe": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    "LayerSummaryFrame": {
+      "additionalProperties": false,
+      "description": "レイヤ要約フレーム(extract.layer_summary、最大5Hz差分送信)。",
+      "properties": {
+        "type": {
+          "const": "layer_summary",
+          "type": "string"
+        },
+        "layer": {
+          "type": "string"
+        },
+        "step": {
+          "type": "integer"
+        },
+        "n_inputs": {
+          "type": "integer"
+        },
+        "gate_ids": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "confidence": {
+          "items": {
+            "type": "number"
+          },
+          "type": "array"
+        },
+        "entropy_mean": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "entropy_max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "layer",
+        "step",
+        "n_inputs",
+        "gate_ids",
+        "confidence",
+        "entropy_mean",
+        "entropy_max"
+      ],
+      "type": "object"
+    },
+    "LoweringView": {
+      "additionalProperties": false,
+      "description": "GET /api/models/current/lower のレスポンス。",
+      "properties": {
+        "node_id": {
+          "type": "string"
+        },
+        "level": {
+          "type": "string"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "capabilities": {
+          "additionalProperties": {
+            "type": "boolean"
+          },
+          "type": "object"
+        },
+        "shape": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "children": {
+          "items": {
+            "$ref": "#/$defs/HierarchyNode"
+          },
+          "type": "array"
+        },
+        "lowering": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "virtual_ir_node": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "actions": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "node_id",
+        "level",
+        "title",
+        "capabilities",
+        "children",
+        "actions"
+      ],
+      "type": "object"
+    },
+    "MetricsFrame": {
+      "additionalProperties": true,
+      "description": "毎stepのmetricsフレーム(training.py _put_metrics)。\n\nval_loss/val_acc はhard eval直後のstepのみ載るスパースなキー。\nstepperの追加メトリクス(exact_match等)が動的に載るためextraを許可する\n(未知キーはフロントが無視する後方互換契約)。",
+      "properties": {
+        "type": {
+          "const": "metrics",
+          "type": "string"
+        },
+        "step": {
+          "type": "integer"
+        },
+        "epoch": {
+          "type": "integer"
+        },
+        "total_steps": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "loss": {
+          "type": "number"
+        },
+        "acc": {
+          "type": "number"
+        },
+        "weight_delta": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "type": "object"
+        },
+        "val_loss": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "val_acc": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "exact_match": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "val_acc_soft": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "selection_gap": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "type",
+        "step",
+        "epoch",
+        "loss",
+        "acc",
+        "weight_delta"
+      ],
+      "type": "object"
+    },
+    "ModelConfig": {
+      "additionalProperties": false,
+      "description": "モデル設定。\n\nkind:\n  dlgn — Flatten + LutLayer×layers + GroupSum(classification用)\n  logic_mlp — Flatten + LutLayer×layers(GroupSumなし、binary_vector用)\n  conv_dlgn — LutConv2d(+OrPooling2d)×段 + Flatten + LutLayer×段 + GroupSum\n              (classification用。形は conv: ConvDLGNModelConfig)\n\nexp099で追加(いずれも既定は従来動作):\n  selection — 訓練時のゲート選択('soft'/'hard_st'/'gumbel_st')\n  init_mode — 16ゲートモードのロジット初期化(None=従来のrandn)\n  init_scale — 残差初期化('ri'/'ri_randn'/'rri')の加算量(既定5.0。\n 社内先行実験 Phase 3 の OP 腕は 1.0)\n  grad_factor — 勾配スケーリング係数\n  gate_mask_hidden — 隠れ層で**除外する**ゲートIDの集合\n  gate_mask_final — 最終LutLayerで除外するゲートIDの集合\n  connections — 'random' / 'unique' / ConnectionsConfig\n                     (rot / perm / 先行実験で random_seeded / random_uniform /\n                      per_layer=層ごとの指定を追加)",
+      "properties": {
+        "kind": {
+          "default": "dlgn",
+          "enum": [
+            "dlgn",
+            "logic_mlp",
+            "conv_dlgn"
+          ],
+          "type": "string"
+        },
+        "conv": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConvDLGNModelConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "k": {
+          "default": 2000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "layers": {
+          "default": 3,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "n_inputs": {
+          "default": 2,
+          "enum": [
+            2,
+            4,
+            6
+          ],
+          "type": "integer"
+        },
+        "parameterization": {
+          "default": "softmax",
+          "enum": [
+            "softmax",
+            "independent",
+            "iwp",
+            "raw",
+            "warp"
+          ],
+          "type": "string"
+        },
+        "connections": {
+          "anyOf": [
+            {
+              "enum": [
+                "random",
+                "unique"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/ConnectionsConfig"
+            }
+          ],
+          "default": "random"
+        },
+        "tau": {
+          "default": 1.0,
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "group_assign": {
+          "default": "contig",
+          "enum": [
+            "contig",
+            "stride"
+          ],
+          "type": "string"
+        },
+        "estimator": {
+          "default": "sigmoid",
+          "enum": [
+            "sigmoid",
+            "sin"
+          ],
+          "type": "string"
+        },
+        "residual_init": {
+          "default": false,
+          "type": "boolean"
+        },
+        "ri_mu": {
+          "default": 1.2,
+          "type": "number"
+        },
+        "ri_sigma": {
+          "default": 0.25,
+          "type": "number"
+        },
+        "selection": {
+          "default": "soft",
+          "enum": [
+            "soft",
+            "hard_st",
+            "gumbel_st"
+          ],
+          "type": "string"
+        },
+        "init_mode": {
+          "anyOf": [
+            {
+              "enum": [
+                "randn",
+                "ri",
+                "ri_randn",
+                "rri",
+                "uniform"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "init_scale": {
+          "default": 5.0,
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "grad_factor": {
+          "default": 1.0,
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        "gate_mask_hidden": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "gate_mask_final": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "type": "object"
+    },
+    "NasIrResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "trial_id": {
+          "type": "integer"
+        },
+        "ir": {
+          "additionalProperties": true,
+          "type": "object"
+        }
+      },
+      "required": [
+        "trial_id",
+        "ir"
+      ],
+      "type": "object"
+    },
+    "NasStartRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "search_id": {
+          "default": "default",
+          "type": "string"
+        },
+        "dataset": {
+          "default": "logic:xor",
+          "type": "string"
+        },
+        "model_kind": {
+          "default": "logic_mlp",
+          "type": "string"
+        },
+        "max_trials": {
+          "default": 12,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "epochs": {
+          "default": 5,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "seed": {
+          "default": 0,
+          "type": "integer"
+        },
+        "n_random": {
+          "default": 4,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "time_budget_sec": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "out_root": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "layers_choices": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "width_choices": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "n_inputs_choices": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "strategy": {
+          "default": "evolution",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "NasStartResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "search_id": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "search_id",
+        "state"
+      ],
+      "type": "object"
+    },
+    "NasStatusResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "search_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "type": "string"
+        },
+        "n_trials": {
+          "type": "integer"
+        },
+        "max_trials": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pareto": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "search_id",
+        "state",
+        "n_trials",
+        "max_trials",
+        "pareto",
+        "error"
+      ],
+      "type": "object"
+    },
+    "NasTrialRow": {
+      "additionalProperties": false,
+      "properties": {
+        "trial_id": {
+          "type": "integer"
+        },
+        "acc": {
+          "type": "number"
+        },
+        "best_acc": {
+          "type": "number"
+        },
+        "total_luts": {
+          "type": "integer"
+        },
+        "logic_depth": {
+          "type": "integer"
+        },
+        "gates": {
+          "type": "integer"
+        },
+        "num_params": {
+          "type": "integer"
+        },
+        "partial": {
+          "type": "boolean"
+        },
+        "state": {
+          "type": "string"
+        },
+        "parent_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "genome": {
+          "additionalProperties": true,
+          "type": "object"
+        }
+      },
+      "required": [
+        "trial_id",
+        "acc",
+        "best_acc",
+        "total_luts",
+        "logic_depth",
+        "gates",
+        "num_params",
+        "partial",
+        "state",
+        "parent_id",
+        "genome"
+      ],
+      "type": "object"
+    },
+    "NasTrialsResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "search_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "trials": {
+          "items": {
+            "$ref": "#/$defs/NasTrialRow"
+          },
+          "type": "array"
+        },
+        "pareto": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "search_id",
+        "trials",
+        "pareto"
+      ],
+      "type": "object"
+    },
+    "NodeCapabilities": {
+      "additionalProperties": false,
+      "description": "IR node meta.capabilities の標準形(v0.3相当)。",
+      "properties": {
+        "python_executable": {
+          "type": "boolean"
+        },
+        "trainable": {
+          "type": "boolean"
+        },
+        "ir_buildable": {
+          "type": "boolean"
+        },
+        "gate_expandable": {
+          "type": "boolean"
+        },
+        "hdl_exportable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "python_executable",
+        "trainable",
+        "ir_buildable",
+        "gate_expandable",
+        "hdl_exportable"
+      ],
+      "type": "object"
+    },
+    "OptimConfig": {
+      "additionalProperties": false,
+      "description": "オプティマイザ設定",
+      "properties": {
+        "name": {
+          "default": "adam",
+          "enum": [
+            "adam",
+            "adamw",
+            "sgd"
+          ],
+          "type": "string"
+        },
+        "lr": {
+          "default": 0.01,
+          "exclusiveMinimum": 0,
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "PreflightBlocker": {
+      "additionalProperties": false,
+      "description": "HDL出力を妨げる要因1件(§4-3)。\n\nkind: 'blackbox' | 'add_sum' | 'structure'。\nnode_idは該当ノード(構造エラー等で特定不能ならNone)。",
+      "properties": {
+        "node_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "kind": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "node_id",
+        "kind",
+        "message"
+      ],
+      "type": "object"
+    },
+    "PreflightResponse": {
+      "additionalProperties": false,
+      "description": "HDL出荷プリフライト(GET /api/models/current/preflight、§4-3)。\n\nhdl_exportableはblockersが空のときのみ真。estimateはHDL不可の構造\nエラー時はNone(見積り計算が破綻するため)。",
+      "properties": {
+        "hdl_exportable": {
+          "type": "boolean"
+        },
+        "blockers": {
+          "items": {
+            "$ref": "#/$defs/PreflightBlocker"
+          },
+          "type": "array"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "estimate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ResourceEstimate"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "draft_node_count": {
+          "type": "integer"
+        },
+        "verify_available": {
+          "$ref": "#/$defs/VerifyAvailability"
+        }
+      },
+      "required": [
+        "hdl_exportable",
+        "blockers",
+        "warnings",
+        "estimate",
+        "draft_node_count",
+        "verify_available"
+      ],
+      "type": "object"
+    },
+    "ProjectSchema": {
+      "additionalProperties": false,
+      "description": "プロジェクトのルートスキーマ。\n\nnetworks/train_configsの値自体はdictのまま保持し、\n妥当性検証(IR/TrainConfigのパース)は保存/読込時に本モジュールの\nvalidate_network/validate_train_configで別途行う。",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "type": "string"
+        },
+        "networks": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": "object"
+        },
+        "train_configs": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": "object"
+        },
+        "dataset_refs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "run_refs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "optimizers": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "monitors": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "executors": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "created_at": {
+          "type": "number"
+        },
+        "updated_at": {
+          "type": "number"
+        },
+        "deleted": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "created_at",
+        "updated_at"
+      ],
+      "type": "object"
+    },
+    "PythonModelImportResponse": {
+      "additionalProperties": false,
+      "description": "POST /api/models/import/python のレスポンス。",
+      "properties": {
+        "ir": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "input_width": {
+          "type": "integer"
+        },
+        "model_ref": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "spec": {
+          "additionalProperties": true,
+          "type": "object"
+        }
+      },
+      "required": [
+        "ir",
+        "input_width",
+        "spec"
+      ],
+      "type": "object"
+    },
+    "RegConfig": {
+      "additionalProperties": false,
+      "description": "正則化設定(先行実験)。省略(None)時は正則化なし=従来動作。\n\nkind:\n  irreducibility — 縮約されやすいゲート種(定数・pass-through)へ置かれた\n    softmax確率質量のペナルティ R = (1/N_h) Σ_n Σ_i p_{n,i}·c_i。\n 隠れ層は {0,15,3,5,10,12}、最終LutLayerは {3,5,10,12} に c=1。\nlambda: 正則化係数(YAMLキーは `lambda`。Python予約語のためフィールド名は\n    lambda_)。0 なら損失に加算しない(**学習は正則化なしと bitwise 不変**)が、\n 指標 reg_penalty は記録する。\nramp_frac: 学習ステップ全体に対する線形ランプ区間の割合。\n    step ∈ [0, ramp_frac·total_steps] で 0 → lambda に線形、以降は lambda 固定。\n    0 なら最初から定数 lambda。",
+      "properties": {
+        "kind": {
+          "const": "irreducibility",
+          "default": "irreducibility",
+          "type": "string"
+        },
+        "lambda": {
+          "default": 0.0,
+          "minimum": 0,
+          "type": "number"
+        },
+        "ramp_frac": {
+          "default": 0.5,
+          "maximum": 1,
+          "minimum": 0,
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "ResourceEstimate": {
+      "additionalProperties": false,
+      "description": "IRのリソース見積り(export.estimate.estimate_resources)。\n\nlut_counts/node_countsはJSON化でキーが文字列になる(dict[str, int])。",
+      "properties": {
+        "total_luts": {
+          "type": "integer"
+        },
+        "lut_counts": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "logic_depth": {
+          "type": "integer"
+        },
+        "wire_count": {
+          "type": "integer"
+        },
+        "group_sums": {
+          "type": "integer"
+        },
+        "node_counts": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "lowered": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "total_luts",
+        "lut_counts",
+        "logic_depth",
+        "wire_count",
+        "group_sums",
+        "node_counts",
+        "lowered"
+      ],
+      "type": "object"
+    },
+    "RunConfig": {
+      "additionalProperties": false,
+      "description": "実行設定。\n\neval_interval: 0=エポック末のみhard eval / N>0=Nステップごと\nloss: None=タスク既定(classification→ce / binary_vector→bce)\ndevice: None=自動検出(cuda→mps→cpu)\n\nwandb_* はレシピからwandbのtaxonomy(experiments/wandb_utils.py の\n`init_wandb`)を指定するためのもの。**既定値は従来のランナーの挙動と同一**\n(group='md-train' / job_type='train' / 追加タグなし / notes・hypothesis なし)\nなので、既存レシピの記録内容は変わらない。\n  wandb_group      — runのグループ名。**モデル族**を指定する(例 'dlgn-ffn')\n  wandb_job_type   — ジョブ種別。本番学習と補助runを区別する\n                     (語彙は training-script skill の train / ablation / sweep /\n                     eval / smoke。較正アンカーの再走は 'train' + tag 'calibration')\n  wandb_tags       — 横断ラベル。ランナー既定のタグへ**追加**する\n                     (既定タグ: 'md-train' / model.kind / データ種別)\n  wandb_notes      — この実験で何をなぜ変えたか(wandbのnotesへ)\n  wandb_hypothesis — 検証したい仮説(configの experiment/hypothesis へ)",
+      "properties": {
+        "seed": {
+          "default": 42,
+          "type": "integer"
+        },
+        "epochs": {
+          "default": 3,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "eval_interval": {
+          "default": 0,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "wandb": {
+          "default": false,
+          "type": "boolean"
+        },
+        "wandb_group": {
+          "default": "md-train",
+          "type": "string"
+        },
+        "wandb_job_type": {
+          "default": "train",
+          "enum": [
+            "train",
+            "ablation",
+            "sweep",
+            "eval",
+            "smoke"
+          ],
+          "type": "string"
+        },
+        "wandb_tags": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "wandb_notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "wandb_hypothesis": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "run_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "method": {
+          "default": "bp",
+          "type": "string"
+        },
+        "loss": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "device": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "export_netlist": {
+          "default": false,
+          "type": "boolean"
+        },
+        "save_eval_history": {
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "RunSummary": {
+      "additionalProperties": false,
+      "description": "runサマリ(GET /api/runs、runs.SUMMARY_KEYS)。壊れたrunはキー欠落=None。",
+      "properties": {
+        "run_id": {
+          "type": "string"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ended_at": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "dataset": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "loss": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "optimizer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lr": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "batch_size": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "epochs": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "final_step": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "final_loss": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "final_acc": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "model_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "wandb_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "run_id",
+        "started_at",
+        "ended_at",
+        "state",
+        "dataset",
+        "method",
+        "loss",
+        "optimizer",
+        "lr",
+        "batch_size",
+        "epochs",
+        "final_step",
+        "final_loss",
+        "final_acc",
+        "model_name",
+        "wandb_url"
+      ],
+      "type": "object"
+    },
+    "SessionEndFrame": {
+      "additionalProperties": false,
+      "description": "セッション終了フレーム(main.py ws_train。TrainStatusと同形+type)。",
+      "properties": {
+        "session_id": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "step": {
+          "type": "integer"
+        },
+        "epoch": {
+          "type": "integer"
+        },
+        "total_steps": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "loss": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "train_loss": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "acc": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "step_budget": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "capture": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CaptureInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "history": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HistoryCounts"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "dataset": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "task": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "last_val_acc": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "last_val_acc_soft": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "last_selection_gap": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "type": {
+          "const": "session_end",
+          "type": "string"
+        }
+      },
+      "required": [
+        "session_id",
+        "state",
+        "step",
+        "epoch",
+        "loss",
+        "acc",
+        "error",
+        "type"
+      ],
+      "type": "object"
+    },
+    "SkippedItem": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "reason"
+      ],
+      "type": "object"
+    },
+    "StatsResponse": {
+      "additionalProperties": false,
+      "description": "統計APIレスポンス(extra='forbid'でスキーマドリフトを検出)。",
+      "properties": {
+        "total_luts": {
+          "type": "integer"
+        },
+        "lut_counts": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "logic_depth": {
+          "type": "integer"
+        },
+        "wire_count": {
+          "type": "integer"
+        },
+        "group_sums": {
+          "type": "integer"
+        },
+        "node_counts": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object"
+        },
+        "lowered": {
+          "type": "boolean"
+        },
+        "num_params": {
+          "type": "integer"
+        },
+        "partial": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "total_luts",
+        "lut_counts",
+        "logic_depth",
+        "wire_count",
+        "group_sums",
+        "node_counts",
+        "lowered",
+        "num_params",
+        "partial"
+      ],
+      "type": "object"
+    },
+    "StepMetrics": {
+      "additionalProperties": false,
+      "description": "HistoryStepView.metrics(スナップショットのstep/epoch/loss/acc)。",
+      "properties": {
+        "step": {
+          "type": "integer"
+        },
+        "epoch": {
+          "type": "integer"
+        },
+        "loss": {
+          "type": "number"
+        },
+        "acc": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "step",
+        "epoch",
+        "loss",
+        "acc"
+      ],
+      "type": "object"
+    },
+    "TrainConfig": {
+      "additionalProperties": false,
+      "description": "学習設定のルート(data/model/optim/run/expected_metrics)。\n\nexpected_metrics: レシピの期待メトリクス照合。\nキーは '<metric>_min' / '<metric>_max'(metricはrun_trainingの返り値キー。\n例 hard_acc_min / final_loss_max)。runner終了時に照合結果をprintし、\n返り値の 'expected_metrics' キーへ格納する(未達でも例外にはしない。\n`griffith train --strict` のみ未達で非0 exit)。",
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/DataConfig"
+        },
+        "model": {
+          "$ref": "#/$defs/ModelConfig"
+        },
+        "optim": {
+          "$ref": "#/$defs/OptimConfig"
+        },
+        "run": {
+          "$ref": "#/$defs/RunConfig"
+        },
+        "distill": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DistillConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "regularization": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RegConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "expected_metrics": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "TrainStatus": {
+      "additionalProperties": false,
+      "description": "訓練セッション状態(GET /api/train/{sid}/status 等、training.py status)。\n\nlossは現在タスクの損失名(例 'ce'/'bce')。数値の直近train lossは\ntrain_loss(旧'loss'。dictキー重複で損失名に上書きされていたのを分離)。\nM18-2以降の追加キーは旧バックエンド互換のためoptional。",
+      "properties": {
+        "session_id": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "started_at": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "step": {
+          "type": "integer"
+        },
+        "epoch": {
+          "type": "integer"
+        },
+        "total_steps": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "loss": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "train_loss": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "acc": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "step_budget": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "capture": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CaptureInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "history": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HistoryCounts"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "dataset": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "task": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "last_val_acc": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "last_val_acc_soft": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "last_selection_gap": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "session_id",
+        "state",
+        "step",
+        "epoch",
+        "loss",
+        "acc",
+        "error"
+      ],
+      "type": "object"
+    },
+    "TransferRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "source_ir": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "target_ir": {
+          "additionalProperties": true,
+          "type": "object"
+        }
+      },
+      "required": [
+        "source_ir",
+        "target_ir"
+      ],
+      "type": "object"
+    },
+    "TransferResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "target_ir": {
+          "additionalProperties": true,
+          "type": "object"
+        },
+        "transferred": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "skipped": {
+          "items": {
+            "$ref": "#/$defs/SkippedItem"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "target_ir",
+        "transferred",
+        "skipped"
+      ],
+      "type": "object"
+    },
+    "U8Envelope": {
+      "additionalProperties": false,
+      "description": "u8量子化テンソルエンベロープ(WS/REST共通、monitor.encode_u8 と対応)。",
+      "properties": {
+        "encoding": {
+          "const": "u8",
+          "type": "string"
+        },
+        "shape": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "scale": {
+          "type": "number"
+        },
+        "data": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "encoding",
+        "shape",
+        "scale",
+        "data"
+      ],
+      "type": "object"
+    },
+    "UncertainGate": {
+      "additionalProperties": false,
+      "description": "確信度が低いゲート1件(GET /api/train/{sid}/uncertain_gates、§4-1)。\n\nentropyは正規化迷い[0,1](層間・パラメータ化間で比較可能)。",
+      "properties": {
+        "layer_id": {
+          "type": "string"
+        },
+        "neuron_index": {
+          "type": "integer"
+        },
+        "entropy": {
+          "type": "number"
+        },
+        "gate_id": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "layer_id",
+        "neuron_index",
+        "entropy",
+        "gate_id"
+      ],
+      "type": "object"
+    },
+    "UncertainGatesResponse": {
+      "additionalProperties": false,
+      "description": "低確信ゲートTop-Nレスポンス(§4-1)。gatesはentropy降順。",
+      "properties": {
+        "step": {
+          "type": "integer"
+        },
+        "gates": {
+          "items": {
+            "$ref": "#/$defs/UncertainGate"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "step",
+        "gates"
+      ],
+      "type": "object"
+    },
+    "UpdateProjectRequest": {
+      "additionalProperties": false,
+      "description": "部分更新的なPUTボディ。省略項目は既存値を維持する。",
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "networks": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "train_configs": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "dataset_refs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "run_refs": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "optimizers": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "monitors": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "executors": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "type": "object"
+    },
+    "VerifyAvailability": {
+      "additionalProperties": false,
+      "description": "HDL等価性検証ツールの利用可否(verify.iverilog_available/ghdl_available)。",
+      "properties": {
+        "iverilog": {
+          "type": "boolean"
+        },
+        "ghdl": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "iverilog",
+        "ghdl"
+      ],
+      "type": "object"
+    }
+  }
+}

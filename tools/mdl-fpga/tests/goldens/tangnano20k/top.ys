@@ -1,0 +1,8 @@
+# mdl-fpga 自動生成 yosys スクリプト(gowin-oss バックエンド)
+read_verilog top.v
+read_verilog mdl_core.v
+read_verilog uart_rx.v
+read_verilog uart_tx.v
+read_verilog frame_rx.v
+read_verilog frame_tx.v
+synth_gowin -top top -nowidelut -json top.json

@@ -1,0 +1,464 @@
+{
+  "name": "top",
+  "ok": true,
+  "stages": [
+    {
+      "stage": "quartus_map",
+      "rc": 0,
+      "seconds": 44.70434904098511
+    },
+    {
+      "stage": "quartus_fit",
+      "rc": 0,
+      "seconds": 584.98668384552
+    },
+    {
+      "stage": "quartus_asm",
+      "rc": 0,
+      "seconds": 4.752789735794067
+    },
+    {
+      "stage": "quartus_sta",
+      "rc": 0,
+      "seconds": 67.68732118606567
+    }
+  ],
+  "setup_slack_clk50_ns": 16.45,
+  "setup_slack_clk_core_ns": 23.484,
+  "alm": 1857,
+  "alm_avail": 18480,
+  "alm_pct": 10.0,
+  "registers": 1900,
+  "pins": 53,
+  "pins_avail": 224,
+  "pins_pct": 24.0,
+  "ram_bits": 1428000,
+  "ram_bits_avail": 3153920,
+  "ram_bits_pct": 45.0,
+  "ram_blocks": 159,
+  "ram_blocks_avail": 308,
+  "ram_blocks_pct": 52.0,
+  "dsp": 0,
+  "dsp_avail": 66,
+  "dsp_pct": 0.0,
+  "entities": [
+    {
+      "node": "|top",
+      "alm": 1857.0,
+      "mem_bits": 1428000.0,
+      "m10k": 159.0,
+      "registers": 1900.0
+    },
+    {
+      "node": "|overlay_harness:u_sys|",
+      "alm": 1717.3,
+      "mem_bits": 1428000.0,
+      "m10k": 159.0,
+      "registers": 1710.0
+    },
+    {
+      "node": "|altsyncram:exp_rom_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 4000.0,
+      "m10k": 1.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_rgg1:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 4000.0,
+      "m10k": 1.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:img_rom_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 784000.0,
+      "m10k": 78.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_9kg1:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 784000.0,
+      "m10k": 78.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|lgn_overlay:u_ov|",
+      "alm": 1671.3,
+      "mem_bits": 640000.0,
+      "m10k": 80.0,
+      "registers": 1621.0
+    },
+    {
+      "node": "|rom32:gr0.r|",
+      "alm": 8.0,
+      "mem_bits": 384000.0,
+      "m10k": 48.0,
+      "registers": 1.0
+    },
+    {
+      "node": "|altsyncram:mem_rtl_0|",
+      "alm": 8.0,
+      "mem_bits": 384000.0,
+      "m10k": 48.0,
+      "registers": 1.0
+    },
+    {
+      "node": "|altsyncram_v8f1:auto_generated|",
+      "alm": 8.0,
+      "mem_bits": 384000.0,
+      "m10k": 48.0,
+      "registers": 1.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[0].bufA|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[0].bufB|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[1].bufA|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[1].bufB|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[2].bufA|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[2].bufB|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[3].bufA|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[3].bufB|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[4].bufA|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[4].bufB|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[5].bufA|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[5].bufB|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[6].bufA|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[6].bufB|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[7].bufA|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|tdp_ram:g_buf[7].bufB|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram:ram_rtl_0|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    },
+    {
+      "node": "|altsyncram_in22:auto_generated|",
+      "alm": 0.0,
+      "mem_bits": 16000.0,
+      "m10k": 2.0,
+      "registers": 0.0
+    }
+  ],
+  "m10k_by_entity": {
+    "gate_rom": 48,
+    "activation": 32,
+    "image_rom": 78,
+    "label_rom": 1,
+    "total": 159
+  },
+  "fmax_clk_core_mhz": 60.88,
+  "fmax_restricted_clk_core_mhz": 60.88,
+  "fmax_altera_reserved_tck_mhz": 64.9,
+  "fmax_restricted_altera_reserved_tck_mhz": 64.9,
+  "sof": "runs\\cwo_96k_p6_s0\\quartus\\output_files\\top.sof"
+}

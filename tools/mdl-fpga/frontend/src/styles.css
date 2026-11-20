@@ -1,0 +1,231 @@
+/* ビューア固有のコンポーネントCSS(移行シム)。
+   トークンは src/index.css(エディタと共有契約)のみを参照する。
+   汎用UI(ボタン/入力等)は shadcn プリミティブへ移行済みのため、ここには
+   キャンバス系(ノードカード/プローブ/payload表示)だけを残す。
+   ノードカードはエディタ styles.css の .editor-node 契約に一致させる。*/
+
+@layer components {
+  /* ---- アプリ骨格 ---- */
+  .app { display: flex; flex-direction: column; height: 100%; }
+  .canvas-wrap { position: relative; height: 100%; min-height: 0; }
+  .sidebar-pane {
+    height: 100%; overflow-y: auto; padding: 10px;
+    display: flex; flex-direction: column; gap: 10px;
+    background: var(--panel-bg);
+  }
+
+  /* ---- 入力パネル(トグル/手描き) ---- */
+  .bit-toggles { display: flex; flex-wrap: wrap; gap: 3px; }
+  .bit-toggle {
+    width: 30px; height: 26px; padding: 0;
+    background: var(--bit-off); color: var(--muted-foreground);
+    border: 1px solid var(--border); border-radius: 4px;
+    font-size: 10px; cursor: pointer;
+  }
+  .bit-toggle.on {
+    background: var(--bit-on); color: var(--background); font-weight: 700;
+    border-color: var(--bit-on);
+  }
+  .paint-canvas {
+    image-rendering: pixelated; border: 1px solid var(--border);
+    border-radius: 4px; cursor: crosshair; touch-action: none;
+    background: var(--muted);
+    /* ペイン幅に追従(最小 140px。上限=自然サイズは inline style で指定) */
+    width: 100%; min-width: 140px; height: auto; aspect-ratio: 1 / 1;
+  }
+
+  /* ---- 回路ノードカード(エディタ .editor-node 契約) ---- */
+  .editor-node {
+    background: var(--node-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    min-width: 150px;
+    font-size: 12px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  }
+  .editor-node.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+  }
+  .node-title {
+    font-weight: 600; display: flex; gap: 6px; align-items: center;
+  }
+  .node-sub { color: var(--muted-foreground); font-size: 11px; }
+  /* 左アクセント(エディタ準拠: lut=slot-0 / groupsum=slot-2。
+     ポートは 入力=slot-3 / 出力=slot-1、system=slot-4 をビューア規約とする) */
+  .lut-node { border-left: 3px solid var(--slot-0); }
+  .groupsum-node { border-left: 3px solid var(--slot-2); }
+  .kind-input { border-left: 3px solid var(--slot-3); }
+  .kind-output { border-left: 3px solid var(--slot-1); }
+  .system-node { border-left: 3px solid var(--slot-4); }
+  .generic-node { border-left: 3px solid var(--edge-default); }
+
+  .node-value {
+    margin-top: 6px; font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 11px; color: var(--status-ok); background: var(--muted);
+    border-radius: 4px; padding: 2px 6px;
+    overflow: hidden; white-space: nowrap;
+  }
+  .xz-badge { color: var(--status-warn); font-size: 11px; font-weight: 700; }
+
+  /* ---- ゲート展開 ---- */
+  .lut-group {
+    width: 100%; height: 100%;
+    background: color-mix(in srgb, var(--panel-bg) 85%, transparent);
+    border: 1px solid var(--primary);
+    border-radius: 10px;
+  }
+  .lut-group-head {
+    display: flex; gap: 8px; align-items: center;
+    padding: 5px 10px; font-size: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .gate-node {
+    width: 66px; height: 40px;
+    background: var(--node-bg); border: 1px solid var(--border);
+    border-left-width: 3px;
+    border-radius: 6px; padding: 3px 6px; font-size: 10px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .gate-node.on {
+    border-color: var(--edge-on);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--edge-on) 35%, transparent);
+  }
+  .gate-label { color: var(--foreground); font-weight: 600; }
+  .gate-out {
+    color: var(--muted-foreground);
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  .gate-node.on .gate-out { color: var(--edge-on); }
+
+  /* ---- プローブ(値表示部) ---- */
+  .probe-node .probe-handle { background: var(--probe); }
+  .probe-card {
+    background: var(--node-bg); border: 1px dashed var(--probe);
+    border-radius: 8px; padding: 8px; min-width: 190px; max-width: 300px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+    font-size: 12px;
+  }
+  .probe-head {
+    display: flex; gap: 4px; align-items: center; margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  .probe-target {
+    font-weight: 700; font-size: 12px; color: var(--probe);
+    max-width: 110px; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .slice-input {
+    width: 62px; background: var(--muted); color: var(--foreground);
+    border: 1px solid var(--input); border-radius: 4px;
+    padding: 2px 4px; font-size: 11px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  .slice-input.bad { border-color: var(--destructive); }
+  .probe-opts {
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 6px; font-size: 10px; color: var(--muted-foreground);
+  }
+  .probe-opts label { display: flex; gap: 3px; align-items: center; }
+  .num-field { display: inline-flex; align-items: center; gap: 1px; }
+  .num-field input {
+    width: 34px; background: var(--muted); color: var(--foreground);
+    border: 1px solid var(--input); border-radius: 4px;
+    padding: 1px 3px; font-size: 11px; text-align: center;
+  }
+  .probe-opts .scale-ctl { display: flex; gap: 3px; align-items: center; }
+
+  /* ---- payload 表示 ---- */
+  .payload-empty { color: var(--muted-foreground); font-size: 11px; }
+  .payload-error {
+    color: var(--destructive); font-size: 11px; white-space: pre-wrap;
+  }
+  .payload-text {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 16px; color: var(--status-ok);
+  }
+  .payload-bits { display: flex; flex-wrap: wrap; gap: 2px; max-width: 280px; }
+  .bit-cell {
+    width: 10px; height: 10px; border-radius: 2px; background: var(--bit-off);
+  }
+  .bit-cell.on {
+    background: var(--bit-on);
+    box-shadow: 0 0 4px color-mix(in srgb, var(--bit-on) 35%, transparent);
+  }
+  .payload-bars { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+  .barwrap {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    font-size: 10px; color: var(--muted-foreground);
+  }
+  .bar { width: 18px; background: var(--edge-default); border-radius: 2px 2px 0 0; }
+  .bar.top {
+    background: var(--primary);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--primary) 40%, transparent);
+  }
+  .payload-argmax { margin-top: 4px; font-size: 11px; color: var(--primary); }
+  .payload-image {
+    image-rendering: pixelated; border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .payload-queue { display: flex; flex-direction: column; gap: 4px; }
+  .queue-slot {
+    display: flex; gap: 6px; align-items: flex-start;
+    border-top: 1px dashed var(--border); padding-top: 3px;
+  }
+  .queue-slot:first-child { border-top: none; padding-top: 0; }
+  .queue-cycle {
+    color: var(--muted-foreground); font-size: 10px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace; min-width: 30px;
+  }
+  .queue-empty {
+    color: var(--muted-foreground);
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+
+  /* ---- ピン留めスタック/凡例/ヒント ---- */
+  .pinned-probes {
+    display: flex; flex-direction: column; gap: 8px;
+    max-height: 75vh; overflow-y: auto;
+  }
+  .edge-legend {
+    display: flex; gap: 10px; align-items: center;
+    background: color-mix(in srgb, var(--panel-bg) 90%, transparent);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 4px 10px; font-size: 10px; color: var(--muted-foreground);
+  }
+  .edge-legend .swatch {
+    display: inline-block; width: 14px; height: 0;
+    border-top: 2px solid var(--edge-default); vertical-align: middle;
+  }
+  .edge-legend .swatch.on { border-top-color: var(--edge-on); }
+  .edge-legend .swatch.probe { border-top-style: dashed; border-top-color: var(--probe); }
+
+  /* ---- 起動/致命エラー ---- */
+  .fatal-overlay {
+    position: fixed; inset: 20px; z-index: 9999; overflow: auto;
+    background: var(--popover); border: 2px solid var(--destructive);
+    border-radius: 10px; padding: 20px; color: var(--popover-foreground);
+  }
+  .fatal-overlay h2 { color: var(--destructive); margin-top: 0; }
+  .fatal-overlay pre { white-space: pre-wrap; font-size: 12px; }
+  .fatal-overlay .stack { color: var(--muted-foreground); }
+  .boot-loading, .boot-error {
+    display: grid; place-items: center; height: 100%;
+    color: var(--muted-foreground);
+  }
+  .boot-error { color: var(--destructive); }
+
+  /* ---- React Flow 調整(トークン追従) ---- */
+  .react-flow { background: var(--canvas-bg); }
+  .react-flow__minimap { background: var(--panel-bg); }
+  .react-flow__controls button {
+    background: var(--panel-bg); border-bottom: 1px solid var(--border);
+    fill: var(--foreground);
+  }
+  .react-flow__edge-text { fill: var(--probe); font-size: 10px; }
+  .react-flow__handle {
+    width: 9px; height: 9px; background: var(--primary);
+    border: 1px solid var(--background);
+  }
+}

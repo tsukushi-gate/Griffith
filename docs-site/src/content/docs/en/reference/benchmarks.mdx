@@ -1,0 +1,241 @@
+---
+title: 'Benchmarks'
+description: 'Measured results across model × dataset × hard accuracy × gate count, each row with its provenance (date, environment, conditions). Includes how to re-measure with `griffith bench`.'
+---
+
+Numbers measured with this library, laid out across **model × dataset × hard accuracy × scale**.
+Every row records **when, on what hardware and under which conditions** it was measured.
+
+If you want a one-line-per-model overview — headline accuracy, main open problem, world-first
+verdict — read the [Model Zoo](/en/reference/model-zoo/) first.
+
+:::caution[How to read these numbers]
+- All headline values are **hard** (gates fixed by argmax after training, then **inference as a pure
+  Boolean circuit**). Soft values (the relaxation used during training) are shown only so you can
+  see the gap.
+- Unless noted otherwise, each row is **a single seed and a single configuration**; seed variance
+  was not measured.
+- What is listed here is a **comparison between settings inside this library**. Side-by-side tables
+  against external implementations are not published, because we have not re-measured them under
+  matched conditions (rows where a prior method was re-implemented on top of this library say so
+  explicitly).
+- Rows marked "needs calibration" are records that **have not converged and whose cause is not yet
+  identified** — they are listed as a current position, not as an achievement.
+:::
+
+## 1. Image classification
+
+| Model / configuration | Dataset | hard | soft | Gates | Date & environment |
+|---|---|---|---|---|---|
+| DLGN (softmax N=2, 6 layers × 8,000, τ=10, unique connections, 200k iter) | MNIST 20×20 | **0.9784** | 0.9787 | 48,000 | 2026-07-02 / Modal A10G |
+| DLGN (Hard-ST selection, 6 layers × 64,000, N=2, 50k iter) | MNIST 28×28 | 0.9802 | — | 384,000 | 2026-04-15 / RunPod GPU |
+| DLGN (Soft-Mix selection, same as above) | MNIST 28×28 | 0.9746 | — | 384,000 | 2026-04-15 / RunPod GPU |
+| DLGN (softmax N=2, 6 layers × 16,000, 50 ep) | MNIST 28×28 | 0.9774 | 0.9830 | 96,000 | 2026-04-20 / RTX 5090 |
+| DLGN (warp N=2, same as above) | MNIST 28×28 | 0.9611 | 0.9605 | 96,000 | 2026-04-20 / RTX 5090 |
+| DLGN (warp N=4, same as above) | MNIST 28×28 | 0.9550 | 0.9564 | 24,000 | 2026-04-20 / RTX 5090 |
+| DLGN (softmax N=4, same as above) | MNIST 28×28 | 0.9454 | 0.9566 | 24,000 | 2026-04-20 / RTX 5090 |
+| BinaryBrain-style (raw + BatchNorm + Binarize, N=6, 10 ep) | MNIST | 0.9483 | — | 14,516 | 2026-04-20 / GPU |
+| BinaryBrain-style (same, smaller, 10 ep) | MNIST | 0.9308 | — | 3,182 | 2026-04-20 / GPU |
+| DLGN (softmax N=6, 10 ep, gate count matched to the row above) | MNIST | 0.6352 | — | 3,180 | 2026-04-20 / GPU |
+| Conv-DLGN (after the `softmax16g` fix) | CIFAR-10 | 0.5808 | — | — | 2026-07-05 / GPU |
+| Conv-DLGN (before the fix, 4-entry simplex) | CIFAR-10 | 0.4921 | — | — | 2026-07-05 / GPU |
+| LogicMixer (20k steps, **needs calibration**) | MNIST | 0.671 | — | — | 2026-07-10 / A10G |
+| LogicResNet (3 ep, **needs calibration**) | MNIST | 0.113 | — | — | 2026-07-10 / A10G |
+
+Gate counts are LUT counts computed as "layers × layer width" (`GroupSum` is not included).
+
+## 2. Parameterization comparison (matched conditions)
+
+MNIST 28×28, 6 layers, τ=10, 50 epochs, bs=128, lr=0.01, seed=0, RTX 5090 (32GB), 2026-04-20.
+
+| | softmax N=2 | warp N=2 | warp N=4 | softmax N=4 |
+|---|---|---|---|---|
+| hard accuracy | **97.74%** | 96.11% | 95.50% | 94.54% |
+| soft accuracy | 98.30% | 96.05% | 95.64% | 95.66% |
+| Discretization gap | 0.56pp | **−0.06pp** | 0.14pp | 1.12pp |
+| Gates | 96,000 | 96,000 | 24,000 | 24,000 |
+| Parameters | 1,536,000 | 384,000 | 384,000 | 384,000 |
+| Training time | 5.0 min | 3.1 min | 2.1 min | 1.7 min |
+| Training FLOPs/sample | 16,896,000 | 1,920,000 | 1,440,000 | 2,976,000 |
+| Accuracy / K gates | 0.0102 | 0.0100 | **0.0398** | 0.0394 |
+| Accuracy / M parameters | 0.636 | **2.503** | 2.487 | 2.462 |
+
+After discretization every method yields the same LUT circuit, so **inference performance is
+identical and the differences only exist during training**. For how to choose, see
+[Parameterization](/en/guides/parameterization/); for the experiment itself, see the
+[parameterization study](/en/explanation/results/parameterization-study/).
+
+## 3. Learning rules (MNIST)
+
+| Learning rule | soft | hard | Conditions |
+|---|---|---|---|
+| BP (softmax N=2) | 0.983 | **0.977** | 6 layers, τ=10, 50 ep / RTX 5090 |
+| BP (Hard-ST selection) | — | **0.980** | 6 layers × 64,000, 50k iter / RunPod GPU |
+| BP (Soft-Mix selection) | — | 0.975 | same as above |
+| AP (Akiho Propagation, error broadcast, no backprop) | ≈0.90 | ≈0.85 | flat, 4 layers × 16,000, 30 ep |
+
+AP is our own learning rule, which updates LUTs directly as
+`weight += error × basis × learning rate` without backprop. On fully connected MLPs it is
+**stable at soft ≈0.90 at any depth from 2 to 8** (0.898–0.909). On **CNNs, however, it collapses
+to ≈0.11** (loss pinned at ln 10, i.e. chance), and **on RNNs (seq2seq) it never rises above
+chance** (the breaking point lies between sequence length T=1 and T=2). The hypothesis that the
+collapse is caused by "broken monotonicity" has been **rejected**: even when projecting onto the
+monotone cone to force zero monotonicity violations, all three seeds still collapsed. On the other
+hand, randomizing the sign of the error broadcast destroys learning completely, so **sign
+consistency is essential**.
+
+`DFA` and `EGGROLL` (evolution strategies) are implemented as learning rules too, but the
+measurements we can publish today stop at convergence checks on XOR / parity / full adder
+(hard eval 100%) rather than MNIST-scale results.
+
+For how the learning rules work, see [Learning rules (BP/AP/DFA/ES)](/en/explanation/learning-rules/).
+
+## 4. Sequence and language
+
+| Model | Task | Metric | Value | Conditions & environment |
+|---|---|---|---|---|
+| LogicGPT L0 (all FP, ceiling) | Tiny Shakespeare char LM | hard ppl | 4.94 | vocab 65, T=64, 20k steps / A10G |
+| LogicGPT L0b (logic in the FFN only) | same as above | hard ppl | ≈7.9 | same as above |
+| LogicGPT L1 (+ projections as circuits) | same as above | hard ppl | 19.24 | same as above |
+| LogicGPT L2 (+ XNOR scores) | same as above | hard ppl | 19.39 | same as above |
+| LogicGPT L3-C (attention fully as circuits) | same as above | hard ppl | 15.54 | soft ≈12.2, gap 0.29 |
+| **LogicGPT L3-C + Gumbel** | same as above | hard ppl | **13.31** | soft ≈12.2, gap 0.107 |
+| LogicLSTM | delayed copy (T=8) | hard acc | **1.00** | ≤200 steps on every seed |
+| Elman-style (equivalent to RDDLGN) | same as above | hard acc | ≈0.86 | still short of it at 800 steps |
+| LogicReservoir (frozen circuit + trained readout) | delayed bit recall | hard acc | **1.00** | every seed, readout only trained |
+| DLGNAttentionTranslator | copy (seq_len=16) | hard acc | 25.77% | soft 71.66%, 9,352 gates / 156,032 params, 50k steps |
+| RDDLGN (re-implemented in this library) | copy (seq_len=16) | hard acc | 15.54% | soft 22.54%, 10,888 gates / 180,608 params, same conditions |
+
+LogicGPT is configured as d=128, 4 heads, 2 layers, T=64, character vocabulary 65, with
+**33,349 parameters in the logic part and a 545KB checkpoint**. Embeddings, LayerNorm, residual
+additions and the LM head are left in FP.
+
+## 5. Detection, dense prediction and generative models
+
+| Model | Task | Metric | Value | Conditions & environment |
+|---|---|---|---|---|
+| CenterNetLUT | Multi-MNIST detection (96×96, 1 object) | mAP (hard) | **0.5425** (epoch 78, **pre-fix figure, awaiting re-measurement**) | soft 0.1791, 13,944 params, 1,000 ep / 11h45m / RTX 5090. The mAP predates the image-scope fix in `compute_map` |
+| LogicUNet | 8×8 toy segmentation | IoU | 0.875 | **needs calibration** |
+| LogicUNet | full MNIST masks | IoU | 0.373 | **needs calibration** |
+| LogicBinaryDiffusion | binary MNIST | acc@t1 | 0.886 | denoising margin +0.377 (passthrough baseline 0.499), 4 ep, **3,937 params** |
+| LogicVAE (binary latent) | binary MNIST | reconstruction | 193.6 nat/image | KL 0.448, active_bits 0.99, 30 ep |
+| LutAutoencoder | MNIST reconstruction | Test MSE (hard) | 0.0863 (epoch 63) | soft 0.0438, 30,784 gates / 492,544 params / Apple M4 Pro (MPS) |
+| LogicYOLO | Multi-MNIST detection | — | full run not done | verified structurally up to round-trip IoU > 0.8 |
+| LogicGAN | 8×8 binary patterns | — | **open problem** | diverges untuned; with stabilization the two players stay balanced |
+
+## 6. Text classification (real data)
+
+WRIME (sentiment analysis of Japanese social media posts), LUT-based TextCNN. All values are hard.
+
+| Task | Accuracy | F1 | Parameters | Reference (published external values) |
+|---|---|---|---|---|
+| Binary classification | 82% | — | — | — |
+| 8-emotion binary classification | 83.4% | 0.367 | approx. 2.08M | DeBERTa-v3-base 87.0% / F1 0.630 |
+
+The 8-emotion version is 3.6pt behind DeBERTa in accuracy with 1/88 of the parameters, but
+**F1 is 0.263 lower**, which is a large deficit (minority classes get missed). Training takes about
+15 minutes on a GPU. The reference column lists each model's published values; it is not a
+re-measurement under conditions matched to this library.
+
+## 7. Conversion from pretrained models
+
+| Path | Dataset | hard | Notes |
+|---|---|---|---|
+| Pruned transfer + STE fine-tuning + int4 QAT + adder-tree lowering | MNIST | **0.9558** | within 2% of the teacher, exact lowering, 418k LUTs emitted |
+| Same recipe transferred (fan-in 48 / bits 6) | Fashion-MNIST | 0.8196 | quantization and lowering are data-independent; the fan-in budget needs to be about 1.5× for a harder task |
+| Pruned transfer (fan-in 32, before lowering) | MNIST | 0.9268 | naive sparse transfer collapses to 0.097 → recovered with pruning + STE |
+| KD from a public ResNet18 (CIFAR-10, 0.9498) | CIFAR-10 | **+2.3pt** vs. scratch | dense DLGN. The gain comes from the capability gap between teacher and student |
+| native DLGN conversion from a weak teacher (MNIST) | MNIST | below scratch (all three paths) | a negative result. native DLGN itself reaches scratch 0.9739 with 6–8k gates |
+| KD from a public DistilBERT | SST-2 | 80.7% (+7.3pt) | 73.4% → 80.7%, 88.4% recovery, α=0.25 / T=2 |
+| Data-free distillation from a public nanoGPT | char LM | BPC 2.71 | 0.51 bit behind the teacher, with no training data (only teacher-generated text) |
+
+## 8. Results you can reproduce on CPU alone (tutorials)
+
+Every tutorial on this site was executed and generated as a scaled-down version that runs
+**start to finish on CPU, no GPU required**. Below are the measured values printed on those pages
+(times are rough; the CPU model is not pinned).
+
+| Tutorial | Task | Measured | Scale | Time |
+|---|---|---|---|---|
+| [Train on MNIST](/en/tutorials/mnist/) | MNIST 20×20 | soft 0.8765 / hard 0.8670 | 4,000 gates, 4,000 steps | ~10 min |
+| [Build a Hybrid NN](/en/tutorials/hybrid/) | synthetic (2 Transformer blocks) | loss 2.0758 → 1.6405 | 8,706 real-valued + 16,384 logic params | ~5 min |
+| [Export to HDL](/en/tutorials/hdl-export/) | XOR | IR simulate predictions match the labels, Verilog comparison ALLPASS | — | ~10 min |
+| [Export a CNN to HDL](/en/tutorials/cnn-hdl-export/) | small image classification | hard 0.760, 100% IR agreement, Verilog ALLPASS | 864 gates after unrolling | ~10 min |
+| [Learning rules (DFA/AP)](/en/tutorials/learning-rules/) | XOR | DFA / AP / BP all reach acc 1.00 | AP stops early at 7 steps, BP takes 600 | ~5 min |
+| [End-to-end walkthrough](/en/tutorials/full-pipeline/) | XOR | hard 1.00 (from step 100 on), Verilog ALLPASS | LutLayer 2→16→16 | ~15 min |
+| [Appendix: XOR](/en/tutorials/xor/) | XOR | 1.00 both soft and hard | 16 gates | ~5 min |
+| [DWN (thermometer)](/en/tutorials/dwn/) | MNIST 20×20 (1,200 bit) | test acc 0.9540, max soft-hard logit difference 0.0 | 64-entry LUTs, widths (2000,1000) | ~7 min |
+| [BinaryBrain-compatible API](/en/tutorials/binarybrain/) | MNIST (7-frame modulation) | eval 0.8030 / 0.2110 after 0-1 rounding / 0.6320 after BN recalibration | 430 LUT6, 27,520 entries | ~10 min |
+| [TextCNN](/en/tutorials/textcnn/) | synthetic bigram-XOR sentiment | 1.0000 both soft and hard (reached at step 800) | a task where unigrams cap out at 0.535 | ~5 min |
+| [Attention tour](/en/tutorials/attention-tour/) | associative recall and 3 other tasks | Boolean / MultiQuery / Positional all 1.0000; Pointer soft 0.9843 / hard 0.8351 | 6,144 params each (9,280 for Pointer) | ~2 min |
+| [The logic ladder](/en/tutorials/logic-ladder/) | copy task | hard: L0 1.000 / L1 0.746 / L2 1.000 / L3-C 0.990 | 800 steps | ~8 min |
+| [Logic GPT](/en/tutorials/logic-gpt/) | Tiny Shakespeare (vocab 32) | val bpc 3.134 (uniform baseline 5.00) | 48,640 params total, 1,500 steps | ~10 min |
+| [seq2seq (RDDLGN)](/en/tutorials/rddlgn-seq2seq/) | copy / reverse (vocab 8) | copy soft 1.0000 / hard 0.9688, reverse soft 0.9980 / hard 0.9414 | 30,080 gate parameters | ~8 min |
+| [LSTM / GRU](/en/tutorials/logic-lstm/) | delayed copy (8 steps) | LSTM / GRU hard 1.0000, Elman 0.5781 | LSTM 1,024 / GRU 768 / Elman 256 params | ~5 min |
+| [WaveNet (causal conv)](/en/tutorials/logic-wavenet/) | periodic bit-pattern prediction | 1 layer (RF=2) hard 0.8167, 3 layers (RF=8) hard 1.0000 | 1,536 gates at 3 layers | ~5 min |
+| [Reservoir](/en/tutorials/logic-reservoir/) | parity / delay-d recall | parity hard: 1.0000 for k=1,2; 0.8223 for k=3; 0.5723 for k=4. delay-d is perfect for d=0–5 | 16,384 frozen + 1,026 readout params (5.9% trained) | ~5 min |
+| [Mixer](/en/tutorials/logic-mixer/) | MNIST 28×28 (16 tokens) | soft 0.6740 / hard 0.6580 | 3,000 steps, depth 2 | ~8 min |
+| [ResNet (exact identity)](/en/tutorials/logic-resnet/) | downscaled image classification | hard: XOR residual 0.361 / OR residual 0.299, max identity error 0.0 | 200 gates total | ~8 min |
+| [U-Net (dense prediction)](/en/tutorials/logic-unet/) | restoring MNIST masks from noise | test IoU 0.5678 (identity baseline 0.4556) | 1,000 steps, depth 2 | ~6 min |
+| [VAE (binary latent)](/en/tutorials/logic-vae/) | MNIST 14×14 | reconstruction BCE 43.27 / KL 13.22 / pixel agreement 0.9073 / active bits 1.00 | 70,436 params, 96-bit latent | ~7 min |
+| [GAN](/en/tutorials/logic-gan/) | four 8×8 binary patterns | stabilized: late_g 1.459 / D acc 0.874 / hamming 3.7 (naive: 7.221 / 1.000 / 21.9) | mode collapse to 1 of 4 under both settings | ~8 min |
+| [Diffusion](/en/tutorials/logic-diffusion/) | 8×8 binary MNIST (T=8) | acc@t1 0.8508 (blank 0.7606 / copy 0.9380), acc@tT 0.7544 | 1,633 params | ~6 min |
+| [Object detection](/en/tutorials/detection/) | synthetic Multi-MNIST | mAP@0.5 = 0.3003 | 679 gates, 500 steps | ~7 min |
+
+## 9. Measure it yourself — `griffith bench`
+
+A benchmark command ships with the library so you can re-measure on the same footing. Give it a
+recipe YAML or a saved checkpoint and it measures **hard eval accuracy, gate count and forward
+latency**, then writes them to JSON.
+
+```bash
+# From a recipe (short training run → measure the best checkpoint)
+uv run python benchmarks/bench.py configs/recipes/logic_xor.yaml
+
+# Measure only latency and gate count without training (hard_acc becomes null)
+uv run python benchmarks/bench.py configs/recipes/logic_xor.yaml --skip-train
+
+# Measure a saved checkpoint
+uv run python benchmarks/bench.py outputs/<run>/checkpoints/best.pt
+```
+
+Output goes to `benchmarks/results/<date>_<name>.json` with this fixed schema.
+
+```json
+{
+  "name": "...",
+  "timestamp": "...",
+  "config": { "...": "..." },
+  "metrics": {
+    "hard_acc": 0.0,
+    "total_gates": 0,
+    "latency_ms_b1": 0.0,
+    "latency_ms_b128": 0.0
+  },
+  "env": { "python": "...", "torch": "...", "platform": "..." }
+}
+```
+
+The measurement conditions are fixed as follows.
+
+- **Gate count** — the sum of neuron counts for `LutLayer` and internal tree nodes for
+  `LutConv2d`.
+- **Latency** — **always on CPU**, for reproducibility. After 5 warm-up runs, the median of 20
+  measurements is taken for both batch=1 and batch=128 (only training follows the device setting in
+  the recipe).
+- **Environment** — Python, PyTorch and the platform are recorded in the JSON.
+
+:::note[Why there is no latency column]
+The tables above are transcribed from individual experiment reports, where latency was not among the
+measured quantities. The `griffith bench` schema covers it, so a cross-cutting table with latency will be
+added here once the measurements are in.
+:::
+
+## Related pages
+
+- [Paper reproduction and improvements — DLGN MNIST](/en/explanation/results/dlgn-repro/) — what adds up to 0.9784
+- [The parameterization study](/en/explanation/results/parameterization-study/)
+- [The discretization gap in practice, and what to do about it](/en/explanation/results/discretization-gap/)
+- [Architecture survey](/en/explanation/results/architecture-survey/)
+
+{/* i18n:source=reference/benchmarks.mdx hash=c542485c8398 */}

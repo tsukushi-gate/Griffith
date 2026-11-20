@@ -1,0 +1,51 @@
+# 成果共有 computed-wiring-overlay / 較正アンカー C4: CIFAR-10 48K の旧 rot(R)。
+# 社内先行実験の R 腕(= 先行実験 B0)。層 0 だけ CIFAR の 2D 近傍
+# (s_a=3 で右 1 画素、s_b=96 で 1 行下)にし、隠れ層は MNIST 用のずらし量
+# {4, 20, 90, 400, 1800} をそのまま使った、受容野を設計する前の配線。
+#
+# 隠れ層のずらし量の和 2,413 が入力 9,216 に届かないため、クラス受容野は 30.7% しかない。
+# 「rot が精度を落とす」のはこの設計の問題で、規則そのものの限界ではない、という
+# 対照として置く(設計則 R26)。
+# 原値(2 seed): 0.4078 / 0.4101(P 比 −5.58 / −5.69pt)
+#
+# 実行: uv run md launch --grid "run.seed=[0,1]" configs/recipes/cwo_cifar10_48k_r.yaml --local
+data:
+  name: cifar-10-3-thresholds
+  batch_size: 100
+  params:
+    interleave_thresholds: true
+model:
+  kind: dlgn
+  k: 8000
+  layers: 6
+  n_inputs: 2
+  parameterization: softmax
+  selection: hard_st
+  init_mode: ri_randn
+  init_scale: 1.0
+  grad_factor: 1.0
+  tau: 30.0
+  connections:
+    kind: rot
+    s_a: [3, 0, 0, 0, 0, 0]
+    s_b: [96, 4, 20, 90, 400, 1800]
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 8
+  eval_interval: 100
+  wandb: true
+  wandb_group: dlgn-ffn
+  wandb_job_type: train
+  wandb_tags: [computed-wiring-overlay, calibration, R, cifar10-48k]
+  wandb_notes: >-
+    成果共有 computed-wiring-overlay の較正アンカー C4。CIFAR-10 48K の旧 rot(R、
+    MNIST 用のずらし量のままでクラス受容野 30.7%)。受容野を満たした SR2 との差を測る。
+  wandb_hypothesis: >-
+    クラス受容野が入力を覆わない rot は、置換配線を大きく下回る(原値 −5.58 / −5.69pt)。
+    落ちる原因は規則配線そのものではなくシフト量の設計にある。
+  run_name: cwo_cifar10_48k_r
+  save_eval_history: true
+expected_metrics:
+  best_hard_acc_min: 0.4048

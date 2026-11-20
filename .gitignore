@@ -1,0 +1,116 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# 仮想環境
+.venv/
+
+# データセット
+data-*/
+
+# テスト・キャッシュ
+.pytest_cache/
+.coverage
+.coverage.*
+.hypothesis/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# ログ
+logs/
+# 実験ログはリモート/PRに含めない(ローカル回収のみ。--log-dirsで参照)
+logs-d*/
+
+# チェックポイント
+checkpoints/
+
+# 統合出力
+outputs/
+
+# 参照用の上流リポ実体(references/repos.lock で SHA 固定。fetch_reference_repos.sh で取得)
+references/repos/
+
+# ベンチマーク結果(nightlyのartifactで保全、リポジトリには含めない)
+benchmarks/results/
+
+# 環境変数
+.env
+
+# 論文PDF原本(md変換版のみコミットする。docs/papers/README.md参照)
+docs/papers/pdf/
+
+# 個人用 SSH GPU ランナー
+scripts/remote/
+
+# wandb run追跡（Claude Code用）
+.wandb_last_run_id
+.wandb_runs.jsonl
+wandb/
+
+# Visualizer
+tools/visualizer/frontend/node_modules/
+tools/visualizer/frontend/dist/
+
+# Claude Code(skills・hooks・共有設定は共有資産として追跡する)
+.claude/*
+!.claude/skills/
+!.claude/settings.json
+!.claude/hooks/
+!.claude/agents/
+!.claude/commands/
+out_examples/
+tools/editor/frontend/node_modules/
+tools/editor/frontend/dist/
+
+# compile-pipeline(Q): 重い成果物は追跡しない(サマリJSONのみコミット)
+results/compile-pipeline/*_ir_final.json
+results/compile-pipeline/*_ir_l*.json
+results/compile-pipeline/*.npz
+results/compile-pipeline/abc_work_*/
+
+# 学習済みckptの作業用コピー(サーバから取得した生成物、42MB)
+scratch_ckpt/
+
+# ドキュメントサイト(Astro Starlight)
+docs-site/node_modules/
+docs-site/dist/
+docs-site/.astro/
+
+# OSS 公開ツリーのローカル組み立て結果
+public-tree/
+*.manifest.json
+# 公開ツリーのテスト(tools/mdl-fpga/tests)が読むサンプルの manifest は無視しない
+!tools/mdl-fpga/examples/*.manifest.json
+
+# デプロイキット(Track K): 生成Cのビルド作業ディレクトリは成果物ではない
+results/deploy/build/
+results/deploy/build_bench/
+results/deploy/build_bench_rddlgn/
+results/deploy/build_bench_onnx/
+
+# デプロイキット(Track K): 計測生データはpushしない(要約はdocs/report/と
+# 開発記録に記録。再生成: scripts/bench_deploy*.py, bench_conv_split_metal.py,
+# verify_cuda_remote.py --bench 等)
+results/deploy/*.json
+results/deploy/sass/
+
+# fan-in掃引の結果(別トラック、deploykit PRに含めない)
+results-d17/
+
+# デプロイキット(Track K): Webランタイムのビルド成果物(`make web-runtime`で再生成)
+runtime/web/dist/
+
+# 低ビットNN比較: 計測データ一式はpushしない(結論は開発記録の
+# 低ビットNN比較節に記録)
+results/lowbit-baselines/
+
+# 検証時の副産物(ルート直下のnpm実行で生成されうる)
+/node_modules/

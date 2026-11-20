@@ -1,0 +1,123 @@
+---
+title: 'The experiment behind the parameterization rule'
+description: 'softmax / warp / independent / raw measured under identical conditions. Where the operating rule "softmax for N=2, independent for N≥4" actually came from.'
+---
+
+`LutLayer` offers five parameterizations (`softmax` / `independent` / `iwp` / `raw` / `warp`). The
+choice changes accuracy, parameter count, and the quality of the circuit after discretization. This
+page traces **which measurements produced the operating rule "softmax for N=2, independent for
+N≥4"**. The methods themselves are explained in
+[Choosing a parameterization](/en/guides/parameterization/).
+
+## 1. Like-for-like comparison — softmax vs. warp, N=2 vs. N=4
+
+:::note[Experimental setup]
+NVIDIA GeForce RTX 5090 (32GB), MNIST 28×28, 6 layers, τ=10, 50 epochs,
+bs=128, lr=0.01, seed=0. Run on 2026-04-20 (single seed).
+:::
+
+| | softmax N=2 | warp N=2 | warp N=4 | softmax N=4 |
+|---|---|---|---|---|
+| **hard accuracy** | **97.74%** | 96.11% | 95.50% | 94.54% |
+| soft accuracy | 98.30% | 96.05% | 95.64% | 95.66% |
+| discretization gap | 0.56pp | **−0.06pp** | **0.14pp** | 1.12pp |
+| gate count | 96,000 | 96,000 | **24,000** | **24,000** |
+| parameter count | 1,536,000 | **384,000** | **384,000** | **384,000** |
+| training time | 5.0 min | 3.1 min | **2.1 min** | 1.7 min |
+| training FLOPs/sample | 16,896,000 | 1,920,000 | **1,440,000** | 2,976,000 |
+
+Four things stand out.
+
+- **softmax N=2 leads on accuracy** (97.74%) — but costs 4× the parameters (the 16-gate mode at N=2
+  spends 16 parameters per gate).
+- **warp very nearly eliminates the discretization gap.** At N=2 it is −0.06pp: hard slightly
+  exceeds soft. The soft score is the circuit's score.
+- **Only softmax N=4 has a large gap, 1.12pp.** That is a lack of expressiveness showing up in the
+  numbers; §2 below explains why.
+- **warp trains at 11–48% of softmax's FLOPs**, because it needs neither softmax's exp (48 FLOPs)
+  nor the 16-gate table multiplication (112 FLOPs).
+
+### The ranking flips when you look at efficiency
+
+| Metric | softmax N=2 | warp N=2 | warp N=4 | softmax N=4 |
+|---|---|---|---|---|
+| accuracy / K gates | 0.0102 | 0.0100 | **0.0398** | 0.0394 |
+| accuracy / M parameters | 0.636 | **2.503** | 2.487 | 2.462 |
+| accuracy / training minute | 0.198 | 0.305 | 0.451 | **0.556** |
+
+**Per gate, N=4 is roughly 4× more efficient.** A single gate carries more expressive power, so the
+same accuracy band is reached with a quarter of the gates. When FPGA area is the constraint, this
+column matters more than peak accuracy.
+
+After discretization the circuit is the same LUT circuit regardless of parameterization.
+**Inference performance is identical; the difference exists only at training time** — an important
+point.
+
+## 2. Why you must not pick softmax at N≥4
+
+At N≥4, softmax operates on a simplex over $2^N$ entries rather than a 16-gate table. Since the
+entries sum to 1, discretization (probability > 0.5) can set at most one bit — **the only hard
+tables you can build are a single minterm or constant FALSE**. Everyday functions like pass-through,
+OR and XOR are structurally unrepresentable.
+
+`independent`, by contrast, has an independent sigmoid per entry and can express any truth table
+directly. In a controlled experiment on a convolutional configuration where only `softmax` (an
+entry simplex) was swapped for `independent`, accuracy improved by **+3.2pt despite half the
+epochs**. This is consistent with the fully connected MNIST numbers (softmax N=4 at hard 94.54% with
+a 1.12pp gap, versus warp N=4 at 95.50% / 0.14pp under the same conditions).
+
+**Missing expressiveness cannot be made up with more training** — that is the takeaway.
+
+## 3. Raise the learning rate when using `independent`
+
+Because `independent` goes through a sigmoid, a saturation-prone initialization combined with deep
+serial composition makes gradients decay fast. In practice the gradient norm across all layers fell
+to around $10^{-5}$, and at the default lr=0.02 soft accuracy did not move after 10 epochs.
+**Learning proceeds at lr ≥ 0.3**, as confirmed by measurement.
+
+```bash
+# N=6 (FPGA LUT6 compatible) + independent + a raised learning rate
+uv run griffith train configs/recipes/dlgn_mnist_quick.yaml \
+    model.n_inputs=6 model.k=4000 model.parameterization=independent optim.lr=0.3
+```
+
+## 4. Comparison with the `raw` family (the BinaryBrain style)
+
+A BinaryBrain-style configuration — `raw` parameterization with BatchNorm and Binarize interleaved —
+**wins in the low-gate regime when gate counts are matched**. Measured on 2026-04-20, MNIST, N=6,
+10 epochs:
+
+| Gate-count level | BinaryBrain (raw+BN+Binarize, binary modulation, 15 frames) | DLGN (softmax, uniform width) |
+|---|---|---|
+| about 3,200 gates | **93.08%** (3,182 gates / 210,012 parameters) | 63.52% (3,180 gates / 203,520 parameters) |
+| about 16,000 gates | **94.83%** (14,516 gates / 958,056 parameters) | 93.38% (16,000 gates / 1,024,000 parameters) |
+| FLOPs/sample (at 3.2K gates) | 43.11 MFLOPS | **2.85 MFLOPS** |
+| wall time (at 3.2K gates) | 1 min 44 s | **11 s** |
+
+The gap decomposes cleanly. BinaryBrain uses **binary modulation**: it binarizes each sample at 15
+different thresholds and averages the inferences. That buys an ensemble effect at the cost of 15×
+the FLOPs (measured 43.1M / 2.85M = 15.1×, exactly the number of modulation frames). On top of that,
+BatchNorm + Binarize in every layer returns the intermediate representation to `{0,1}`, so the LUTs
+receive high-quality inputs.
+
+On the other hand, BinaryBrain tends to peak at 2–3 epochs and then degrade (94.83% → 92.99% by
+epoch 10); the cause has been pinned to BatchNorm's `momentum=1.0` (running stats fully replaced
+every batch). The DLGN side improved monotonically and stayed stable.
+
+**When to use which**: tight FPGA resources → BinaryBrain style; training and inference speed →
+DLGN style; enough gates available → DLGN style is simpler and more stable.
+
+## 5. Summary
+
+| Goal | Choose | Basis |
+|---|---|---|
+| peak accuracy | `softmax` N=2 | MNIST hard 97.74% |
+| minimum FPGA area | `warp` N=4 | 95.50% at 24K gates, a quarter of the resources |
+| minimum discretization gap | `warp` | −0.06pp to 0.14pp |
+| hard accuracy at N≥4 | `independent` (+ lr 0.1–0.3) | softmax at N≥4 can only build a single minterm |
+| accuracy with few gates | `raw` + BN + Binarize (BinaryBrain style) | 93.08% at 3.2K gates |
+
+Related: [The discretization gap in practice](/en/explanation/results/discretization-gap/) /
+[Benchmarks](/en/reference/benchmarks/)
+
+{/* i18n:source=explanation/results/parameterization-study.mdx hash=3a3ab131915b */}

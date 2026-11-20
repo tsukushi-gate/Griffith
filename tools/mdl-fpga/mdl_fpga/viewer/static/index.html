@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>mdl-fpga viewer</title>
+<style>
+  :root {
+    --bg: #12151c; --panel: #1a1f2b; --border: #2a3245;
+    --text: #d8dee9; --dim: #6b7691; --on: #4ade80; --off: #232a3a;
+    --accent: #60a5fa; --warn: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font-family: "Segoe UI", system-ui, sans-serif; font-size: 14px; }
+  header { display: flex; align-items: center; gap: 16px; padding: 10px 16px;
+           background: var(--panel); border-bottom: 1px solid var(--border); }
+  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  header .meta { color: var(--dim); font-size: 12px; }
+  #status { margin-left: auto; display: flex; gap: 14px; font-size: 12px;
+            color: var(--dim); }
+  #status b { color: var(--text); font-variant-numeric: tabular-nums; }
+  main { display: flex; gap: 14px; padding: 14px; align-items: flex-start; }
+  .panel { background: var(--panel); border: 1px solid var(--border);
+           border-radius: 8px; padding: 12px; }
+  #left { width: 300px; flex-shrink: 0; display: flex; flex-direction: column;
+          gap: 12px; }
+  #layers { flex: 1; display: flex; flex-direction: column; gap: 10px;
+            min-width: 0; }
+  .layer-title { font-size: 12px; color: var(--dim); margin-bottom: 6px;
+                 display: flex; gap: 8px; }
+  .layer-title b { color: var(--text); font-weight: 600; }
+  .cells { display: flex; flex-wrap: wrap; gap: 2px; }
+  .cell { width: 14px; height: 14px; border-radius: 3px; background: var(--off);
+          transition: background .15s; }
+  .cell.on { background: var(--on); box-shadow: 0 0 6px #4ade8055; }
+  .cell.clickable { cursor: pointer; width: 22px; height: 22px; }
+  .cell.clickable:hover { outline: 1px solid var(--accent); }
+  canvas.grid { image-rendering: pixelated; border: 1px solid var(--border);
+                border-radius: 4px; }
+  #paint { cursor: crosshair; touch-action: none; }
+  .bars { display: flex; align-items: flex-end; gap: 8px; height: 110px; }
+  .barwrap { display: flex; flex-direction: column; align-items: center;
+             gap: 4px; font-size: 11px; color: var(--dim); }
+  .bar { width: 26px; background: #334155; border-radius: 3px 3px 0 0;
+         transition: height .25s; }
+  .bar.top { background: var(--accent); box-shadow: 0 0 8px #60a5fa66; }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { background: #263149; color: var(--text); border: 1px solid var(--border);
+           border-radius: 6px; padding: 7px 14px; cursor: pointer; font-size: 13px; }
+  button:hover { background: #2f3d5c; }
+  button.primary { background: var(--accent); color: #0b1020; font-weight: 700; }
+  label.chk { display: flex; gap: 6px; align-items: center; font-size: 12px;
+              color: var(--dim); cursor: pointer; }
+  #xzbadge { color: var(--warn); font-size: 12px; display: none; }
+  footer { color: var(--dim); font-size: 11px; padding: 4px 16px 14px; }
+  .pred { font-size: 30px; font-weight: 800; color: var(--on);
+          font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<header>
+  <h1>mdl-fpga viewer</h1>
+  <span class="meta" id="modelname"></span>
+  <span id="xzbadge">⚠ X/Z</span>
+  <div id="status">
+    <span>cycle <b id="cycle">0</b></span>
+    <span>step <b id="latency">-</b> ms</span>
+    <span id="conn">接続中...</span>
+  </div>
+</header>
+<main>
+  <div id="left">
+    <div class="panel" id="inputPanel">
+      <div class="layer-title"><b>入力 x</b><span id="inputInfo"></span></div>
+      <div id="inputArea"></div>
+    </div>
+    <div class="panel">
+      <div class="controls">
+        <button class="primary" onclick="doStep(1)">STEP ⏵ 1clk</button>
+        <button onclick="doStep(10)">×10</button>
+        <button id="runbtn" onclick="toggleRun()">RUN</button>
+        <button onclick="send({cmd:'reset'})">RESET</button>
+      </div>
+      <div style="margin-top:10px; display:flex; flex-direction:column; gap:6px;">
+        <label class="chk"><input type="checkbox" id="autostep" checked>
+          入力変更で自動 1clk(クリック=1クロック)</label>
+        <label class="chk"><input type="checkbox" id="flowanim" checked>
+          レイヤ伝搬のフロー演出(値は同一クロックで確定)</label>
+      </div>
+    </div>
+    <div class="panel" id="outPanel">
+      <div class="layer-title"><b>出力 y</b><span id="outInfo">(1clk 遅れの出力レジスタ)</span></div>
+      <div id="outArea"></div>
+    </div>
+  </div>
+  <div id="layers"></div>
+</main>
+<footer>
+  値は RTL シミュレーション(iverilog + cocotb)の実値。ライブラリ参照シムと bit 一致
+  することを回帰テストで保証(check の辺(a))。フロー演出は表示のみで、組み合わせ回路の
+  値は同一クロック内に確定している。
+</footer>
+<script>
+"use strict";
+let META = null, WS = null, X = 0n, RUN = null;
+const $ = id => document.getElementById(id);
+
+function hexBits(hex, width) {
+  const v = BigInt("0x" + (hex || "0"));
+  const bits = new Uint8Array(width);
+  for (let i = 0; i < width; i++) bits[i] = Number((v >> BigInt(i)) & 1n);
+  return bits;
+}
+
+// ---- 入力 UI(≤64bit: トグル / 784bit: 28x28 手描き / その他: 正方キャンバス) ----
+function buildInput() {
+  const area = $("inputArea");
+  const w = META.in_width;
+  $("inputInfo").textContent = `${w} bit`;
+  if (w <= 64) {
+    const div = document.createElement("div");
+    div.className = "cells";
+    for (let i = 0; i < w; i++) {
+      const c = document.createElement("div");
+      c.className = "cell clickable"; c.dataset.i = i; c.title = `x[${i}]`;
+      c.onclick = () => { X ^= 1n << BigInt(i); pushX(); renderInput(); };
+      div.appendChild(c);
+    }
+    area.appendChild(div);
+  } else {
+    const side = (w === 784) ? 28 : Math.ceil(Math.sqrt(w));
+    const scale = Math.max(4, Math.floor(280 / side));
+    const cv = document.createElement("canvas");
+    cv.id = "paint"; cv.className = "grid";
+    cv.width = side * scale; cv.height = side * scale;
+    cv.dataset.side = side; cv.dataset.scale = scale;
+    let drawing = 0;
+    const apply = (e, erase) => {
+      const r = cv.getBoundingClientRect();
+      const px = Math.floor((e.clientX - r.left) / scale);
+      const py = Math.floor((e.clientY - r.top) / scale);
+      if (px < 0 || py < 0 || px >= side || py >= side) return;
+      const i = py * side + px;
+      if (i >= w) return;
+      if (erase) X &= ~(1n << BigInt(i)); else X |= 1n << BigInt(i);
+      renderInput();
+    };
+    cv.onpointerdown = e => { drawing = (e.button === 2) ? 2 : 1;
+                              apply(e, drawing === 2); e.preventDefault(); };
+    cv.onpointermove = e => { if (drawing) apply(e, drawing === 2); };
+    cv.onpointerup = () => { if (drawing) { drawing = 0; pushX(); } };
+    cv.oncontextmenu = e => e.preventDefault();
+    area.appendChild(cv);
+    const clr = document.createElement("button");
+    clr.textContent = "クリア"; clr.style.marginTop = "8px";
+    clr.onclick = () => { X = 0n; pushX(); renderInput(); };
+    area.appendChild(clr);
+  }
+}
+function renderInput() {
+  const w = META.in_width;
+  if (w <= 64) {
+    document.querySelectorAll("#inputArea .cell").forEach(c => {
+      const on = (X >> BigInt(+c.dataset.i)) & 1n;
+      c.classList.toggle("on", on === 1n);
+    });
+  } else {
+    const cv = $("paint"), side = +cv.dataset.side, sc = +cv.dataset.scale;
+    const g = cv.getContext("2d");
+    g.fillStyle = "#232a3a"; g.fillRect(0, 0, cv.width, cv.height);
+    g.fillStyle = "#4ade80";
+    for (let i = 0; i < w; i++)
+      if ((X >> BigInt(i)) & 1n)
+        g.fillRect((i % side) * sc, Math.floor(i / side) * sc, sc - 1, sc - 1);
+  }
+}
+function pushX() {
+  const auto = $("autostep").checked;
+  send(auto ? { cmd: "set_step", hex: X.toString(16), n: 1 }
+            : { cmd: "set_x", hex: X.toString(16) });
+}
+
+// ---- レイヤ表示 ----
+function buildLayers() {
+  const root = $("layers");
+  for (const n of META.nodes) {
+    const p = document.createElement("div");
+    p.className = "panel"; p.id = "node_" + n.id;
+    const title = document.createElement("div");
+    title.className = "layer-title";
+    title.innerHTML = `<b>${n.id}</b><span>${n.type} / ${n.width} bit` +
+      (n.alias ? "(alias)" : "") + `</span>`;
+    p.appendChild(title);
+    if (n.type === "group_sum" && META.k) {
+      const bars = document.createElement("div");
+      bars.className = "bars"; bars.dataset.node = n.id;
+      const maxScore = (1 << n.score_bits) - 1;
+      for (let c = 0; c < META.k; c++) {
+        const wrap = document.createElement("div"); wrap.className = "barwrap";
+        const bar = document.createElement("div");
+        bar.className = "bar"; bar.dataset.c = c; bar.dataset.max = maxScore;
+        bar.style.height = "2px";
+        const lbl = document.createElement("span");
+        lbl.textContent = "c" + c;
+        wrap.appendChild(bar); wrap.appendChild(lbl); bars.appendChild(wrap);
+      }
+      p.appendChild(bars);
+      const pred = document.createElement("div");
+      pred.className = "pred"; pred.id = "pred_" + n.id; pred.textContent = "-";
+      p.appendChild(pred);
+    } else if (n.width <= 512) {
+      const div = document.createElement("div");
+      div.className = "cells"; div.dataset.node = n.id;
+      const size = n.width <= 64 ? 14 : (n.width <= 256 ? 9 : 6);
+      for (let i = 0; i < n.width; i++) {
+        const c = document.createElement("div"); c.className = "cell";
+        c.style.width = size + "px"; c.style.height = size + "px";
+        div.appendChild(c);
+      }
+      p.appendChild(div);
+    } else {
+      const side = Math.ceil(Math.sqrt(n.width));
+      const sc = Math.max(2, Math.floor(560 / side));
+      const cv = document.createElement("canvas");
+      cv.className = "grid"; cv.dataset.node = n.id;
+      cv.dataset.side = side; cv.dataset.scale = sc;
+      cv.width = side * sc; cv.height = side * sc;
+      p.appendChild(cv);
+    }
+    root.appendChild(p);
+  }
+}
+function paintNode(n, hex) {
+  if (n.type === "group_sum" && META.k) {
+    const v = BigInt("0x" + hex);
+    const mask = (1n << BigInt(n.score_bits)) - 1n;
+    const scores = [];
+    for (let c = 0; c < META.k; c++)
+      scores.push(Number((v >> BigInt(c * n.score_bits)) & mask));
+    const top = scores.indexOf(Math.max(...scores));
+    document.querySelectorAll(`[data-node="${n.id}"] .bar`).forEach(b => {
+      const c = +b.dataset.c, max = +b.dataset.max;
+      b.style.height = Math.max(2, scores[c] / max * 100) + "px";
+      b.classList.toggle("top", c === top);
+    });
+    $("pred_" + n.id).textContent =
+      `argmax = ${top}(score ${scores[top]})`;
+    return;
+  }
+  const bits = hexBits(hex, n.width);
+  const el = document.querySelector(`[data-node="${n.id}"]`);
+  if (!el) return;
+  if (el.tagName === "CANVAS") {
+    const side = +el.dataset.side, sc = +el.dataset.scale;
+    const g = el.getContext("2d");
+    g.fillStyle = "#232a3a"; g.fillRect(0, 0, el.width, el.height);
+    g.fillStyle = "#4ade80";
+    for (let i = 0; i < n.width; i++)
+      if (bits[i]) g.fillRect((i % side) * sc, Math.floor(i / side) * sc,
+                              Math.max(1, sc - 1), Math.max(1, sc - 1));
+  } else {
+    el.querySelectorAll(".cell").forEach(
+      (c, i) => c.classList.toggle("on", !!bits[i]));
+  }
+}
+
+// ---- 値更新(フロー演出=レイヤごとに遅延描画。値自体は同一クロック確定) ----
+function onValues(msg) {
+  $("cycle").textContent = msg.cycle ?? "-";
+  if (msg.latency_ms !== undefined) $("latency").textContent = msg.latency_ms;
+  $("xzbadge").style.display = (msg.xz && msg.xz.length) ? "inline" : "none";
+  if (!msg.values) return;
+  const anim = $("flowanim").checked;
+  META.nodes.forEach((n, li) => {
+    const run = () => paintNode(n, msg.values[n.id]);
+    anim ? setTimeout(run, 70 * (li + 1)) : run();
+  });
+  const yb = hexBits(msg.values.y, META.out_width);
+  const out = $("outArea");
+  if (!out.dataset.built) {
+    out.dataset.built = 1;
+    const div = document.createElement("div");
+    div.className = "cells"; div.dataset.node = "__y";
+    for (let i = 0; i < META.out_width; i++) {
+      const c = document.createElement("div"); c.className = "cell";
+      div.appendChild(c);
+    }
+    out.appendChild(div);
+  }
+  document.querySelectorAll('[data-node="__y"] .cell').forEach(
+    (c, i) => c.classList.toggle("on", !!yb[i]));
+}
+
+function send(obj) {
+  if (WS && WS.readyState === 1) WS.send(JSON.stringify(obj));
+}
+function doStep(n) { send({ cmd: "step", n }); }
+function toggleRun() {
+  if (RUN) { clearInterval(RUN); RUN = null; $("runbtn").textContent = "RUN"; }
+  else { RUN = setInterval(() => doStep(1), 100); $("runbtn").textContent = "STOP"; }
+}
+
+async function init() {
+  META = await (await fetch("/api/meta")).json();
+  $("modelname").textContent =
+    `${META.name} — in ${META.in_width}b / out ${META.out_width}b` +
+    (META.k ? ` / ${META.k} クラス` : "");
+  buildInput(); renderInput(); buildLayers();
+  WS = new WebSocket(`ws://${location.host}/ws/sim`);
+  WS.onopen = () => $("conn").textContent = "● 接続";
+  WS.onclose = () => $("conn").textContent = "○ 切断";
+  WS.onmessage = e => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === "values") onValues(msg);
+  };
+}
+init();
+</script>
+</body>
+</html>

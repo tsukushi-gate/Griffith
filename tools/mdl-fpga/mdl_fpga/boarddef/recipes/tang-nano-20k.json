@@ -1,0 +1,115 @@
+{
+  "recipe_version": 1,
+  "_comment": "レシピは『どのソースのどの信号が schema のどの役割か』の対応付けのみを持つ。ピン値は一切書かない(創作禁止)。ピンは fetch がソースから機械抽出し2ソース突合する。boards/tang-nano-20k.json(実機受入済み)の再生成テストが本レシピの受入基準",
+  "key": "tang-nano-20k",
+  "name": "Sipeed Tang Nano 20K",
+  "toolchain": "gowin-oss",
+  "pin_format": "gowin",
+  "family": "GW2A-18C",
+  "family_note": "nextpnr-himbaechel の chipdb-GW2A-18C.bin / apycula の GW2A-18C デバイスデータに対応する die 名(GW2AR-18 は同 die の SDRAM 内蔵 SIP。litex devicename=GW2AR-18C)",
+  "sources": {
+    "litex": {
+      "provider": "litex",
+      "home": "https://github.com/litex-hub/litex-boards",
+      "commit": "4f4caad16f97e5214837e75719af396f69cc2f8c",
+      "license": "BSD-2-Clause",
+      "local": "references/tang-nano-20k/litex-boards/sipeed_tang_nano_20k.py",
+      "url": "https://raw.githubusercontent.com/litex-hub/litex-boards/4f4caad16f97e5214837e75719af396f69cc2f8c/litex_boards/platforms/sipeed_tang_nano_20k.py"
+    },
+    "sipeed": {
+      "provider": "cst",
+      "home": "https://github.com/sipeed/TangNano-20K-example",
+      "commit": "e23949a0a77381b94960cbc4e97a7c5e5ba8d222",
+      "local_dir": "references/tang-nano-20k/sipeed-examples",
+      "files": [
+        "top.cst",
+        "blink_leds.cst",
+        "fpga_project.cst",
+        "nestang.cst",
+        "audio_src_audio.cst",
+        "hdmi_src_hdmi.cst"
+      ]
+    }
+  },
+  "device_refs": [
+    { "source": "litex", "field": "device" },
+    { "source": "sipeed", "file": "fpga_project.cst", "field": "part_number" },
+    { "source": "sipeed", "file": "hdmi_src_hdmi.cst", "field": "part_number" }
+  ],
+  "clock": {
+    "port": "CLK27",
+    "hz": 27000000,
+    "refs": [
+      { "source": "litex", "signal": "clk27" },
+      { "source": "sipeed", "file": "blink_leds.cst", "net": "clk" },
+      { "source": "sipeed", "file": "top.cst", "net": "clk" },
+      { "source": "sipeed", "file": "fpga_project.cst", "net": "clk" },
+      { "source": "sipeed", "file": "nestang.cst", "net": "sys_clk" }
+    ]
+  },
+  "led": {
+    "port": "LED",
+    "active_low": true,
+    "active_low_note": "負論理(litex 命名 led_n + Sipeed blink_leds.v の assign leds = ~leds_value の2証拠)",
+    "refs": [
+      { "source": "litex", "signal": "led_n" },
+      { "source": "sipeed", "file": "blink_leds.cst", "net": "leds[{i}]", "count": 6 },
+      { "source": "sipeed", "file": "fpga_project.cst", "net": "trap", "at": 0 }
+    ]
+  },
+  "button": {
+    "port": "BTN",
+    "active_low": false,
+    "active_low_note": "押下=High / idle=Low(正論理)。実機 A/B 実験で確定(boards/NOTICE 参照)。draft 再生成時も実機確定済みの本値を注記ごと引き継ぐ",
+    "note": "BTN[0]=S1 / BTN[1]=S2。litex btn と Sipeed 例(top.cst rst / fpga_project.cst resetn / nestang.cst s1 / hdmi I_rst=S1、audio rst / hdmi I_key=S2)の突合",
+    "refs": [
+      { "source": "litex", "signal": "btn" },
+      { "source": "sipeed", "file": "top.cst", "net": "rst", "at": 0 },
+      { "source": "sipeed", "file": "fpga_project.cst", "net": "resetn", "at": 0 },
+      { "source": "sipeed", "file": "nestang.cst", "net": "s1", "at": 0 },
+      { "source": "sipeed", "file": "hdmi_src_hdmi.cst", "net": "I_rst", "at": 0 },
+      { "source": "sipeed", "file": "audio_src_audio.cst", "net": "rst", "at": 1 },
+      { "source": "sipeed", "file": "hdmi_src_hdmi.cst", "net": "I_key", "at": 1 }
+    ]
+  },
+  "headers": [
+    {
+      "name": "BL616_UART",
+      "connector": "onboard",
+      "builtin": true,
+      "note": "BL616 内蔵 USB-UART と基板上で直結(外部ブリッジ・結線不要)。io[0]=FPGA 側 RX(litex serial.rx)/ io[1]=FPGA 側 TX(litex serial.tx)= DEFAULT_UART_LINK の index 0/1 規約",
+      "io": {
+        "0": [
+          { "source": "litex", "signal": "serial", "sub": "rx" },
+          { "source": "sipeed", "file": "top.cst", "net": "uart_rx" }
+        ],
+        "1": [
+          { "source": "litex", "signal": "serial", "sub": "tx" },
+          { "source": "sipeed", "file": "top.cst", "net": "uart_tx" },
+          { "source": "sipeed", "file": "fpga_project.cst", "net": "ser_tx" }
+        ]
+      }
+    }
+  ],
+  "io_standard": {
+    "value": "LVCMOS33",
+    "note": "litex IOStandard / cst IO_TYPE の突合"
+  },
+  "detection": {
+    "cable_ref": { "source": "litex", "field": "cable" },
+    "ofl_board": "tangnano20k",
+    "ofl_board_note": "openFPGALoader --list-boards の実出力から転記(boards/NOTICE。バージョン更新時は再確認)",
+    "jtag_part_regex": "GW2A",
+    "silk_hint": "基板裏に『Tang Nano 20K』シルク。HDMI コネクタ+microSD スロット+表面実装 LED 6 個"
+  },
+  "resources": {
+    "unit": "lut4",
+    "lut4": 20736,
+    "ff": 15552,
+    "bsram_kbits": 828,
+    "bsram_blocks": 46,
+    "sdram_mbits": 64,
+    "note": "Sipeed 公式 wiki(tang-nano-20k/nano-20k.html)の仕様表から転記"
+  },
+  "synth_options_from_litex": true
+}

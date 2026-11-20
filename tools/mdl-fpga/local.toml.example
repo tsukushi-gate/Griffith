@@ -1,0 +1,16 @@
+# mdl-fpga のローカルツールパス設定(このファイルを local.toml にコピーして編集)。
+# local.toml は gitignore 済み。環境変数 MDL_FPGA_OSS_CAD / MDL_FPGA_QUARTUS_BIN でも指定可。
+
+# oss-cad-suite のルート(bin/ と lib/ を含むディレクトリ)
+# oss_cad_root = 'C:\oss-cad-suite'
+
+# Quartus の bin64 ディレクトリ
+# quartus_bin = 'C:\altera_lite\24.1std\quartus\bin64'
+
+# --- ベンダ EDA 探索枠(任意。見つかると doctor に表示される) ---
+# Xilinx Vivado の bin(将来の vivado バックエンド用)
+# vivado_bin = 'C:\Xilinx\Vivado\2024.2\bin'
+# Gowin EDA(gw_sh)の bin(将来の gowin 公式 EDA バックエンド用)
+# gowin_eda_bin = 'C:\Gowin\Gowin_V1.9.9\IDE\bin'
+# Lattice Radiant の bin(将来の radiant バックエンド用)
+# radiant_bin = 'C:\lscc\radiant\2024.1\bin\nt64'

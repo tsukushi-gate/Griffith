@@ -1,0 +1,28 @@
+# build output
+dist/
+# generated types
+.astro/
+
+# 自動生成APIリファレンス(scripts/gen_api_docs.py がビルド前に生成する)
+src/content/docs/reference/api/
+
+# example → 公開シンボルの索引(scripts/build_tutorials.py の副産物。
+# gen_api_docs.py は同じ関数を直接呼ぶので、このファイルは人が読む用)
+src/data/example-symbols.json
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store

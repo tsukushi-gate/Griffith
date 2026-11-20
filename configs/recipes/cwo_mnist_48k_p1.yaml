@@ -1,0 +1,47 @@
+# 成果共有 computed-wiring-overlay / 較正アンカー C3: MNIST 48K の rot 配線(P1)。
+# 社内先行実験掃引A の P1(幾何級数 fine → coarse)。
+#
+# 配線規則(先行実験 wiring.py rot_layer):
+#   idx_a[g] = (g + s_a[l]) mod W_in, idx_b[g] = (g + s_b[l]) mod W_in
+#   P1 は s_a を全層 0、s_b = {1, 4, 20, 90, 400, 1800}。
+#   HW ではゲート番号のカウンタに定数を足して剰余を取るだけなので配線表が要らない。
+# 学習レジームは cwo_mnist_48k_p0.yaml と同一(OP・soft・8 エポック・tau 30)。
+# 原値(2 seed): 0.9501 / 0.9494(先行実験実測表掃引A。P0 比 +0.95pt)
+#
+# 実行: uv run md launch --grid "run.seed=[0,1]" configs/recipes/cwo_mnist_48k_p1.yaml --local
+data:
+  name: mnist
+  batch_size: 100
+  params:
+    binarize_threshold: 0.5
+model:
+  kind: dlgn
+  k: 8000
+  layers: 6
+  n_inputs: 2
+  parameterization: softmax
+  selection: soft
+  tau: 30.0
+  connections:
+    kind: rot
+    s_a: [0, 0, 0, 0, 0, 0]
+    s_b: [1, 4, 20, 90, 400, 1800]
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 8
+  eval_interval: 0
+  wandb: true
+  wandb_group: dlgn-ffn
+  wandb_job_type: train
+  wandb_tags: [computed-wiring-overlay, calibration, P1, mnist-48k]
+  wandb_notes: >-
+    成果共有 computed-wiring-overlay の較正アンカー C3。MNIST 48K の rot 配線(P1)。
+    判定は P0 との 2 seed 平均の差(原値 +0.95pt、下限 +0.4pt)。
+  wandb_hypothesis: >-
+    配線を層ごとの幾何級数シフト(rot)で計算しても、固定ランダム配線(P0)と
+    同等以上の精度になる。
+  run_name: cwo_mnist_48k_p1
+expected_metrics:
+  hard_acc_min: 0.9444

@@ -1,0 +1,180 @@
+---
+title: '用語集'
+description: 'DLGN / LUT / soft・hard / パラメータ化 / 離散化ギャップ など、本サイトとコードで同じ意味で使う言葉の定義。'
+---
+
+本プロジェクトで使う言葉の定義。**コード・ドキュメント・会話で同じ言葉を同じ意味で使う**ことを目的とする
+(ユビキタス言語)。用語の背景は [DLGNとは何か](/explanation/dlgn/) と
+[分類と系譜](/explanation/taxonomy/) を参照。
+
+## 系譜の見取り図
+
+```
+学術論文の系譜                       本ライブラリでの実装
+─────────────────                 ─────────────────
+difflogic (2022)                  griffith_logic
+  │  2入力固定、softmax                │  N入力へ一般化(N=2,4,6)
+  ├─ DLGN     ← 全結合                ├─ LutLayer(全結合)
+  ├─ CDDLGN   ← 畳み込み              ├─ LutConv2d(畳み込み)
+  ├─ RDDLGN   ← RNN                   ├─ RDDLGN(seq2seq)
+  ├─ LDDLGN   ← 軽量化                ├─ iwp パラメータ化
+  ├─ WARP     ← WH変換                ├─ warp パラメータ化
+  └─ CAGE     ← 訓練改善              └─ Hard-ST + 温度スケジューラ
+
+BinaryBrain ─ independent パラメータ化 ─→ independent / raw パラメータ化
+```
+
+## 1. アーキテクチャ名(論文由来)
+
+| 用語 | 正式名 | 出典 | 意味 |
+|---|---|---|---|
+| **DLGN** | Deep Differentiable Logic Gate Networks | Petersen et al., NeurIPS 2022 | 2入力論理ゲートを softmax で微分可能にした**全結合**ネットワーク。本ライブラリはこれを N 入力へ一般化したもので、DLGN そのものではない |
+| **difflogic** | — | 同上(参照実装名) | DLGN の公式実装リポジトリ名。「difflogic 互換」= N=2 + softmax モード |
+| **CDDLGN** | Convolutional DDLGN | Petersen et al., NeurIPS 2024 | 論理ゲートツリーによる**畳み込み**。`LutConv2d` の設計元 |
+| **RDDLGN** | Recurrent DDLGN | Buhrer et al., 2025 | DLGN の **RNN / seq2seq** 拡張 |
+| **LDDLGN** | Light DDLGN | Ruttgers et al., 2025 | 入力ごとのパラメータ化(IWP)で**軽量化** |
+| **WARP** | WAlsh Relaxation for Probabilistic LNNs | Gerlach et al., 2025 | Walsh-Hadamard 変換による**制約なし最適化**。N=4,6 で安定 |
+| **CAGE** | Align Forward, Adapt Backward | Kim, 2026 | Hard-ST 訓練 + 適応温度スケジューリング |
+| **DWN** | Differentiable Weightless Neural Networks | Bacellar et al., ICML 2024 | 6入力LUT + 学習配線。EFD 勾配 |
+| **LogicNets** | — | Umuroglu et al., FPL 2020 | 量子化+疎化から真理値表を列挙する「算術演算DLGN」 |
+| **LL-ViT** | — | Nag et al., ICFPT 2025 | ViT の MLP だけを LUT 化するハイブリッド |
+| **BinaryBrain** | — | 今村 | LUT 直接学習フレームワーク(C++)。`independent` / `raw` パラメータ化の起源 |
+
+## 2. コンポーネント
+
+### コアレイヤ
+
+| 名前 | 何をするか | 入出力 |
+|---|---|---|
+| **LutLayer** | N 入力 LUT ゲートの全結合層。最小構成要素 | `(B, in_dim)` → `(B, out_dim)`、値域 [0,1] |
+| **LutConv2d** | 論理ゲートツリーによる畳み込み層 | `(B, C, H, W)` → `(B, C', H', W')` |
+| **DWNLayer** | 二値入力 → N入力LUT × n_luts → 二値出力(EFD 勾配)。LutLayer のパラメータ化ではなく独立レイヤ | `(B, in_bits)` → `(B, n_luts)`、値域 $\{0,1\}$ |
+
+### 集約・出力レイヤ
+
+| 名前 | 何をするか | 用途 |
+|---|---|---|
+| **GroupSum** | ニューロンを k グループに分けて合計し、温度 τ で割る | **分類**タスクの出力層 |
+| **SpatialGroupSum** | GroupSum の空間次元保持版 | **検出**タスクのヘッド |
+| **OrPooling2d** | max pooling(= 論理 OR プーリング) | CNN 内のダウンサンプリング |
+
+### 実数とビットの境界
+
+| 名前 | 何をするか |
+|---|---|
+| **Binarize** | forward は閾値で二値化、backward は HardTanh STE |
+| **RealToBinary** | 実数入力を複数閾値で二値化し、バッチ方向に水増しする(バイナリ変調) |
+| **BinaryToReal** | 変調フレームを平均して実数に戻す |
+| **DifferentiableLutBlock** | LutLayer(raw) + BatchNorm1d + Binarize の複合層(BinaryBrain 互換) |
+
+## 3. パラメータ化方式
+
+LutLayer の重み $W$ をどうゲート出力に変換するかの方式。
+
+| 方式名 | 起源 | 数式 | パラメータ数/ゲート | 特徴 |
+|---|---|---|---|---|
+| **softmax**(既定) | DLGN | $w=\mathrm{softmax}(W)$ | $2^N$ | エントリ間が**競合**(合計 1)。N=2 では 16 ゲートモード |
+| **independent** | BinaryBrain | $w=\sigma(W)$ | $2^N$ | 各エントリが**独立**(合計 ≠ 1) |
+| **iwp** | LDDLGN | $\prod_j [p_j x_j + (1-p_j)(1-x_j)]$ | **$N$** | 入力ごとに 1 パラメータ。パラメータ数が約 10 分の 1 |
+| **raw** | BinaryBrain | $w=\mathrm{clamp}(W,0,1)$ | $2^N$ | 重みを直接 [0,1] に保持。optimizer step 後にクランプ |
+| **warp** | WARP | $y=\sigma(\sum_k \theta_k \varphi_k^{WH}(1-2x)/\tau)$ | $2^N$ | Walsh-Hadamard 基底上の**制約なし実数**パラメータ。N=4,6 の安定学習に推奨 |
+
+:::caution
+`softmax` / `independent` / `iwp` / `raw` / `warp` は **コード上のフラグ名** であり、
+論文名(DLGN / BinaryBrain / LDDLGN / WARP)とは区別する。
+:::
+
+## 4. 訓練
+
+### ゲート選択方式(`selection`)
+
+| 方式 | forward | backward | 選択ギャップ | 起源 |
+|---|---|---|---|---|
+| **soft**(既定) | softmax 混合(全ゲートの加重和) | 解析的な softmax Jacobian | **> 0**(訓練 ≠ 推論) | DLGN |
+| **hard_st** | argmax(1 つのゲートを選択) | $\mathrm{softmax}(W/\tau_b)$ による STE 近似 | **= 0**(訓練 = 推論) | CAGE |
+
+### 学習則
+
+| 名称 | 方式 | 勾配の作り方 |
+|---|---|---|
+| **BP** | PyTorch autograd | 自動微分(標準の SGD / Adam) |
+| **AP**(Akiho Propagation) | 手動更新 | `w += error × basis × lr`(逆伝播を使わない) |
+| **DFA**(Direct Feedback Alignment) | 固定ランダム行列で誤差を直送 | 層間の逐次依存が無い |
+| **EGGROLL** | 進化戦略 | 勾配を使わない探索 |
+
+学習則は層単位で混在できる(`with_learning` + `HybridTrainer`)。
+
+## 5. 技術概念
+
+### LUT 関連
+
+| 用語 | 定義 |
+|---|---|
+| **LUT**(Look-Up Table) | 入力ビットパターンに対する出力を格納した真理値表。FPGA / ASIC の基本構成要素 |
+| **N入力LUT / LUT-N** | N 個の入力を持つ LUT。$2^N$ 個のエントリを持つ(N=2,4,6 をサポート) |
+| **LUT6** | 6入力LUT。現行 FPGA の標準プリミティブ。N=6 モードが 1 セルに直マップされる |
+| **n_inputs / N** | LUT の入力数(fan-in)。コード上の引数名 |
+| **n_entries** | LUT のエントリ数 $=2^N$。N=2→4, N=4→16, N=6→64 |
+| **16ゲートモード** | N=2 + softmax のときのみ有効。16 種の 2 入力ブール関数(AND, OR, XOR…)に対する softmax で、difflogic と完全互換 |
+
+### 計算手法
+
+| 用語 | 定義 |
+|---|---|
+| **Butterfly基底** | LUT の基底関数を再帰的に計算する効率的アルゴリズム。$O(N\cdot 2^N)$(素朴実装は $O(2^{2N})$) |
+| **二値正則化** | `loss = mean(w × (1-w))` で重みを 0/1 へ誘導する |
+| **Residual初期化** | ゲートツリーで「パススルー」ゲートを初期選択し、勾配消失を防ぐ |
+| **STE**(Straight-Through Estimator) | forward は離散化、backward は連続近似で勾配を通す手法 |
+
+### モード
+
+| 用語 | 定義 | コード上の操作 |
+|---|---|---|
+| **soft モード** | 訓練モード。出力は [0,1] の連続値で勾配が流れる | `model.train()` |
+| **hard モード** | 推論モード。出力は $\{0,1\}$ の離散値で、純粋な論理回路 | `model.eval()` |
+| **離散化ギャップ / 選択ギャップ** | soft 出力と hard 出力の性能差 `acc(soft) - acc(hard)` | Hard-ST で 0 にできる |
+| **Forward Alignment** | 訓練時 forward と推論時 forward を一致させる原則(CAGE) | Hard-ST で実現 |
+
+### 接続方式
+
+| 方式 | 定義 |
+|---|---|
+| **random** | 各ニューロンがランダムに N 個の入力を選ぶ(重複あり)。既定。一部の入力が未使用になりうる |
+| **unique** | すべての入力が少なくとも 1 回は選ばれることを保証する |
+
+## 6. 下流(IR・HDL)
+
+| 用語 | 定義 |
+|---|---|
+| **IR**(中間表現) | 学習後の回路を固定した JSON。真理値表 + 配線 + 形状を持つ**真実源**。下流(HDL 生成・エディタ・見積り)はすべて IR だけを見る |
+| **lowering** | `conv2d` / `or_pool2d` のようなネイティブノードを `lut_layer` の列へ展開すること。HDL 生成の前段 |
+| **simulate** | IR を numpy でビット厳密に実行する golden model。等価性検証の基準 |
+| **3段等価性** | 「PyTorch hard eval ⇔ simulate ⇔ HDL シミュレーション」の 3 経路が全ベクトルで一致すること |
+| **リソース見積り** | IR から LUT 数・論理深さ・配線数を数える、シンセサイザ非依存の一次見積り |
+
+## 7. ハードウェア・事業用語
+
+| 用語 | 定義 | 本プロジェクトとの関係 |
+|---|---|---|
+| **微分可能回路** | 回路を連続緩和して微分可能にし、逆伝播で最適化する技術 | 中核技術。LutLayer がその実装 |
+| **FPGA** | 書き換え可能な論理デバイス。LUT が基本構成要素 | hard モードの学習済みモデルを直接マッピングできる |
+| **ソブリンAI** | クラウドに依存せず、自国 / 自組織内で完結する AI | FPGA 推論による低コスト・低消費電力・データ主権 |
+
+## 8. 紛らわしい用語の区別
+
+**「LUT-Network」と「DLGN」**
+
+| | LUT-Network | DLGN |
+|---|---|---|
+| 指すもの | LUT を使った NN の**総称** | Petersen et al. (2022) の**特定の手法** |
+| 範囲 | BinaryBrain・difflogic・本ライブラリを含む | 2入力 + softmax + 全結合のみ |
+| 使い分け | 技術カテゴリとして | 論文引用として |
+
+**「difflogic」と「DLGN」** — 前者は実装(リポジトリ名)、後者は手法(論文名)。
+コード比較の文脈では difflogic、学術的引用の文脈では DLGN。
+
+**「softmax パラメータ化」と「DLGN」** — 前者はコード上のフラグ、後者は
+「全結合アーキテクチャ + softmax」という手法全体。
+
+**「Hard-ST」と「CAGE」** — 前者は STE によるゲート選択方式(`selection='hard_st'`)、
+後者は「Hard-ST + 適応温度スケジューリング」という訓練手法全体。

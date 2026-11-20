@@ -1,0 +1,207 @@
+/* デザイントークン定義。
+   出典: tools/editor/frontend/src/index.css(コピー、トークン名は
+   エディタと完全一致 = 統合時の契約。ドリフトは tokens.drift.test.ts が監視)。
+   ビューア拡張: (c) ビューア固有トークンと (d) .dark ブロック(ライト/ダーク切替。
+   エディタは現状ライト固定のため .dark はビューア側で新規較正 — 将来エディタへ
+   そのまま逆移植できるよう同名トークンのみで構成する)。
+   (a) shadcn標準トークン: UIコンポーネント(Tailwindユーティリティ経由)用
+   (b) エディタ専用トークン: canvas/SVG 等へ JS からも参照される。hex 固定。 */
+
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* --- (a) shadcn標準トークン(ライト = エディタと同値) --- */
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #2563eb;
+  --primary-foreground: #f8fafc;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive: #dc2626;
+  --destructive-foreground: #f8fafc;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #2563eb;
+  --radius: 0.5rem;
+
+  /* --- (b) エディタ専用トークン(hex固定、エディタと同値) --- */
+  --canvas-bg: #ffffff;
+  --canvas-dot: #e2e8f0;
+  --panel-bg: #f8fafc;
+  --node-bg: #ffffff;
+  --edge-default: #94a3b8;
+  --edge-error: #dc2626;
+  --edge-real: #7c3aed;
+  --replay-sepia: rgba(120, 72, 20, 0.12);
+  --status-ok: #15803d;
+  --status-warn: #b45309;
+  --chart-axis: #64748b;
+  --chart-grid: #eceef2;
+  --chart-loss: #eb6834;
+  --chart-acc: #2a78d6;
+  --chart-series-0: #2a78d6;
+  --chart-series-1: #1baf7a;
+  --chart-series-2: #eda100;
+  --chart-series-3: #008300;
+  --chart-series-4: #4a3aa7;
+  --chart-series-5: #e34948;
+  --chart-series-6: #e87ba4;
+  --chart-series-7: #eb6834;
+  --slot-0: #2a78d6;
+  --slot-1: #eb6834;
+  --slot-2: #4a3aa7;
+  --slot-3: #008300;
+  --slot-4: #c2447a;
+  --slot-5: #1baf7a;
+  --gate-0: #a8aeb9; /* FALSE */
+  --gate-1: #d03b3b; /* AND */
+  --gate-2: #ef9493; /* A>B */
+  --gate-3: #2a78d6; /* A */
+  --gate-4: #ee9059; /* B>A */
+  --gate-5: #1c5cab; /* B */
+  --gate-6: #008300; /* XOR */
+  --gate-7: #4a3aa7; /* OR */
+  --gate-8: #9085e9; /* NOR */
+  --gate-9: #59b359; /* XNOR */
+  --gate-10: #5598e7; /* !B */
+  --gate-11: #a02c2b; /* A>=B */
+  --gate-12: #6da7ec; /* !A */
+  --gate-13: #a34413; /* B>=A */
+  --gate-14: #eb6834; /* NAND */
+  --gate-15: #4b5563; /* TRUE */
+
+  /* --- (c) ビューア固有トークン(RTLシム値表示。エディタ未使用の追加分) --- */
+  --edge-on: #16a34a;   /* 1bit配線の実行値=1 */
+  --edge-off: #cbd5e1;  /* 1bit配線の実行値=0 */
+  --probe: #ca8a04;     /* プローブ(値表示部)のアクセント/破線 */
+  --bit-on: #16a34a;    /* bit格子の点灯セル */
+  --bit-off: #e2e8f0;   /* bit格子の消灯セル */
+}
+
+/* --- (d) ダークテーマ(ビューア較正。トークン名はライトと完全一致 = エディタへ
+   逆移植可能。--gate-* は白背景較正値の明度を上げた対応系、意味ファミリは維持) --- */
+.dark {
+  --background: #12151c;
+  --foreground: #d8dee9;
+  --card: #1a1f2b;
+  --card-foreground: #d8dee9;
+  --popover: #1a1f2b;
+  --popover-foreground: #d8dee9;
+  --primary: #60a5fa;
+  --primary-foreground: #0b1020;
+  --secondary: #263149;
+  --secondary-foreground: #d8dee9;
+  --muted: #232a3a;
+  --muted-foreground: #8b93a8;
+  --accent: #263149;
+  --accent-foreground: #d8dee9;
+  --destructive: #f87171;
+  --destructive-foreground: #0b1020;
+  --border: #2a3245;
+  --input: #2a3245;
+  --ring: #60a5fa;
+
+  --canvas-bg: #12151c;
+  --canvas-dot: #232a3a;
+  --panel-bg: #1a1f2b;
+  --node-bg: #1c2130;
+  --edge-default: #46536e;
+  --edge-error: #f87171;
+  --edge-real: #a78bfa;
+  --replay-sepia: rgba(200, 150, 60, 0.1);
+  --status-ok: #4ade80;
+  --status-warn: #fbbf24;
+  --chart-axis: #8b93a8;
+  --chart-grid: #242c3d;
+  --chart-loss: #fb923c;
+  --chart-acc: #60a5fa;
+  --chart-series-0: #60a5fa;
+  --chart-series-1: #2dd4bf;
+  --chart-series-2: #facc15;
+  --chart-series-3: #4ade80;
+  --chart-series-4: #a78bfa;
+  --chart-series-5: #f87171;
+  --chart-series-6: #f472b6;
+  --chart-series-7: #fb923c;
+  --slot-0: #60a5fa;
+  --slot-1: #fb923c;
+  --slot-2: #a78bfa;
+  --slot-3: #4ade80;
+  --slot-4: #f472b6;
+  --slot-5: #2dd4bf;
+  --gate-0: #7c8494;  /* FALSE */
+  --gate-1: #ef5350;  /* AND */
+  --gate-2: #f8a8a7;  /* A>B */
+  --gate-3: #60a5fa;  /* A */
+  --gate-4: #f9a870;  /* B>A */
+  --gate-5: #4c8ce0;  /* B */
+  --gate-6: #43c465;  /* XOR */
+  --gate-7: #8b7cf6;  /* OR */
+  --gate-8: #a89bf0;  /* NOR */
+  --gate-9: #7ac97a;  /* XNOR */
+  --gate-10: #7fb3f2; /* !B */
+  --gate-11: #d0706f; /* A>=B */
+  --gate-12: #93c1f5; /* !A */
+  --gate-13: #d98a53; /* B>=A */
+  --gate-14: #fb923c; /* NAND */
+  --gate-15: #cbd5e1; /* TRUE */
+
+  --edge-on: #4ade80;
+  --edge-off: #2c3550;
+  --probe: #eab308;
+  --bit-on: #4ade80;
+  --bit-off: #232a3a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+    font-size: 13px;
+  }
+}

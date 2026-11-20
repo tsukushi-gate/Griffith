@@ -1,0 +1,124 @@
+/* デザイントークン定義(白テーマ統一)。
+   (a) shadcn標準トークン: UIコンポーネント(Tailwindユーティリティ経由)用
+   (b) エディタ専用トークン: canvas/SVG/deck.gl/uPlotへ theme.ts 経由でJSから供給する。
+       JSでパースするため必ずhex表記で定義すること(oklch等は禁止)。 */
+
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+:root {
+  /* --- (a) shadcn標準トークン(白テーマのみ、.darkは定義しない) --- */
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #2563eb;
+  --primary-foreground: #f8fafc;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive: #dc2626;
+  --destructive-foreground: #f8fafc;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #2563eb;
+  --radius: 0.5rem;
+
+  /* --- (b) エディタ専用トークン(hex固定) --- */
+  /* キャンバス・パネル */
+  --canvas-bg: #ffffff;
+  --canvas-dot: #e2e8f0;
+  --panel-bg: #f8fafc;
+  --node-bg: #ffffff;
+  --edge-default: #94a3b8;
+  --edge-error: #dc2626;
+  --edge-real: #7c3aed; /* 実数域(blackbox/ToLogic境界)の信号 */
+  --replay-sepia: rgba(120, 72, 20, 0.12); /* リプレイ視認性オーバーレイ(§4-4) */
+  /* 状態色 */
+  --status-ok: #15803d;
+  --status-warn: #b45309;
+  /* チャート(uPlot) */
+  --chart-axis: #64748b;
+  --chart-grid: #eceef2;
+  --chart-loss: #eb6834;
+  --chart-acc: #2a78d6;
+  --chart-series-0: #2a78d6;
+  --chart-series-1: #1baf7a;
+  --chart-series-2: #eda100;
+  --chart-series-3: #008300;
+  --chart-series-4: #4a3aa7;
+  --chart-series-5: #e34948;
+  --chart-series-6: #e87ba4;
+  --chart-series-7: #eb6834;
+  /* 配線スロット s0..s5 */
+  --slot-0: #2a78d6;
+  --slot-1: #eb6834;
+  --slot-2: #4a3aa7;
+  --slot-3: #008300;
+  --slot-4: #c2447a;
+  --slot-5: #1baf7a;
+  /* 16ゲート色(白背景向け、意味ファミリ: 定数=グレー/パススルー=青/AND系=赤橙/XOR系=緑/OR系=紫) */
+  --gate-0: #a8aeb9; /* FALSE */
+  --gate-1: #d03b3b; /* AND */
+  --gate-2: #ef9493; /* A>B */
+  --gate-3: #2a78d6; /* A */
+  --gate-4: #ee9059; /* B>A */
+  --gate-5: #1c5cab; /* B */
+  --gate-6: #008300; /* XOR */
+  --gate-7: #4a3aa7; /* OR */
+  --gate-8: #9085e9; /* NOR */
+  --gate-9: #59b359; /* XNOR */
+  --gate-10: #5598e7; /* !B */
+  --gate-11: #a02c2b; /* A>=B */
+  --gate-12: #6da7ec; /* !A */
+  --gate-13: #a34413; /* B>=A */
+  --gate-14: #eb6834; /* NAND */
+  --gate-15: #4b5563; /* TRUE */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+    font-size: 13px;
+  }
+}

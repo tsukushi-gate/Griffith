@@ -1,0 +1,31 @@
+# IWP-1: OP(Original Parametrization = 16ゲートsoftmax)アーム / MNIST k=2000×3層。
+# 対になるIWPアーム: iwp1_mnist_2k_iwp.yaml
+#   → 両者で異なるのは model.parameterization / estimator / residual_init のみ。
+#     lr・batch_size・epochs・k・layers・n_inputs・tau・seed は完全に一致させること
+#     (公平比較の前提。片方だけ変更するのは禁止)。
+# 実行: uv run python experiments/bench_iwp.py --task mnist2k --arm both --seeds 0 1 2
+#       (単体は uv run griffith train configs/recipes/iwp1_mnist_2k_op.yaml)
+# seedはランチャ側で3本(0/1/2)振る前提。ここには既定値を1つだけ書く。
+data:
+  name: mnist
+  batch_size: 128
+model:
+  kind: dlgn
+  k: 2000
+  layers: 3
+  n_inputs: 2
+  parameterization: softmax  # OP: 16ゲートのsoftmax加重(difflogic方式)
+  tau: 10.0
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 10
+  eval_interval: 117  # 468 step/epoch の約1/4。収束step数を測るための時間解像度
+  seed: 0
+  wandb: false  # 有効化するには wandb: true と WANDB_API_KEY を設定
+# 期待メトリクス: 既存の dlgn_mnist_quick.yaml(同じk=2000×3層×同lr、3エポック)の
+# 実績閾値 hard_acc_min=0.90 をそのまま流用する。本レシピは10エポックとより長いので
+# 0.90 は下限として妥当。実測前に根拠のない高い値を置かない。
+expected_metrics:
+  hard_acc_min: 0.90

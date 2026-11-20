@@ -1,0 +1,242 @@
+---
+title: 'Deploy your own model'
+description: 'From a trained PyTorch model to Python / C / GPU / Web: turn it into IR with export_ir, add preprocessing, labels and readout to the model doc, and bundle it. How to get the same circuit compression as the CLI from the Python API, and a pre-deploy checklist.'
+---
+
+The [Quickstart](/en/guides/deploy-quickstart/) took XOR through "IR to bundle to C" on the CLI.
+This page is a guide for putting **a model you trained yourself** on the same road:
+which information goes where, how to build a bundle from Python and run inference, and what to check before shipping.
+
+The overall flow is:
+
+```
+Trained torch model
+  -> export_ir()             fixed into IR (truth tables)
+  -> model doc (dict/JSON)   ir + preproc + labels + readout + ...
+  -> griffith deploy bundle  bundle (.bundle.json)
+  -> codegen-c / -cuda / -metal / -web   to each target
+```
+
+## 1. Turn the trained model into IR
+
+`export_ir()` converts a sequential `nn.Sequential` model made of `LutLayer`, `GroupSum` and similar layers into IR.
+By convention, **call `model.eval()` first** (it fixes the continuous weights into hard truth tables).
+
+```python
+from griffith_logic.export import export_ir
+from griffith_logic.ir import validate
+from griffith_logic.ir.serialize import ir_to_dict
+
+model.eval()
+ir = export_ir(model, input_width=2, name='xor')
+validate(ir, target='hdl')           # structural check of the IR
+ir_dict = ir_to_dict(ir)             # a dict that can be written as JSON
+```
+
+- `input_width` is the number of input bits. For inputs with a shape, such as images, use the `input_shape=` argument of `export_ir`.
+- Before writing, it **checks PyTorch hard eval against IR simulate as integers**, and stops here if they disagree.
+- Complete working examples are `examples/06_deploy_c/export_model.py` (XOR) and `examples/29_deploy_mnist.py` (MNIST).
+
+## 2. Assemble the model doc
+
+What `griffith deploy bundle` reads is a JSON called the "model doc". **Only `ir` is required**;
+any other keys you add are carried into the bundle.
+
+| Key | What to put there |
+|---|---|
+| `ir` | `ir_to_dict(export_ir(...))`. The **source of truth**, and the only required key |
+| `preproc` | A declaration of the rule that turns input into bits (below) |
+| `labels` | An array of class names (`["WALKING", ...]`). With it, C gets a generated `mdl_labels[]` |
+| `readout` | How to read the output. `class_scores` for classification, `spatial_scores` for segmentation, `detection` for detection |
+| `eval` | Measured values such as accuracy (for display) |
+| `about` | Provenance (checkpoint, recipe, wandb run id, and so on). The compression result is put in `about.compress` automatically |
+| `demo_samples` | Real samples for demos and verification. If present, gate-reduction checks also run on real data |
+
+The minimal example is `{"ir": ...}`, the same as in the Quickstart. To add labels as well:
+
+```python
+doc = {'ir': ir_dict, 'labels': ['xor=0', 'xor=1']}
+```
+
+### The kinds of `preproc`
+
+`preproc.kind` declares how the input was turned into bits, and what the bundle does depends on the kind.
+
+| `kind` | Input | What the bundle does |
+|---|---|---|
+| `raw` (when omitted) | Already a 0/1 bit vector | No preprocessing. C takes the bit vector in `mdl_infer(bits, scores)` |
+| `thermometer` | Real-valued features (sensor values and so on) | Recorded as a declaration (mean, standard deviation, thresholds, bit order). **The bundle does not compile it into integer descriptors.** Turning input into bits is the app's job, following the same rule as the declaration |
+| `image_thermometer` | u8 image | **Compiled into integer descriptors (`preproc_desc`).** C gets a generated `mdl_infer_image()` that takes an image directly |
+| `image_lowlevel` | u8 image | Same. In addition to thermometer, it has comparison channels for edges, curvature, color difference and saturation |
+
+The image kinds need `mean` / `std` (per image channel), `thresholds` (a table of thresholds per channel), and `height` / `width`.
+`image_lowlevel` can also take `edge_thresholds` / `curv_thresholds` / `chroma_thresholds` and
+`edge_offsets` / `curv_offsets` / `chroma_pairs`.
+At bundling time this is compiled into `preproc_desc`, so bits can be made from an image **without floating point**
+(how it works: [Bundle specification](/en/reference/deploy-bundle/#the-preproc_desc-section)).
+Not needing floating point on the device is what helps in embedded use.
+
+:::caution[Match the preprocessing rule to training]
+`preproc` is where you write **exactly the encoding used in training**. If it drifts, the IR is correct but the scores do not match.
+For the image kinds, the bundling step also checks that `preproc_desc` agrees with the IR's input width (a mismatch is an error at generation time).
+:::
+
+## 3. Bundling and code generation (CLI)
+
+Write the doc to JSON, and the rest is the same as in the Quickstart.
+
+```bash
+uv run griffith deploy bundle my_model.json -o my.bundle.json
+uv run griffith deploy info my.bundle.json --strict
+uv run griffith deploy codegen-c my.bundle.json -o out_c
+uv run griffith deploy verify-c  my.bundle.json -n 8
+```
+
+- C: the [Quickstart](/en/guides/deploy-quickstart/); ESP32: [Run on ESP32](/en/guides/deploy-esp32/); iPhone: [Run on iPhone](/en/guides/deploy-ios/)
+- GPU (CUDA / Metal): [Run on GPU](/en/guides/deploy-gpu/)
+- Web: `codegen-web` (ships the bundle as is; [Quickstart](/en/guides/deploy-quickstart/))
+
+By default (`--compress fast`), `bundle` automatically applies every **lossless gate reduction** that finishes in seconds (sweep for dense, resynthesis for conv2d).
+By default (`--dense-flat auto`), `codegen-c` / `verify-c` try flattening at the C generation step and adopt it if the reduction is at or above the threshold.
+Neither changes accuracy.
+
+## 4. Run inference in Python
+
+A bundle can also be read and run from Python alone, using the reference implementation (golden model) `ir.simulate`.
+
+```python
+import numpy as np
+from griffith_logic.deploy import load_bundle
+from griffith_logic.ir.serialize import ir_from_dict
+from griffith_logic.ir.simulate import simulate
+
+bundle = load_bundle('my.bundle.json')       # with version and structure checks
+graph = ir_from_dict(bundle['ir'])
+
+bits = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8)  # [N, input bit width]
+scores = simulate(graph, bits)               # integer scores, [N, output width]
+pred = scores.argmax(axis=1)
+```
+
+How to pack the input:
+
+- **Bit-vector input (`raw` and so on)**: `uint8`, shape `[N, input bit width]`, values 0 or 1. The input width is `bundle['ir']['inputs'][0]['width']`.
+- **Image input (`image_*`)**: turn the u8 images into bits with the preprocessing descriptors, then pass them to `simulate`.
+
+  ```python
+  from griffith_logic.deploy.preproc_desc import build_preproc_descriptors, encode_bits
+
+  plan = build_preproc_descriptors(bundle['preproc'])
+  # images_u8: uint8, shape [N, image channels, H, W]
+  bits = encode_bits(plan, images_u8)       # 0/1, shape [N, channels*H*W]
+  scores = simulate(graph, bits)
+  ```
+
+`simulate` is a plain numpy implementation, not built for speed (its value is being correct as the reference). To push a lot through, use C or a GPU.
+
+## 5. Building a bundle with the Python API (mind the CLI-only compression)
+
+To build a bundle from Python, use `build_bundle()`. **But `build_bundle()` and `generate_c()` do not apply circuit compression automatically.**
+Only the CLI (`griffith deploy bundle` and `codegen-c`) compresses by default.
+A bundle made with just `build_bundle(doc)` has no gate reduction and no `about.compress` (checking with XOR, there was no `about` at all).
+
+To get the same result as the CLI, call the compression yourself.
+
+| CLI default | Doing the same in Python |
+|---|---|
+| `bundle --compress fast` (sweep and conv2d resynthesis) | Call `apply_compress(doc, level='fast')` **before** `build_bundle` (it also resynthesizes conv2d; pass `resynth=False` to suppress). Record the result in `about.compress` with `attach_compress_info` |
+| `codegen-c --dense-flat auto` (flatten only when generating C) | Make the C-generation bundle with `resolve_dense_flat(bundle, mode='auto')` and pass it to `generate_c` |
+| The `--dense-batch` (default 32) that `codegen-c` adds when flattening | Pass `generate_c(..., dense_batch=32)` explicitly. The `generate_c` default is `dense_batch=0` (no batch entry point) |
+
+```python
+from griffith_logic.deploy import build_bundle, save_bundle
+from griffith_logic.deploy.compress import apply_compress, attach_compress_info
+from griffith_logic.deploy.flatten_dense import resolve_dense_flat
+from griffith_logic.deploy.cbackend import generate_c
+
+# --- same as bundle --compress fast ---
+doc, info, _ = apply_compress(doc, level='fast')   # 'none' / 'fast' / 'max'
+doc = attach_compress_info(doc, info)              # record in about.compress
+bundle = build_bundle(doc, verify=True)
+save_bundle(bundle, 'my.bundle.json')
+
+# --- same as codegen-c --dense-flat auto ---
+c_bundle, decision = resolve_dense_flat(bundle, mode='auto')
+files = generate_c(c_bundle, name='model', validate=False,
+                   dense_flat_decision=decision)   # {file name: source text}
+```
+
+Running it on XOR gives this (`examples/33_bundle_python.py`; the messages are printed in Japanese, and `採用` means "adopted"):
+
+```
+圧縮(compress=fast): 適用 sweep
+dense-flat(auto): 採用 — 実効ゲート 22 → 3(削減率 86.4%)。削減率が閾値以上(86.4% >= 25%)
+```
+
+- `apply_compress` returns `(new doc, info to record, a summary per pass)`. It does not modify the original doc.
+- `level='max'` searches deeper (limit 5) with extra verification (minutes on real models). `level='none'` means no compression.
+- Calling only the conv2d resynthesis directly, `resynth_doc_lossless(doc)` verifies with `verify='simulate'` by default (integer comparison against the golden model `ir/simulate`). Only the CLI's `--compress fast` (and `apply_compress(level='fast')`) explicitly use the faster `verify='fast'` (exhaustive per-tree truth-table check plus a fast forward pass).
+- `resolve_dense_flat` **leaves the bundle itself unchanged** and flattens only a copy for C generation. `mode` is `'auto'` / `'on'` / `'off'`.
+- Flattening (`lut_flat`) is decided automatically at generation time by `codegen-c` / `codegen-web`. `codegen-cuda` / `codegen-metal` can run it too but default to `off` (opt in with `--dense-flat auto` / `on`, because large models can get slower). No target needs it baked into the bundle ([Run on GPU](/en/guides/deploy-gpu/#relation-to-circuit-compression)).
+- A runnable example that goes all the way to building the C and comparing it with Python is `examples/33_bundle_python.py`.
+
+```bash
+uv run python examples/33_bundle_python.py
+```
+
+```
+入力   Python scores  C scores   予測  正解
+(0, 0)  [8, 1]         [8, 1]        0     0
+(0, 1)  [0, 8]         [0, 8]        1     1
+(1, 0)  [0, 8]         [0, 8]        1     1
+(1, 1)  [8, 1]         [8, 1]        0     0
+```
+
+(The header reads: input, Python scores, C scores, prediction, expected.)
+
+## 6. What to check before deploying
+
+Check these four things in order before shipping.
+
+1. **Confirm integer match (`verify-c`)**
+
+   ```bash
+   uv run griffith deploy verify-c my.bundle.json -n 8 --seed 1
+   ```
+
+   If the last line reads "一致: ... N output elements x 8 samples (integer-exact ...)", the generated C does not differ from `simulate` by a single bit.
+   `verify-c` builds the C with the same flattening decision as `codegen-c` and compares it with **the `simulate` of the IR of the bundle before flattening**.
+   For GPU use `verify-metal` (on a Mac); for CUDA use a remote NVIDIA machine ([Run on GPU](/en/guides/deploy-gpu/#verifying-before-you-ship)); for Web use `verify-web`.
+
+2. **Look at the bundle's contents and consistency (`info`)**
+
+   ```bash
+   uv run griffith deploy info my.bundle.json --strict
+   ```
+
+   It shows the node kinds and counts, the number of classes, the compression result (`圧縮(compress=...)`), the expected flattening under the `codegen-c` default, and the gate reduction.
+   `--strict` rebuilds the instruction lists from the IR and checks for an exact match.
+
+3. **Look at sizes**: for delivery, the bundle byte count that `bundle` prints; for embedded, the sizes of `model.c` / `model.h` that `codegen-c` prints,
+   and the `.rodata` of the built executable.
+
+4. **Look at working RAM (`MDL_CTX_BYTES`)**: `MDL_CTX_BYTES` in the generated `model.h` is the **number of bytes of working memory rewritten during inference**.
+   Check that it fits in the target device's free RAM. Dense-flat increases `MDL_CTX_BYTES` by the signal table,
+   so on a RAM-tight microcontroller use `codegen-c --dense-flat off` and confirm that `MDL_DENSE_FLAT` in `model.h` is 0.
+   For real on-device numbers, see the measurement table in [Run on ESP32](/en/guides/deploy-esp32/).
+
+:::note[When it does not work]
+- **`export_ir` stops**: the check failed. Confirm that you called `model.eval()` and that no unsupported layer is present.
+- **Scores do not match PyTorch**: the `preproc` declaration most likely differs from training. Even if IR `simulate` and C agree, accuracy will not be there if the preprocessing is off.
+- **Detection model output**: the runtime returns only up to the score maps; decoding to boxes is the app's job ([Prepare the demo models](/en/guides/deploy-models/)).
+:::
+
+## What to read next
+
+- [Deploy Kit Quickstart](/en/guides/deploy-quickstart/) — XOR through to a C executable
+- [Run on GPU (CUDA / Metal)](/en/guides/deploy-gpu/) — run the same bundle on a GPU
+- [Prepare the demo models](/en/guides/deploy-models/) — the three real-data models (MNIST / activity recognition / face detection)
+- [Bundle specification](/en/reference/deploy-bundle/) — the `preproc` / `preproc_desc` / `readout` / `about` specification
+- [griffith CLI](/en/reference/cli/#griffith-deploy) — every `griffith deploy` subcommand
+
+{/* i18n:source=guides/deploy-your-model.mdx hash=54b3b914590d */}

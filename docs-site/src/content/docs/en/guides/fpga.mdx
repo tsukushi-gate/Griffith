@@ -1,0 +1,129 @@
+---
+title: 'Burning to a Real FPGA (Preview Guide)'
+description: 'Getting a trained circuit running on real hardware with Tang Nano 20K / DE0-CV. The end-to-end doctor → convert → build → flash → hw-check flow.'
+---
+
+:::caution[Preview guide / the tooling is being merged in]
+The FPGA support tooling described here (`mdl-fpga`) is **being merged into this repository** and
+will land as `tools/mdl-fpga/`. This page is a **preview guide meant to share the flow and the
+reasoning early**; commands and options may change when it lands. The commands below assume an
+environment where `mdl-fpga` is already installed.
+**Once it lands, this page will be replaced with a fully runnable guide.**
+
+Everything up to [HDL export](/en/guides/hdl-export/) is self-contained in this repository:
+you can generate and equivalence-check Verilog / VHDL without `mdl-fpga`.
+:::
+
+The Verilog produced in [HDL Export and Equivalence Checking](/en/guides/hdl-export/) drops straight onto an FPGA.
+That said, for someone new to FPGAs, installing a synthesis tool, assigning pins, flashing the board, and
+checking it on real hardware are each an independent wall. `mdl-fpga` is a set of tools that folds those walls
+into **a single sequence of commands**.
+
+:::caution["It burns" and "the accuracy holds" are different claims]
+The equivalence this page deals with is a **bit-exact match between the IR (the discretized truth tables) and the hardware**.
+Once a circuit is in IR form, it is guaranteed to behave that way on hardware, but
+**the accuracy of the continuous-valued model used during training is not guaranteed to match that of the discretized circuit**.
+
+Rounding a model whose truth tables have not yet settled on 0/1 can cost a lot of accuracy.
+The short recipe in [BinaryBrain-Compatible API](/en/tutorials/binarybrain/) is a concrete example: with continuous truth tables
+it reaches eval acc 0.803, but rounding the entries makes it **collapse to 0.211**
+(recalibrating BatchNorm statistics only gets it back to 0.632; the main cause is that the entries stay clustered near 0.5).
+
+So **always check hard eval accuracy (`model.eval()`) before burning**.
+For how to read the gap between soft and hard, see [Reading Training Curves](/en/guides/training-curves/);
+for a parameterization where no gap appears, see [DWN](/en/tutorials/dwn/) (train/eval logit difference of 0.0).
+:::
+
+## The overall flow
+
+```
+train (library) → IR (JSON) → convert → check (bit match) → build (synthesis) → flash (program) → hw-check (bit match on hardware)
+                                  ↑ detect (auto board ID) / advise (fit estimate) / bundle (zip for programming from another PC) / up (end to end)
+```
+
+The IR is treated as a **fixed input**, and this tool owns everything from HDL generation downstream.
+That keeps the concerns of the training side and the concerns of the board from mixing ([the IR is the source of truth](/en/explanation/architecture/)).
+
+## Verbs (subcommands)
+
+| Verb | What it does |
+|---|---|
+| `doctor` | **Environment diagnosis.** Detects synthesis tools, JTAG, and serial ports, and suggests the next step. Always run this first |
+| `detect` | Automatically identifies the connected board (no EDA required). Matches signatures such as the JTAG IDCODE against board definitions and reports candidates with a confidence level |
+| `advise` | **Up-front feasibility check** (no EDA required). Estimates from empirical rules whether a circuit of this size fits on the board |
+| `convert` | Loads and validates the IR. If real-valued (blackbox) nodes remain, it refuses explicitly and points you to the fix |
+| `check` | **Bit-exact verification without a board.** Cross-checks the reference simulator against the RTL, and duplicates the generator to compare the two |
+| `build` | HDL generation → feasibility check → simulation → synthesis → bitstream. `--selftest` bundles in a self-verifying circuit |
+| `flash` | JTAG programming |
+| `hw-check` | **Bit-exact match on real hardware.** Streams every vector over UART and compares |
+| `up` | All of the above end to end (detect → advise → build → flash → hw-check). Stops at the stage that failed and states the cause and next step for that specific stage |
+| `view` | Circuit visualization viewer (one click = one clock of interactive simulation, probe anywhere) |
+
+## The shortest path on a Tang Nano 20K
+
+The Sipeed Tang Nano 20K needs **no vendor EDA installation at all** (an open toolchain covers
+synthesis and programming) and needs **only one cable** (JTAG and UART share a bridge), which makes it
+by far the lowest barrier for a first board. It has also passed hardware acceptance testing.
+
+```bash
+# 0) Diagnose the environment first
+mdl-fpga doctor
+
+# 1) Verify the bit-exact match without a board
+mdl-fpga check model.ir.json
+
+# 2) End to end (detect -> advise -> synthesize -> flash -> compare on hardware)
+mdl-fpga up <manifest>.json --hw-check
+```
+
+## How to confirm the hardware is "correct"
+
+There are two routes for hardware verification.
+
+1. **UART comparison (`hw-check`)** — send test vectors from the PC and compare every response against the golden output.
+   Requires a USB-UART bridge connection
+2. **On-chip self-test (`build --selftest`)** — burn all vectors and expected values into the circuit and compare
+   automatically at power-on. **LED lit = every vector matches bit for bit.** No UART and no PC needed
+
+The verification loop closes like this.
+
+```
+library simulate (numpy bit-exact = the ground-truth oracle)
+   ⇔ RTL simulation of the in-house core (the primary check verdict)
+   ⇔ real hardware (hw-check / selftest)
+   ⇔ the library's HDL generator (duplicated generators detect drift)
+```
+
+## Supported boards
+
+| Tier | Board | Synthesis | Status |
+|---|---|---|---|
+| Tier1 | **Sipeed Tang Nano 20K** (GW2AR) | Open toolchain (**no EDA needed**) | Hardware-accepted |
+| Tier1 | Terasic DE0-CV (Cyclone V) | Vendor EDA | Hardware-tested |
+| Tier2 | Terasic DE10-Lite (MAX 10) | Vendor EDA | Definition only (not verified on hardware) |
+
+Board definitions hold **only physical facts** (pin assignments, device, detection signatures) in JSON, and the
+process **forbids inventing pin numbers or IDCODEs**, requiring the source of every transcription to be recorded
+(this prevents real wiring accidents). The synthesis backend is dispatched from the board definition, so adding one
+backend makes `build` / `up` work with a new vendor without any modification.
+
+## Known pitfalls
+
+:::danger[Timing can PASS while the logic is still corrupted]
+Place-and-route in the open toolchain **can produce a functionally broken bitstream depending on placement**
+(timing verification passes while only the logic is wrong). So
+**always take hardware verification all the way through `hw-check` (bit-exact match)**. If it comes out corrupted, change the
+placement seed and rebuild (the seed used is recorded in the build result).
+:::
+
+There are other environment-specific chores as well, such as a one-time USB driver switch on Windows.
+The design is for `doctor` to detect these and suggest the next step, so when you get stuck, go back to `doctor` first.
+
+## What to read next
+
+- [HDL Export and Equivalence Checking](/en/guides/hdl-export/) — the three-stage equivalence you must always pass before burning
+- [Architecture Overview](/en/explanation/architecture/) — how everything downstream of the IR branches
+- [BinaryBrain-Compatible API](/en/tutorials/binarybrain/) — measuring "not burnable yet" as a discretization gap
+- [DWN](/en/tutorials/dwn/) — a parameterization where the discretization gap is zero
+
+{/* i18n:source=guides/fpga.mdx hash=52fe54b61ead */}

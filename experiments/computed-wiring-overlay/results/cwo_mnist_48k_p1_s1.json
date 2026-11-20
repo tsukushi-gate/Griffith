@@ -1,0 +1,36 @@
+{
+  "recipe": "cwo_mnist_48k_p1",
+  "anchor": "C3",
+  "seed": 1,
+  "overrides": [
+    "run.seed=1",
+    "run.run_name=cwo_mnist_48k_p1_s1",
+    "run.device=cuda"
+  ],
+  "wall_clock_s": 159.64136838912964,
+  "hard_acc": 0.9502999800443649,
+  "best_hard_acc": 0.9502999800443649,
+  "final_loss": 0.1980423778295517,
+  "steps": 4800,
+  "out_dir": "outputs\\computed-wiring-overlay-wandb\\cwo_mnist_48k_p1_s1",
+  "checkpoint_latest": "outputs\\computed-wiring-overlay-wandb\\cwo_mnist_48k_p1_s1\\checkpoints\\latest.pt",
+  "checkpoint_best": "outputs\\computed-wiring-overlay-wandb\\cwo_mnist_48k_p1_s1\\checkpoints\\best.pt",
+  "netlist_path": null,
+  "expected_metrics": {
+    "ok": true,
+    "checks": [
+      {
+        "metric": "hard_acc",
+        "bound": "min",
+        "expected": 0.9444,
+        "actual": 0.9502999800443649,
+        "ok": true
+      }
+    ]
+  },
+  "smoke": false,
+  "library_commit": "b2dc0941cc3ef7ad76349b8662c27d7b699806f2",
+  "device_requested": "cuda",
+  "python": "3.13.2",
+  "finished_at": "2026-09-11T00:48:26.781462+09:00"
+}

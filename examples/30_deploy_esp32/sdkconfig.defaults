@@ -1,0 +1,21 @@
+# デプロイキット ESP32 デモの既定設定(sdkconfig は生成物なのでコミットしない)
+CONFIG_IDF_TARGET="esp32"
+
+# 最適化: 推論カーネルは速度優先
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# CPU 240MHz
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ_240=y
+
+# flash 4MB(DIO 40MHz。ボード由来)。大きいモデルは model.c が .rodata(flash) に載る
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_PARTITION_TABLE_SINGLE_APP_LARGE=y
+
+# main task のスタック(推論は作業RAMを static に持つので深い再帰は無いが余裕を持つ)
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# 長い推論でも task watchdog に殺されないように
+CONFIG_ESP_TASK_WDT_EN=n
+
+# シリアルは 115200(ボード/ブリッジ依存。FTDI)
+CONFIG_ESP_CONSOLE_UART_BAUDRATE=115200

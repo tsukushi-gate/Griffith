@@ -1,0 +1,136 @@
+# public リポで動くリリースワークフロー。
+# v* タグで wheel/sdist をビルドし、PyPI(Trusted Publishing)へ公開して
+# GitHub Release を作る。
+#
+# private リポにもこのファイルは存在するが(export の include 対象)、
+# private 側のタグ push は publish-public.yml が担当するため、
+# ここではリポジトリ変数 IS_PUBLIC_REPO == 'true' のときだけ動かす。
+# 詳細: docs/guides/oss-release.md
+name: release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'ビルドする ref(タグ推奨)'
+        type: string
+        required: true
+      target:
+        description: '公開先'
+        type: choice
+        options: [testpypi, pypi, build-only]
+        default: testpypi
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: wheel / sdist のビルド
+    if: vars.IS_PUBLIC_REPO == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: バージョンの決定
+        id: meta
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            version="${GITHUB_REF_NAME}"
+          else
+            version="v$(python3 -c 'import tomllib,pathlib;print(tomllib.loads(pathlib.Path("pyproject.toml").read_text())["project"]["version"])')"
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+      - run: uv build
+
+      - name: 成果物の検証
+        run: |
+          set -euo pipefail
+          uvx twine check dist/*
+          ls -la dist/
+          # setuptools の自動検出は空 wheel でも成功するため中身を明示検査する
+          whl="$(find dist -name '*.whl' -print -quit)"
+          python3 -c "import zipfile,sys; ns=zipfile.ZipFile(sys.argv[1]).namelist(); \
+            sys.exit(0 if any(n.startswith('griffith_logic/') for n in ns) else 1)" "$whl" \
+            || { echo '::error::wheel に griffith_logic が入っていません(空 wheel)'; exit 1; }
+
+      - name: リリースノート(CHANGELOG の該当節)
+        run: |
+          python3 scripts/changelog_section.py "${{ steps.meta.outputs.version }}" \
+            > release-notes.md || true
+          cat release-notes.md || true
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: dist
+          path: |
+            dist/
+            release-notes.md
+
+  publish-testpypi:
+    name: TestPyPI へ公開
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.target == 'testpypi'
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: dist
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086  # v1.14.3
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: dist/
+
+  publish-pypi:
+    name: PyPI へ公開
+    needs: build
+    if: >-
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'pypi')
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: dist
+      - uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086  # v1.14.3
+        with:
+          packages-dir: dist/
+
+  github-release:
+    name: GitHub Release を作る
+    needs: [build, publish-pypi]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: dist
+      - uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3  # v3.0.4
+        with:
+          tag_name: ${{ needs.build.outputs.version }}
+          name: ${{ needs.build.outputs.version }}
+          body_path: release-notes.md
+          files: dist/*
+          fail_on_unmatched_files: true

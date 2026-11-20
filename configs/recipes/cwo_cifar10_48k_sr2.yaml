@@ -1,0 +1,58 @@
+# 成果共有 computed-wiring-overlay / 較正アンカー C4: CIFAR-10 48K の受容野を満たした rot(SR2)。
+# 社内先行実験 phase 2 の SR2 腕。クラス受容野 100%。
+#
+# 配線:
+#   層 0   引き伸ばし rot(s_a=3, s_b=96): 基準位置を round(g·9216/8000) に引き伸ばした rot。
+#          幅 8,000 < 入力 9,216 でも入力を取りこぼさない(被覆 100%)。
+#          s_b − s_a = 93 は CIFAR サーモメータ順で「右 1 画素と 1 行下」の局所性を保つ
+#   層 1〜5 rot(s_a=0, s_b = 64, 640, 1024, 1800, 4096): 隠れ層のずらし量を、クラスの
+#          部分和の並びが入力全体へ届くよう設計し直したもの(和 7,624)
+# それ以外は cwo_cifar10_48k_p.yaml と同一。
+# 原値(2 seed): 0.4746 / 0.4801(P 比 +1.10 / +1.31pt)
+#
+# 実行: uv run md launch --grid "run.seed=[0,1]" configs/recipes/cwo_cifar10_48k_sr2.yaml --local
+data:
+  name: cifar-10-3-thresholds
+  batch_size: 100
+  params:
+    interleave_thresholds: true
+model:
+  kind: dlgn
+  k: 8000
+  layers: 6
+  n_inputs: 2
+  parameterization: softmax
+  selection: hard_st
+  init_mode: ri_randn
+  init_scale: 1.0
+  grad_factor: 1.0
+  tau: 30.0
+  connections:
+    kind: per_layer
+    layers:
+      - {kind: stretched_rot, s_a: 3, s_b: 96}
+      - {kind: rot, s_a: 0, s_b: 64}
+      - {kind: rot, s_a: 0, s_b: 640}
+      - {kind: rot, s_a: 0, s_b: 1024}
+      - {kind: rot, s_a: 0, s_b: 1800}
+      - {kind: rot, s_a: 0, s_b: 4096}
+optim:
+  name: adam
+  lr: 0.01
+run:
+  epochs: 8
+  eval_interval: 100
+  wandb: true
+  wandb_group: dlgn-ffn
+  wandb_job_type: train
+  wandb_tags: [computed-wiring-overlay, calibration, SR2, cifar10-48k]
+  wandb_notes: >-
+    成果共有 computed-wiring-overlay の較正アンカー C4。CIFAR-10 48K の受容野を
+    満たした rot(SR2、クラス受容野 100%)。判定は置換配線(P)との差。
+  wandb_hypothesis: >-
+    クラス受容野が入力を覆うようシフト量を設計すれば、計算型配線(rot)は置換配線を
+    下回らない(原値 +1.10 / +1.31pt)。
+  run_name: cwo_cifar10_48k_sr2
+  save_eval_history: true
+expected_metrics:
+  best_hard_acc_min: 0.4716

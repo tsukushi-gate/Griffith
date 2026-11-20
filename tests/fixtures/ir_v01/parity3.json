@@ -1,0 +1,164 @@
+{
+ "ir": {
+  "format": "magicdelta-ir",
+  "version": "0.1.0",
+  "metadata": {
+   "name": "fx_parity3"
+  },
+  "inputs": [
+   {
+    "id": "x",
+    "width": 3,
+    "shape": null,
+    "encoding": null,
+    "semantics": null
+   }
+  ],
+  "outputs": [
+   {
+    "id": "y",
+    "width": 1,
+    "shape": null,
+    "encoding": null,
+    "semantics": null
+   }
+  ],
+  "nodes": [
+   {
+    "id": "n1_lutlayer",
+    "type": "lut_layer",
+    "params": {
+     "in_width": 3,
+     "out_width": 2,
+     "n_inputs": 2,
+     "indices": [
+      [
+       0,
+       2
+      ],
+      [
+       1,
+       2
+      ]
+     ],
+     "truth_tables": [
+      "0x6",
+      "0xa"
+     ]
+    },
+    "train_info": {
+     "parameterization": "softmax",
+     "selection": "soft"
+    },
+    "meta": {}
+   },
+   {
+    "id": "n2_lutlayer",
+    "type": "lut_layer",
+    "params": {
+     "in_width": 2,
+     "out_width": 1,
+     "n_inputs": 2,
+     "indices": [
+      [
+       0
+      ],
+      [
+       1
+      ]
+     ],
+     "truth_tables": [
+      "0x6"
+     ]
+    },
+    "train_info": {
+     "parameterization": "softmax",
+     "selection": "soft"
+    },
+    "meta": {}
+   }
+  ],
+  "edges": [
+   {
+    "src": "x",
+    "dst": "n1_lutlayer"
+   },
+   {
+    "src": "n1_lutlayer",
+    "dst": "n2_lutlayer"
+   },
+   {
+    "src": "n2_lutlayer",
+    "dst": "y"
+   }
+  ]
+ },
+ "golden_inputs": [
+  [
+   0,
+   0,
+   0
+  ],
+  [
+   1,
+   0,
+   0
+  ],
+  [
+   0,
+   1,
+   0
+  ],
+  [
+   1,
+   1,
+   0
+  ],
+  [
+   0,
+   0,
+   1
+  ],
+  [
+   1,
+   0,
+   1
+  ],
+  [
+   0,
+   1,
+   1
+  ],
+  [
+   1,
+   1,
+   1
+  ]
+ ],
+ "golden_outputs": [
+  [
+   0
+  ],
+  [
+   1
+  ],
+  [
+   1
+  ],
+  [
+   0
+  ],
+  [
+   1
+  ],
+  [
+   0
+  ],
+  [
+   0
+  ],
+  [
+   1
+  ]
+ ]
+}

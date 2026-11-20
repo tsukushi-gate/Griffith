@@ -1,0 +1,148 @@
+---
+title: 'Docs Management'
+description: 'Classification with Diátaxis, the split between generated and hand-written areas, the machine checks that keep the docs from rotting, and the exit strategy.'
+---
+
+Documentation is **harder to keep fresh than it is to write**. This page collects the policy for how
+documentation in this project is structured, how it is updated, and how rot is detected
+mechanically. Please read it before adding a new page.
+
+## 1. Decide where a page goes with the four Diátaxis categories
+
+Every page belongs to **exactly one** of the four [Diátaxis](https://diataxis.fr/) quadrants,
+determined by "studying or working" × "practice or theory".
+
+| Quadrant | State of the reader | How to write it | On this site |
+|---|---|---|---|
+| **Tutorial** (studying × practice) | Knows nothing; wants a hands-on experience | Steps in order. No options offered. It must always work | `tutorials/` |
+| **How-to** (working × practice) | Has a goal; wants the shortest path to it | Organized by goal. Prerequisites stated. Branching allowed | `guides/` |
+| **Reference** (working × theory) | Wants to look up an exact specification | Exhaustive, consistent, matter-of-fact. Does not explain | `reference/` |
+| **Explanation** (studying × theory) | Wants to understand "why" | Background, design decisions, comparisons. No procedures | `explanation/` |
+
+**Not mixing them is the greatest discipline.** The moment a tutorial starts discussing design
+decisions, that page becomes too long for a beginner and too thin for an expert. When you feel the
+urge to explain, **split it into an explanation page and link to it**.
+
+Rules of thumb when you're unsure:
+
+- Answers "what do I do first?" → tutorial
+- Answers "how do I do X?" → guide
+- Answers "what are X's arguments?" → reference
+- Answers "why X?" → explanation
+
+## 2. What is generated and what is written by hand
+
+**Never write the same fact in two places.** Almost every case of documentation rot comes from "the
+same information exists separately in the code and in the prose, and only one of them gets
+updated". So anything that can be derived mechanically from the code is treated as a **generated
+artifact**, and hand editing is forbidden there.
+
+| Area | Source of truth | How it's generated | Hand editing |
+|---|---|---|---|
+| API reference | The package's public symbol definitions and docstrings | `npm run gen:api` (static analysis with griffe) | **forbidden** (fix the docstring) |
+| Tutorials | `examples/*.py` (minimal runnable samples) | `scripts/build_tutorials.py` (executes them and embeds the output and figures) | **forbidden** (fix the original `.py`) |
+| Guides / explanation | Human judgment and design intent | Hand-written | allowed |
+
+The generators are **wired into the build as a preliminary step** (`prebuild` runs API generation).
+The point is to kill the failure mode "I forgot to regenerate and the API table is stale" with
+machinery rather than with a written procedure.
+
+:::caution[Don't hand-edit generated files]
+Always state at the top of a generated file that it is generated automatically. A hand edit is
+wiped out by the next generation, and the divergence from the source of truth stays there with
+nobody noticing.
+:::
+
+## 3. Update workflow
+
+### When you implement something, fix the docs on the same branch
+
+"I'll fix it all later" always rots. The rule is to **put the implementation PR and the
+documentation fix on the same branch**. Follow the commit convention
+(`type: [task ID] summary`), using `docs:` for documentation-only changes.
+
+### Running docs-sync
+
+To avoid maintaining the repository's `docs/` (internal documentation for developers) and this
+public site twice, keep to this division of roles.
+
+| | Repository `docs/` | Public site |
+|---|---|---|
+| Readers | Developers and AI agents | Users and external readers |
+| Contents | Progress, experiment ledger, internal design notes, operational procedures | How to use it, concepts, API |
+| Internal IDs and experiment IDs | Fine to have | **Removed** (they mean nothing to outsiders) |
+
+There are three rules when carrying material over to the public site.
+
+1. **Drop internal experiment IDs and task IDs** ("the result of D5" → "the result of an internal
+   experiment")
+2. **Drop unconfirmed plans and unpublished numbers**
+3. **Rewrite links to paths within the public site** (never carry over repository-relative paths)
+
+Doing that cleanup by hand every time inevitably drifts, so the **procedure is pinned down as a
+skill** (a written procedure for routine work), and "reflecting internal documentation into the
+public site" always follows the same steps. The criterion for turning something into a skill is
+"once it has grown from a fact into a procedure".
+
+## 4. Detect rot mechanically
+
+Eyeballing during review always misses things. The goal is to make these four **fail in CI**.
+
+| Target | Mechanism | Effect |
+|---|---|---|
+| Broken links | A link validation plugin (checks internal links resolve) | Moving or renaming a page that kills a link fails the build |
+| Build warnings | A strict build configuration (warnings treated as errors) | Detects missing frontmatter and invalid references |
+| API coverage | `npm run check:api` (diff check only, no generation) | Fails when you add a public symbol and forget the docs |
+| Missing docstrings | Docstring coverage measurement with tools such as `interrogate` | Monitors "a public API with no explanation" numerically, and the threshold never goes down |
+
+:::tip[Never lower a threshold]
+Coverage and verification thresholds only ever move **upwards** (a ratchet). Lowering a threshold
+when it fails is the same as disabling the check.
+:::
+
+On top of that, writing links as **site-absolute paths rather than relative ones** (the
+`/explanation/dlgn/` form) makes the failure mode when a page moves simple, and reliably caught by
+validation.
+
+## 5. Writing conventions
+
+- **Write in Japanese.** The English version lives under `/en/`, and untranslated pages fall back to
+  Japanese
+- **One purpose per page.** If there are two purposes, split into two pages
+- **No thin links.** Instead of just "see X for details", add a line saying **why the reader should
+  go there**
+- **Math in KaTeX, diagrams in Mermaid** (rendered at build time and client-side respectively)
+- **Keep the color convention** — orange = the real-valued world, green = the logic world. Never
+  deviate from it in a diagram
+- **Screenshots are a last resort.** The UI changes, so explain the parts that don't change with
+  prose and diagrams
+
+## 6. Exit strategy (preparing for a future migration)
+
+Documentation site frameworks turn over every few years. Adopt a design that **keeps migration cost
+minimal** from the start.
+
+- **Keep the content close to plain Markdown** — framework-specific components stay limited to
+  asides, tabs and other uses that still make sense without them. Never build the structure of the
+  prose out of framework-specific syntax
+- **Keep frontmatter minimal** (`title` / `description`)
+- **Keep directory structure = URL structure = the four Diátaxis categories.** As long as those
+  three agree, migrating means moving whole directories, whatever the destination is
+- **Make sure the generator scripts work by swapping only the output path**
+
+Meet those conditions and the decision to switch to another candidate (for example
+[Zensical](https://zensical.org/), MkDocs Material or VitePress) shrinks to **a question of build
+configuration, not of content**. Start writing the prose in framework-specific syntax, on the other
+hand, and migration becomes a rewrite of hundreds of pages — that is the practical payoff of
+"staying close to plain Markdown".
+
+## 7. Checklist for adding a new page
+
+1. Did you settle on **exactly one** of the four categories?
+2. Is the same fact written on another page? (If so, replace it with a link)
+3. Is this something a generator could fill in? (If so, fix the generator side)
+4. Did any internal ID or unpublished number slip in?
+5. Are the links site-absolute paths, and do the targets exist?
+6. Does the build pass locally (warnings included)?
+
+{/* i18n:source=contributing/docs-management.mdx hash=09adb8e1f829 */}

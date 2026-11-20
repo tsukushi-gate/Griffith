@@ -1,0 +1,220 @@
+---
+title: '対応プラットフォーム'
+description: 'デプロイキットの各ターゲット(C / CUDA / Metal / Web)がどこまで検証されているか。コンパイラ・OS・CPU アーキ・GPU・SIMD 経路ごとの検証段階と、C ランタイムの移植性契約。'
+---
+
+`griffith deploy codegen-c` / `codegen-cuda` / `codegen-metal` / `codegen-web` が生成する各ターゲットについて、
+**「どこまで検証されているか」** を 1 枚にまとめたリファレンスである。デプロイキット全体の使い方は
+[デプロイキット クイックスタート](/guides/deploy-quickstart/)、バンドルの形式は [配布バンドル仕様](/reference/deploy-bundle/) を参照。
+
+## 検証段階の区分
+
+本ページの「検証」列は、次の 3 段階で書く。**検証していないものを「動く」と書かない** ための区分である。
+
+| 区分 | 意味 |
+|---|---|
+| **実測検証済み** | 実機でビルドして実行し、`ir/simulate.py`(golden model)との **整数厳密一致** をテストまたは検証コマンドで確認済み |
+| **ビルドのみ確認** | クロスコンパイルが通ることは確認したが、その環境で実行はしていない(整数一致は未検証) |
+| **標準準拠につき理論上可(未検証)** | コード上は分岐やマクロで対応しているが、ビルド・実行のどちらも実績がない |
+
+:::note[ESP32 と iOS の位置づけ(実測)]
+**ESP32(Xtensa)** は実機で実行し、行動認識 3 モデル(k600・k2400・k6000)と MNIST の全 50 件の出力が `ir/simulate.py` と整数一致したので「実測検証済み」である。
+ただし **畳み込みモデル(顔検出 128px)は PSRAM なしの無印 ESP32 では DRAM に載らず、ビルドできない**。
+
+**iOS** は、**シミュレータ(Apple Silicon ホスト上のネイティブ実行)でも、iPhone 17 実機(iOS 26.6.2)でも実測検証済み** である。
+実機では 5 モデルの出力が `ir/simulate.py` と整数一致した(行動認識 k6000 が 8.07 µs、顔検出が 0.803 ms)。
+シミュレータの時間はホスト CPU の値で、実機の値ではない。
+
+手順と実測値は [ESP32 に載せる](/guides/deploy-esp32/) と [iPhone に載せる](/guides/deploy-ios/) にある。
+:::
+
+## 対応コンパイラ(C ランタイム、C99)
+
+| コンパイラ | 検証段階 | 根拠 |
+|---|---|---|
+| clang(`cc` が clang に解決する環境。macOS は既定でこれ) | 実測検証済み | ホスト実行とベンチ実測、およびクロスコンパイル(下の表) |
+| gcc(`cc` / `gcc` が gcc に解決する環境) | ビルドのみ確認 | `-Wall -Wextra -Werror` つきでホストビルドが通ることを確認(Linux、gcc 9.4.0 でも再確認)。**クロスターゲット(`-target <triple>`)は clang 専用の構文なので対象外** |
+| clang(Windows 向けクロス: `x86_64-pc-windows-msvc` / `x86_64-w64-windows-gnu`) | ビルドのみ確認 | Apple clang から `-ffreestanding -DMDL_NO_LIBC` つきでオブジェクト生成まで確認。実機の `cl.exe` / MinGW での実行は未検証 |
+| MSVC(`cl.exe` 実機)/ MinGW gcc 実機 | 標準準拠につき理論上可(未検証) | `mdl_simd.h` に MSVC 方言(`_M_IX86_FP`)の SSE2 検出分岐があるのみ。実機のビルド・実行実績は無い |
+
+C ランタイムの依存は C99 標準ヘッダ 2 つ(`<stdint.h>` / `<stddef.h>`)だけで、libc 関数は `memcpy` / `memset` のみである
+(`-DMDL_NO_LIBC` で自前実装に切り替わり、libc も不要になる)。
+
+検証に使えたコンパイラの範囲にも限りがある。手元の clang(Apple clang 21.0.0)が持つクロスバックエンドは
+ARM / AArch64 系と x86 系に限られ、**RISC-V / MIPS / WASM / Xtensa / MSP430 のバックエンドは無い**。
+これらが「未検証」なのはコードの制約ではなく、**検証環境が無かった** ためである。
+
+## 対応 OS と実行環境
+
+| 環境 | 検証段階 | 根拠 |
+|---|---|---|
+| macOS(Apple Silicon) | 実測検証済み | Apple M3 でホスト実行とベンチ実測。Metal と Web のランタイムの検証環境でもある |
+| Linux(x86_64 / i386、ネイティブ実行) | 実測検証済み | クロスコンパイルして実行し、数値一致まで確認 |
+| ベアメタル(Cortex-M0 / M0+ / M3 / M4 / M4F / M7 / M33、Cortex-A 系、`-ffreestanding -DMDL_NO_LIBC`) | ビルドのみ確認 | クロスコンパイルの通過のみ(実機での実行は無し) |
+| Windows(コア推論のみ: `mdl_kernels.c` + 生成モデル) | ビルドのみ確認 | 上のとおり clang クロスでオブジェクト生成まで。**並列ヘルパ `mdl_threads.c` は pthread 専用で Windows 非対応** |
+| ブラウザ(Chromium、WASM) | 実測検証済み | `griffith deploy verify-web`。検証済みブラウザは Chromium のみ。これは TS / AssemblyScript の Web ランタイムで、C ランタイムの freestanding WASM ビルドとは別物 |
+| ESP32(Xtensa、ESP-IDF) | 実測検証済み(行動認識 dense)。畳み込み 128px の顔検出は DRAM 超過で載らない | ESP32-D0WDQ6(240 MHz、4MB flash、PSRAM なし)、ESP-IDF v5.4-dev で実機実行。行動認識 k600 / k2400 / k6000 と MNIST の全 50 件が整数一致(既定の圧縮つき=`lut_flat` で k600 290.7 µs、k2400 782.2 µs、k6000 12.69 ms、MNIST 324.7 µs。圧縮なしは k600 410.9 µs、k6000 26.60 ms)。出力は圧縮なしと整数一致のまま。顔検出は `dram0_0_seg` を 1,394,696 B 超過 |
+| iOS シミュレータ(iPhone 17、iOS 26.5) | 実測検証済み | 5 モデル(XOR・行動認識 2 本・顔検出・MNIST)で出力が整数一致。時間は **ホスト CPU(Apple Silicon)の値** で実機の値ではない |
+| iOS 実機(iPhone 17、iOS 26.6.2) | 実機で整数一致を確認 | 5 モデル(XOR・行動認識 k600 / k6000・MNIST・顔検出)の出力が `ir/simulate.py` と整数一致(Release)。中央値は行動認識 k6000(`lut_flat`、15,124 ゲート)8.07 µs、顔検出(1,279 ゲート、合成画像 8 枚)0.803 ms。各モデル 1 回の測定。署名なし Release ビルド(`generic/platform=iOS`)も通る |
+| Android | 標準準拠につき理論上可(未検証) | NDK 経由で組み込む想定だが、実機ビルド・実行の実績はまだ無い |
+
+## 対応 CPU アーキ: 移植性契約
+
+結論を先に書く。**C99 の(クロス)コンパイラが存在するターゲットであれば、原則すべて動く。**
+「対応アーキ」は命令セット別に用意された別々の実装の一覧ではなく、**同じ 1 本の C99 ソースがそのまま通るか** の検証実績の一覧にすぎない。
+根拠は次のとおり。
+
+- **コアは厳密な C99**。依存ヘッダは `<stdint.h>` / `<stddef.h>` の 2 つだけで、どちらもフリースタンディング処理系でも C 標準が提供を義務づける。
+  `-DMDL_NO_LIBC` で libc も不要になる(`-ffreestanding` でホストヘッダ無しにビルドできる)
+- **アーキ固有コード(NEON / SSE2 / AVX2 の組み込み関数・検出マクロ)は `mdl_simd.h` の 1 ファイルだけに隔離** されている。
+  対応の無いアーキ、または `-DMDL_NO_SIMD` では、自動的に **ビット同一のスカラー実装** へフォールバックする
+- **エンディアン・アライメントの仮定を持ち込まない**。ビットプレーンのワード演算はすべてビット位置(`x>>5`、`x&31`)で定義してあり、
+  メモリ上のバイト列を別の整数幅として再解釈するポインタキャストがコアに 1 件も無い
+- **SIMD は速くするだけで、正しさには影響しない**。SIMD 経路とスカラー強制ビルドが実モデルでビット完全一致することを、テストで固定している
+- 生成コード(`model.c` / `model.h`)にもアーキ固有コードが無いことを、同様にテストで固定している
+
+:::caution[言い切れない残余条件が 1 つある]
+タップ平面の水平シフト(`mdl_kernels.c`)が、**負の値に対する符号付き右シフトを「算術シフト(2 の補数の床除算)」として扱う**。
+これは厳密な C99 では処理系定義(implementation-defined)で、標準が無条件に保証するものではない。
+ただし 2 の補数を使うあらゆる実務上の C99 コンパイラ(gcc / clang / MSVC / 組込み向けの主要ツールチェーン)で成立し、
+既知の反例は無く、C23 ではこの挙動自体が標準の意味論として明文化された。
+つまり「C99 なら動く」は、実質的に **「2 の補数・算術右シフトの実務上あらゆる C99 コンパイラなら動く」** という意味だと理解するのが正確である。
+:::
+
+この契約は、次のチェックで機械的に強制している。
+
+| チェック内容 | 対応するテスト |
+|---|---|
+| アーキ検出マクロ・インライン asm が `mdl_simd.h` の外に無い | `TestSIMDContract` |
+| コアにバイト再解釈キャストが無い | `TestSIMDContract` |
+| SIMD 経路とスカラー経路が実モデルでビット完全一致 | `TestSIMDContract` |
+| 生成コード側にもアーキ固有コードが無い | `TestSIMDContract` |
+| 依存ヘッダが 2 つだけ | `TestFreestanding` |
+| ヒープ確保・浮動小数点・I/O が無い | `TestFreestanding` |
+| libc 無しビルド(`-DMDL_NO_LIBC -ffreestanding`)が通る | `TestFreestanding` |
+
+テストは `tests/deploy/test_c_portability.py` にある。
+
+### 検証実績(用途別)
+
+契約により「原則動くはず」の範囲のうち、**実際にビルドまたは実行まで確認したもの** を用途でまとめる。
+真実源は同テストの `CROSS_TARGETS` で、手元の clang が持たないバックエンドは自動で skip される。
+
+| 用途グループ | 検証段階 | 含まれるターゲット triple | 代表デバイス |
+|---|---|---|---|
+| 組込み ARM(Cortex-M 系 / Cortex-A 系) | ビルドのみ確認 | `thumbv6m-none-eabi`、`armv7m-none-eabi`、`armv7a-none-eabi`、`thumbv7em-none-eabi`、`armv8m.main-none-eabi`、`aarch64-none-elf`、`aarch64_be-none-elf`(ビッグエンディアン) | Cortex-M0 / M0+ / M3 / M4 / M4F / M7 / M33(STM32 など)、Cortex-A 系 |
+| Linux x86(i386 / x86_64) | **実行して数値一致まで確認** | `i386-unknown-linux-gnu`、`x86_64-unknown-linux-gnu` | PC / サーバ |
+| aarch64 ホストネイティブ | **実行して数値一致まで確認**(NEON とスカラーの一致を含む) | (ホストの aarch64) | Apple Silicon(M3 で実測)。iPhone / Android / Raspberry Pi も同アーキ |
+| Windows(コア推論のみ) | ビルドのみ確認(クロス、`-ffreestanding -DMDL_NO_LIBC`) | `x86_64-pc-windows-msvc`、`x86_64-w64-windows-gnu` | Windows(MSVC / MinGW ABI)。実機での実行は未検証 |
+| RISC-V / MIPS / WASM(C 版) | 検証環境が無いため未検証(契約上は動く見込み) | `riscv32-unknown-elf`、`riscv64-unknown-elf`、`riscv64-unknown-linux-gnu`、`mipsel-unknown-linux-gnu`、`wasm32-unknown-unknown` | RISC-V 組込み / Linux、MIPS Linux、freestanding WASM |
+| Xtensa(ESP32) | **実行して数値一致まで確認**(行動認識 dense。畳み込み 128px は DRAM 超過で非搭載) | (ESP-IDF v5.4-dev 同梱の xtensa-esp-elf 13.2.0) | ESP32-D0WDQ6(PSRAM なし)。PSRAM 付きボードは未検証 |
+
+**Windows の並列ヘルパについて**: `mdl_threads.c`(`mdl_run_pool` など)は pthread 専用で Windows 非対応である。
+コア(`mdl_kernels.c` + 生成モデル)は Windows でもクロスビルドが通るが、複数コアで回す場合は、
+呼び出し側のスレッド(`CreateThread` など)から `mdl_infer_ctx`(コンテキストが別なら再入可能)を直接呼ぶ形になる。
+
+### SIMD 経路(検出マクロ別)
+
+SIMD 経路はコンパイル時にマクロで自動選択され、無効な環境ではスカラーへ落ちる(`mdl_simd.h`)。
+**どの経路でも整数出力は完全に同一** で、これは上の移植性契約の一部としてテストで固定している。
+
+| 経路 | 検出マクロ | 検証段階 | 根拠 |
+|---|---|---|---|
+| NEON | `__ARM_NEON` / `__ARM_NEON__` | 実測検証済み | Apple M3 で実行。スカラー経路との整数出力一致をテストで固定(この Mac の既定ビルドが NEON) |
+| SSE2 | `__SSE2__`、または `_M_IX86_FP >= 2`(MSVC 方言) | ビルドのみ確認 | x86_64 クロスコンパイルは通るが、SSE2 経路そのものを実機で実行して確認した記録は無い |
+| スカラー(フォールバック) | 上のどちらも無い場合、または `-DMDL_NO_SIMD` | 実測検証済み | 全実測の基準経路。SIMD 経路との比較対象でもある |
+| AVX2 | `__AVX2__`(MSVC は未対応) | 実測検証済み | Xeon W-1270P(Comet Lake、8C16T)実機、gcc 9.4.0。dense / conv 系とも AVX2 ビルドとスカラー / SSE2 ビルドの出力がバイト完全一致。この検証は手動の A/B であり、常設のテストではない。`-DMDL_NO_AVX2` / `-mno-avx2` で SSE2 側へ戻せる |
+| AVX-512 | — | 未実装 | 検証機に AVX-512 が無く、実行検証できないため実装を見送った |
+
+## 同種ライブラリとの比較で未対応のもの
+
+ONNX Runtime / TFLite / llama.cpp 級のランタイムが通常持っているもののうち、現時点で持たないものの正直な棚卸しである。
+**「未対応」であって「対応不可能」ではない**(標準 C99 の範囲でしか書いていないので、検証環境さえ揃えばビルドが通る可能性が高い)。
+
+| 項目 | 状態 | 理由 |
+|---|---|---|
+| RISC-V / MIPS 実機(または QEMU)での実行検証 | 未対応 | クロスツールチェーンが手元に無い。実行にはさらにエミュレータか実機が要る |
+| Windows 実機(`cl.exe` / MinGW)でのビルド・実行 | 未対応 | clang クロスでオブジェクト生成までは確認済みだが、Windows 機が手元に無い |
+| Android 実機(NDK 経由) | 未対応 | 組み込み手順の想定はあるが、実機・NDK でのビルド実績が無い |
+| ESP32 で畳み込みモデル(顔検出 128px) | 未対応 | PSRAM なしの無印 ESP32 では `MDL_CTX_BYTES` 1,544,000 B が静的 DRAM(180,736 B)に載らない。PSRAM 付きボードは未検証([ESP32 に載せる](/guides/deploy-esp32/)) |
+| MSP430 | 未対応 | TI 製ツールチェーンが要る |
+| WASM(C 版、`wasm32-unknown-unknown` の freestanding ビルド) | 未対応 | `emcc` / `wasi-sdk` が手元に無い。ブラウザ向けの WASM 自体は実測検証済みだが、それは C ランタイムとは別ソース |
+| npm / pip で配るビルド済みバイナリ | 未対応 | このリポジトリはソース配布のみ(設計上の方針でもあり、配布物は命令セット別に分かれない) |
+
+## GPU: CUDA
+
+| 項目 | 内容 | 検証段階 |
+|---|---|---|
+| 検証済みの GPU | RTX 4070 Ti(compute capability 8.9 = `sm_89`) | 実測検証済み |
+| 検証済みの CUDA バージョン | CUDA 12.8 | 実測検証済み |
+| ビルドコマンドの例 | `nvcc -O2 -arch=sm_89 -I. model_cuda.cu mdl_cuda.cu your_main.cu -o app` | — |
+| 他の compute capability / CUDA バージョン | コード側に最小要件のチェックは無く、`nvcc` が解釈できれば通る | 標準準拠につき理論上可(未検証) |
+| 検証コマンド | `codegen-cuda` はコード生成のみで、`verify-cuda` に相当するサブコマンドは無い | — |
+| 平坦ネットリスト `lut_flat`(`--dense-flat auto` / `on`) | 生成はできるが、NVIDIA 実機では実行していない(生成コードの構文検査のみ。Metal では実機で整数一致を確認済み) | 未検証 |
+
+CUDA のカーネルの計算式は Metal と共有しており(`__device__` / `device` の違いはマクロで吸収)、
+C 版と整数一致することをテストで固定している。
+
+## GPU: Metal
+
+| 項目 | 内容 | 検証段階 |
+|---|---|---|
+| 検証済みの環境 | Apple M3、macOS 26 系 | 実測検証済み |
+| ツールチェーンの要件 | `clang++` と Metal.framework があればよい(macOS であること、`clang++` とランタイムディレクトリの存在で判定) | 実測検証済み |
+| Xcode の metal ツールチェーン | **不要**。シェーダは実行時にソースからコンパイルするので、`.metallib` の事前コンパイルは任意の最適化(コールドスタートの短縮)にすぎない | 実測検証済み(実行時コンパイル経路) |
+| 他の Apple シリコン(M1 / M2 / M4 など) | 同じ Metal API なので動く見込み | 標準準拠につき理論上可(未検証) |
+
+検証コマンドは `griffith deploy verify-metal`(macOS + Apple GPU + `clang++` が必要)。
+
+## Web(ブラウザ)
+
+| 項目 | 内容 | 検証段階 |
+|---|---|---|
+| 検証済みブラウザ | Chromium | 実測検証済み(`griffith deploy verify-web`) |
+| wasm-SIMD(`release-simd.wasm`) | 既定で優先されるエンジン。未対応の環境では、理由を記録して純 TS(`js`)へ自動でフォールバックする | 実測検証済み(フォールバックを含め、両エンジンの出力一致をテストで固定) |
+| Firefox / Safari 単体 | 個別の実測記録なし | 標準準拠につき理論上可(未検証) |
+| 配信要件 | `threads=1` が既定で `SharedArrayBuffer` 不要。COOP/COEP ヘッダ無しの素の静的配信で動く | 実測検証済み |
+
+## HDL(FPGA / ASIC)
+
+Verilog / VHDL への出力は、デプロイキットの C / GPU / Web とは別経路(`griffith export-hdl`)だが、同じ IR を起点にする。
+3 段の等価性(PyTorch hard eval、`ir/simulate.py`、HDL シミュレーション)で検証する。
+
+| 項目 | 内容 | 検証段階 |
+|---|---|---|
+| Verilog | iverilog で生成物の出力を照合(ローカルで実行可) | 実測検証済み |
+| VHDL | ghdl で生成物の出力を照合(ghdl は CI / クラウドのコンテナでの検証が公式運用) | 実測検証済み |
+| 実機 FPGA | Tang Nano 20K / DE0-CV など | [FPGA に焼く](/guides/fpga/) の対応ボード表を参照 |
+
+手順と照合の詳細は [HDLエクスポート](/guides/hdl-export/) にある。
+
+## 対応ノード種と非対応の機能
+
+C ランタイムが対応する IR のノード種は、`conv2d` / `or_pool2d` / `upsample2d` / `permute` / `concat` / `group_sum` /
+`lut_layer`(`n_inputs<=5`)/ `flatten` である。**範囲外の形は生成時に例外**(`UnsupportedNode`)になり、
+黙って別経路へフォールバックしない(検証していないコードを出荷しないため)。
+
+| ノード | 対応範囲 |
+|---|---|
+| `conv2d` | 全般(stride / padding は任意。stride=1 かつ同幅は共有シフト平面の高速路) |
+| `or_pool2d` | kernel=2、stride=2、padding=0 のみ |
+| `upsample2d` | scale=2(最近傍)のみ |
+| `permute` | チャネル軸のみ / SpatialGroupSum 型(`[0,2,3,1]` + group_sum 融合) |
+| `concat` | チャネル軸(ビットプレーン)/ スコア列(検出の多ヘッド出力) |
+| `group_sum` | 素の総和 / SpatialGroupSum 融合 |
+| `lut_layer` | `n_inputs <= 5` |
+| `lut_flat` | dense の平坦ネットリスト。`griffith deploy codegen-c` が既定の `--dense-flat auto` で、実効ゲートの削減率が閾値以上のとき C 生成時に作る(`bundle --dense-flat` でバンドルに焼くこともできる)。現在は Web(`codegen-web` が既定で平坦化)と CUDA / Metal(段ごとに並列実行。`codegen-cuda` / `codegen-metal` の既定は `off` で、`--dense-flat auto` / `on` で opt-in)でも実行できる。`--dense-flat off` なら出ない |
+| `flatten` | 素通し |
+
+特に注意が必要な非対応の機能は次のとおり。
+
+- **検出モデルのボックス復号(CenterNet のピーク抽出 + NMS)は含まれない**。ランタイムが返すのはスコアマップまでで、
+  そこから先はアプリ側の後処理である(手順は [デモモデルを用意する](/guides/deploy-models/#ボックスの復号はアプリ側で行う))
+- `add` / `binarize` / `constant` / 汎用 pool / 汎用 upsample は未実装(実モデルに現れないため)
+
+## 関連ページ
+
+- [デプロイキット クイックスタート](/guides/deploy-quickstart/) — IR からバンドル、C 生成、実行までの通し手順
+- [配布バンドル仕様](/reference/deploy-bundle/) — バンドルの形式
+- [griffith CLI](/reference/cli/#griffith-deploy) — `griffith deploy` の全サブコマンド
+- [ESP32 に載せる](/guides/deploy-esp32/) / [iPhone に載せる](/guides/deploy-ios/) — 実機手順

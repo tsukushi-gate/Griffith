@@ -1,0 +1,580 @@
+/* 白テーマ全体スタイル。デザイントークンは index.css の :root に定義。
+   Tailwind v4のユーティリティ(@layer utilities)より優先度を下げるため、
+   全体を @layer components に置く(shadcn移行の進行に合わせてセクションごと削除する)。 */
+
+@layer components {
+  .form-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .form-row label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 11px;
+    color: var(--muted-foreground);
+    flex: 1;
+  }
+
+  .form-row label.grow {
+    flex: 1;
+  }
+
+  .form-row input {
+    background: var(--background);
+    border: 1px solid var(--input);
+    border-radius: 4px;
+    color: var(--foreground);
+    padding: 4px 6px;
+    font-size: 12px;
+    width: 100%;
+  }
+
+  /* レガシーボタン装飾(shadcn Buttonはdata-slot属性を持つため対象外) */
+  button:not([data-slot]) {
+    background: var(--secondary);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--foreground);
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-bottom: 6px;
+  }
+
+  button:not([data-slot]):hover:not(:disabled) {
+    background: #e2e8f0;
+  }
+
+  button:not([data-slot]):disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .error-text {
+    color: var(--destructive);
+    font-size: 11px;
+    margin: 4px 0;
+    word-break: break-all;
+  }
+
+  .hint-text {
+    color: var(--muted-foreground);
+    font-size: 11px;
+    margin-top: 4px;
+  }
+
+  /* --- インスペクタ --- */
+
+  .param-list {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 3px 12px;
+    margin: 0 0 8px;
+    font-size: 12px;
+  }
+
+  .param-list dt {
+    color: var(--muted-foreground);
+  }
+
+  .param-list dd {
+    margin: 0;
+    word-break: break-all;
+  }
+
+  .param-row {
+    display: contents;
+  }
+
+  .lut-heatmap canvas {
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    image-rendering: pixelated;
+  }
+
+  .gate-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin-top: 6px;
+  }
+
+  .gate-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    color: var(--muted-foreground);
+  }
+
+  .gate-chip i {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  /* --- 診断・同期バッジ(E2) --- */
+
+  .diagnostics {
+    margin: 4px 0 8px;
+    padding-left: 4px;
+    list-style: none;
+    font-size: 11px;
+  }
+
+  .diagnostics .diag-error {
+    color: var(--destructive);
+  }
+
+  .diagnostics .diag-warning {
+    color: var(--status-warn);
+  }
+
+  .warn-badge {
+    color: var(--status-warn);
+    font-size: 11px;
+    margin: 4px 0 8px;
+  }
+
+  .draft-badge {
+    color: var(--primary);
+    font-size: 11px;
+    margin: 4px 0 8px;
+  }
+
+  /* --- パラメータフォーム(E2) --- */
+
+  .param-form select {
+    background: var(--background);
+    border: 1px solid var(--input);
+    border-radius: 4px;
+    color: var(--foreground);
+    padding: 4px 6px;
+    font-size: 12px;
+    width: 100%;
+  }
+
+  .param-form input:disabled {
+    opacity: 0.6;
+  }
+
+  button.danger {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+
+  button.danger:hover:not(:disabled) {
+    background: #fee2e2;
+  }
+
+  /* --- 真理値表/接続エディタ(E3) --- */
+
+  .tt-editor h3,
+  .indices-editor h3 {
+    margin: 10px 0 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--muted-foreground);
+    text-transform: uppercase;
+  }
+
+  .tt-grid {
+    display: grid;
+    gap: 2px;
+    margin: 6px 0;
+  }
+
+  .tt-grid.readonly {
+    opacity: 0.55;
+  }
+
+  .tt-cell {
+    margin: 0;
+    padding: 0;
+    aspect-ratio: 1;
+    min-width: 0;
+    font-size: 11px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--muted-foreground);
+  }
+
+  .tt-cell.on {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: var(--status-ok);
+    font-weight: 700;
+  }
+
+  .tt-cell:disabled {
+    cursor: not-allowed;
+  }
+
+  .indices-editor svg {
+    display: block;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin: 6px 0;
+  }
+
+  .slot-row {
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  .slot-row label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 11px;
+    color: var(--muted-foreground);
+    width: 64px;
+  }
+
+  .slot-row input {
+    background: var(--background);
+    border: 1px solid var(--input);
+    border-radius: 4px;
+    color: var(--foreground);
+    padding: 4px 6px;
+    font-size: 12px;
+    width: 100%;
+  }
+
+  .slot-row input.invalid {
+    border-color: var(--destructive);
+  }
+
+  /* --- コード生成プレビュー(E2) --- */
+
+  .code-block {
+    max-height: 260px;
+    overflow: auto;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 11px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    white-space: pre;
+  }
+
+  /* --- React Flowノード --- */
+
+  .editor-node {
+    background: var(--node-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    min-width: 150px;
+    font-size: 12px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  }
+
+  .editor-node.selected {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+  }
+
+  .node-title {
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .node-sub {
+    color: var(--muted-foreground);
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .node-draft {
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 8px;
+    border: 1px solid #93c5fd;
+    color: var(--primary);
+    font-size: 10px;
+    font-weight: 400;
+  }
+
+  .lut-node {
+    border-left: 3px solid var(--slot-0);
+  }
+
+  .groupsum-node {
+    border-left: 3px solid var(--slot-2);
+  }
+
+  .generic-node {
+    border-left: 3px solid var(--edge-default);
+  }
+
+  .generic-node.kind-input {
+    border-left-color: var(--slot-3);
+  }
+
+  .generic-node.kind-output {
+    border-left-color: var(--slot-1);
+  }
+
+  /* --- サブサーキット(グループ)ノード --- */
+
+  .group-node {
+    border-left: 3px solid var(--slot-3);
+    border-style: dashed;
+    background: var(--panel-bg);
+  }
+
+  .group-node-head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .group-node-name {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: text;
+  }
+
+  .group-node-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .group-node-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--node-bg);
+    font-size: 11px;
+    cursor: pointer;
+  }
+
+  .group-node-actions button:hover {
+    border-color: var(--primary);
+  }
+
+  .group-header-node {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border: 1px dashed var(--slot-3);
+    border-radius: 6px;
+    background: var(--panel-bg);
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .group-header-count {
+    color: var(--muted-foreground);
+    font-weight: 400;
+  }
+
+  .group-header-node button {
+    display: inline-flex;
+    padding: 1px 3px;
+    border: none;
+    background: none;
+    color: var(--muted-foreground);
+    cursor: pointer;
+  }
+
+  .group-header-node button:hover {
+    color: var(--primary);
+  }
+
+  .gate-histogram {
+    display: block;
+    background: var(--panel-bg);
+    border-radius: 4px;
+  }
+
+  .drill-btn {
+    margin: 6px 0 0;
+    padding: 2px 8px;
+    font-size: 10px;
+    width: 100%;
+  }
+
+  /* --- リプレイ視認性(§4-4) --- */
+
+  .replay-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 4; /* ノードの上、React Flowパネル(z-index:5)の下に敷く */
+    pointer-events: none;
+    background: var(--replay-sepia);
+  }
+
+  .replay-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    border: 1px solid #a9791f;
+    border-radius: 8px;
+    background: #78451e;
+    color: #fff8ef;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+  }
+
+  .replay-banner button {
+    margin: 0;
+    padding: 2px 10px;
+    border: 1px solid #fff8ef;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff8ef;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .replay-banner button:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  /* --- エッジ型の凡例(§5) --- */
+
+  .edge-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 3px 8px;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--panel-bg) 90%, transparent);
+    font-size: 10px;
+    color: var(--muted-foreground);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  }
+
+  .edge-legend-title {
+    font-weight: 600;
+    color: var(--foreground);
+  }
+
+  .edge-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .edge-legend-item i {
+    width: 12px;
+    height: 3px;
+    border-radius: 2px;
+    display: inline-block;
+  }
+
+  /* --- L0ドリルダウン --- */
+
+  .l0-canvas {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: var(--canvas-bg);
+  }
+
+  .l0-canvas canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  .l0-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--muted-foreground);
+    pointer-events: none;
+    line-height: 1.6;
+  }
+
+  .l0-hover {
+    color: var(--primary);
+  }
+
+  /* パンくず: L0ドリルダウンから俯瞰へ復帰する導線 */
+  .l0-breadcrumb {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--muted-foreground);
+  }
+
+  .l0-breadcrumb button {
+    color: var(--primary);
+    font-weight: 600;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+
+  .l0-breadcrumb button:hover {
+    text-decoration: underline;
+  }
+
+  /* --- uPlot白テーマ調整 --- */
+
+  .chart {
+    margin-top: 8px;
+  }
+
+  .uplot .u-title {
+    color: var(--muted-foreground);
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .uplot .u-legend {
+    color: var(--muted-foreground);
+    font-size: 10px;
+  }
+
+  .uplot .u-legend .u-label {
+    color: var(--muted-foreground);
+  }
+}

@@ -1,0 +1,148 @@
+---
+title: Griffith
+description: 高速・省電力で動くAIチップを、Pythonから開発する。微分可能論理ゲートでNNを学習し、IR経由でVerilog/VHDLを生成してFPGAへ。
+template: splash
+editUrl: false
+lastUpdated: false
+hero:
+  title: Griffith
+  tagline: 高速・省電力で動くAIチップを、Pythonから開発する
+  actions:
+    - text: クイックスタート
+      link: /getting-started/quickstart/
+    - text: GitHub
+      link: https://github.com/tsukushi-gate/Griffith
+---
+
+import { Code } from '@astrojs/starlight/components';
+
+export const quickstart = `import torch
+import griffith_logic as gl   # 公式の慣用別名は gl
+
+# 3層のN=4 LUTネットワーク(MNIST想定)
+model = torch.nn.Sequential(
+    torch.nn.Flatten(),
+    gl.LutLayer(in_dim=784, out_dim=16000, n_inputs=4),
+    gl.LutLayer(in_dim=16000, out_dim=16000, n_inputs=4),
+    gl.LutLayer(in_dim=16000, out_dim=16000, n_inputs=4),
+    gl.GroupSum(k=10, tau=30.0),
+)
+
+# 学習時: softmax の連続緩和で勾配が流れる
+y = model(torch.rand(32, 784))       # (32, 10) クラスロジット
+
+# 推論時: argmax 離散化で純粋な Boolean 回路へ崩壊する
+model.eval()
+y_hard = model(torch.rand(32, 784))  # GPU不要・ビット演算のみ`;
+
+<p class="not-content mx-auto mt-6 max-w-2xl text-center text-sm text-(--sl-color-gray-3)">
+  Named after Griffith Observatory, whose mission is to bring astronomy to everyone — we want
+  differentiable logic to be just as accessible.
+</p>
+
+<div class="not-content mx-auto mt-16 max-w-5xl">
+
+  <h2 class="text-center text-2xl font-bold text-(--sl-color-white) sm:text-3xl">
+    論理ゲートを<span class="md-accent-text">学習</span>させる
+  </h2>
+  <p class="mx-auto mt-3 max-w-2xl text-center text-sm text-(--sl-color-gray-3) sm:text-base">
+    学習は連続緩和で微分可能に、推論は離散化して純粋な Boolean 回路に。
+    その間をつなぐのが IR(中間表現)です。
+  </p>
+
+  <div class="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+
+    <div class="md-card rounded-xl p-5">
+      <div class="mb-3 inline-flex size-9 items-center justify-center rounded-lg md-chip-logic">◧</div>
+      <h3 class="text-base font-semibold text-(--sl-color-white)">学習可能な論理ゲート</h3>
+      <p class="mt-2 text-sm leading-relaxed text-(--sl-color-gray-3)">
+        N入力LUT(N=2/4/6)を連続緩和して勾配を流す。difflogic の16ゲートから FPGA LUT6 まで、
+        1つの層で表現できます。
+      </p>
+    </div>
+
+    <div class="md-card rounded-xl p-5">
+      <div class="mb-3 inline-flex size-9 items-center justify-center rounded-lg md-chip-real">⌁</div>
+      <h3 class="text-base font-semibold text-(--sl-color-white)">FPGA直行</h3>
+      <p class="mt-2 text-sm leading-relaxed text-(--sl-color-gray-3)">
+        学習結果を IR(JSON)へ抽出し、Verilog / VHDL を生成。GPU なしでビット演算として
+        超高速・低消費電力に推論します。
+      </p>
+    </div>
+
+    <div class="md-card rounded-xl p-5">
+      <div class="mb-3 inline-flex size-9 items-center justify-center rounded-lg md-chip-logic">⇄</div>
+      <h3 class="text-base font-semibold text-(--sl-color-white)">ハイブリッドNN</h3>
+      <p class="mt-2 text-sm leading-relaxed text-(--sl-color-gray-3)">
+        「Attention は PyTorch、MLP だけ LUT」のような部分置換。既存の
+        <code>nn.Module</code> の途中にそのまま挟めます。
+      </p>
+    </div>
+
+    <div class="md-card rounded-xl p-5">
+      <div class="mb-3 inline-flex size-9 items-center justify-center rounded-lg md-chip-logic">▤</div>
+      <h3 class="text-base font-semibold text-(--sl-color-white)">ビジュアルエディタ</h3>
+      <p class="mt-2 text-sm leading-relaxed text-(--sl-color-gray-3)">
+        IR グラフ表示・LUT ヒートマップ・リアルタイム学習監視(タイムマシン/勾配ストリーミング)を
+        ブラウザから。
+      </p>
+    </div>
+
+    <div class="md-card rounded-xl p-5">
+      <div class="mb-3 inline-flex size-9 items-center justify-center rounded-lg md-chip-real">≡</div>
+      <h3 class="text-base font-semibold text-(--sl-color-white)">HDL等価性検証</h3>
+      <p class="mt-2 text-sm leading-relaxed text-(--sl-color-gray-3)">
+        PyTorch hard eval ⇔ IR simulate ⇔ HDL シミュレーションの3段が一致することを
+        テストで保証します。
+      </p>
+    </div>
+
+    <div class="md-card rounded-xl p-5">
+      <div class="mb-3 inline-flex size-9 items-center justify-center rounded-lg md-chip-real">∇</div>
+      <h3 class="text-base font-semibold text-(--sl-color-white)">学習則を選べる</h3>
+      <p class="mt-2 text-sm leading-relaxed text-(--sl-color-gray-3)">
+        BP / AP法(微分不使用)/ DFA / EGGROLL(進化戦略)をレイヤ単位で注釈。
+        層ごとに違う学習則を混ぜられます。
+      </p>
+    </div>
+
+  </div>
+
+  <div class="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+    <span class="text-(--sl-color-gray-4)">次に読む:</span>
+    <a href="/tutorials/nn-basics/" class="text-(--sl-color-gray-2) hover:text-(--sl-color-white)">入門コース(NN未経験者向け)</a>
+    <a href="/tutorials/" class="text-(--sl-color-gray-2) hover:text-(--sl-color-white)">例ギャラリー</a>
+    <a href="/reference/benchmarks/" class="text-(--sl-color-gray-2) hover:text-(--sl-color-white)">ベンチマーク</a>
+    <a href="/explanation/dlgn/" class="text-(--sl-color-gray-2) hover:text-(--sl-color-white)">DLGNとは</a>
+    <a href="/guides/fpga/" class="text-(--sl-color-gray-2) hover:text-(--sl-color-white)">FPGAに焼く</a>
+    <a href="/reference/api/" class="text-(--sl-color-gray-2) hover:text-(--sl-color-white)">APIリファレンス</a>
+  </div>
+</div>
+
+<div class="mx-auto mt-20 max-w-4xl">
+
+## 30秒で試す
+
+```bash
+pip install griffith-logic          # 配布名は griffith-logic / import 名は griffith_logic
+```
+
+開発する場合(`examples/` を動かす場合)は uv を使う。
+
+```bash
+uv sync --extra dev --extra cpu     # セットアップ(GPU機は --extra cu128)
+uv run python examples/01_xor.py    # XOR学習 → 離散回路(hard eval)で accuracy 1.00
+```
+
+<Code code={quickstart} lang="python" title="mnist_lut.py" />
+
+</div>
+
+<div class="not-content mx-auto mt-16 mb-8 max-w-4xl text-center">
+  <a
+    href="/getting-started/installation/"
+    class="inline-block rounded-lg border border-(--sl-color-gray-5) px-6 py-3 text-sm font-semibold text-(--sl-color-white) no-underline transition-transform hover:-translate-y-0.5 hover:border-md-logic-400"
+  >
+    インストールへ進む →
+  </a>
+</div>

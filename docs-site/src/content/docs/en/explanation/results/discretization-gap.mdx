@@ -1,0 +1,112 @@
+---
+title: 'The discretization gap in practice'
+description: 'How large the soft–hard difference really gets: 0.56pp to 1.12pp, and 0.29 nat on a language model. Gumbel calibration cuts it by 63% — plus comparisons against Hard-ST and warp.'
+---
+
+A differentiable logic gate network has two phases: **continuous relaxation (soft) during training,
+and a pure Boolean circuit fixed by argmax (hard) at inference**. The performance difference between
+the two phases is the **discretization gap** — the real cause behind "it trained fine, then dropped
+once it became a circuit". Only the hard side survives onto hardware, so this gap translates almost
+directly into lost product performance.
+
+This page collects what the gap actually measures at, and what moved it.
+
+## 1. Measured gaps, by task
+
+| Task / model | soft | hard | Gap | Conditions |
+|---|---|---|---|---|
+| MNIST, softmax N=2, 6 layers | 98.30% | 97.74% | 0.56pp | RTX 5090, 50ep, 2026-04-20 |
+| MNIST, softmax N=4, 6 layers | 95.66% | 94.54% | **1.12pp** | same |
+| MNIST, warp N=2, 6 layers | 96.05% | 96.11% | **−0.06pp** (hard is higher) | same |
+| MNIST, warp N=4, 6 layers | 95.64% | 95.50% | 0.14pp | same |
+| Character language model (LogicGPT L3-C) | ppl ≈12.2 | ppl 15.54 | **0.29 nat** | A10G, Tiny Shakespeare, 20k steps |
+| Object detection (CenterNetLUT) | mAP 0.1791 | mAP 0.5425 | hard far higher | RTX 5090, Multi-MNIST 96×96. **The mAP is a pre-fix figure, awaiting re-measurement.** |
+
+Three points deserve emphasis.
+
+- **The gap depends strongly on the method.** Same data, same depth — and 1.12pp sits next to
+  −0.06pp.
+- **hard can beat soft.** warp N=2 and the detection model both do; discretization can act as noise
+  removal. "It always drops" is false.
+- **The absolute values are larger for language models.** Deeper composition makes the gap bite
+  harder than in classification.
+
+## 2. Remedy 1: warp (Walsh–Hadamard coefficients + Gumbel smoothing)
+
+Rather than the truth table itself, this learns coefficients in the Walsh–Hadamard basis and
+discretizes on the sign of the logit. Training is aware of discretization from the start, so the gap
+nearly vanishes: **−0.06pp at MNIST N=2, 0.14pp at N=4**. Running at 11–48% of softmax's FLOPs helps
+too.
+
+The price is peak accuracy: warp N=2 reached 96.11% against softmax N=2's 97.74% under the same
+conditions. "Small gap, but a lower ceiling" is the right way to place it.
+
+## 3. Remedy 2: Hard-ST (argmax forward + STE backward)
+
+A selection scheme that makes the forward pass argmax from the outset and passes only the backward
+pass through a Straight-Through Estimator. Measured on 2026-04-15, RunPod GPU, MNIST 28×28,
+6 layers, 64,000 neurons/layer, N=2, Adam lr=0.01, bs=512, 50,000 iterations, seed=0:
+
+| | Soft-Mix (the usual softmax weighted average) | Hard-ST |
+|---|---|---|
+| final accuracy (best hard) | 97.46% | **98.02%** |
+| iterations to reach 97% | 10,500 | **5,000** |
+| selection gap (at convergence) | 0.9–1.0% | **0.2–0.4%** |
+| wall time | **43 min** | 85 min |
+
+**Convergence is about 2.1× faster, final accuracy is +0.56pt, and the selection gap is under a
+third.** The reversal in wall time is an implementation artifact: Soft-Mix runs on a CUDA kernel
+while Hard-ST falls back to Python (18.8 it/s vs. 9.2 it/s per iteration).
+
+Note that Hard-ST's selection gap should be zero in theory, yet 0.2–0.4% remained in practice. The
+cause is that inputs differ between training and evaluation — continuous values versus bits.
+
+## 4. Remedy 3: Gumbel gate-selection noise (the biggest win on language models)
+
+Add Gumbel noise to the gate selection distribution during training only
+($\pi = \mathrm{softmax}((w+g)/\tau_g)$, $g \sim \mathrm{Gumbel}(0,1)$). It is disabled entirely at
+evaluation, so the circuit's definition is unchanged.
+
+A three-arm ablation on the Tiny Shakespeare character language model (vocab 65, T=64, 20k steps,
+A10G, seed=0, evaluated on the full validation set), varying the projection layer's parameterization
+and the presence of Gumbel:
+
+| Arm | Projection parameterization | Gumbel | hard ppl | soft ppl | Gap (final) |
+|---|---|---|---|---|---|
+| baseline (L3-C) | warp | no | 15.54 | ≈12.2 | 0.29 |
+| control | softmax | no | 15.44 → 17.9 late | ≈11.9 | **0.41** (worse) |
+| **the candidate** | softmax | **yes ($\tau_g$=1.0)** | **13.31** | ≈12.2 | **0.107** |
+
+**Gap 0.29 → 0.107 (−63%), hard ppl 15.5 → 13.3 (−14%).** Soft-side performance (≈12.2) did not
+move, so the improvement is purely on the discretization side.
+
+Including the control arm paid off. **Swapping warp → softmax alone makes things worse** (gap 0.41),
+which isolates the improvement as the contribution of Gumbel noise by itself. The learning curves
+agree: the Gumbel arm's gap shrank monotonically (0.139 at step 1,000 → 0.107 at 20,000) while the
+control arm's widened as the temperature fell (0.27 → 0.41).
+
+For now this applies only to the attention projection layers; the FFN is out of scope. The target is
+a gap of 0.02–0.05, on par with sequential MNIST — still some distance away.
+
+## 5. Second-order problems the gap causes
+
+In object detection (CenterNetLUT, Multi-MNIST 96×96, RTX 5090, 1,000 epochs, 11h45m), mAP (hard)
+peaked at 0.5425 at epoch 78 and then became unstable. Note that **this mAP predates the image-scope fix in `compute_map` (boxes from all images used to be matched in a single pool) and is awaiting re-measurement** — use it for ranking, not as an absolute value. Because soft and hard move in different
+directions, **early stopping or model selection on a soft metric misses the hard peak**. Including
+the hard side in the selection criterion is the practical answer.
+
+## 6. Summary
+
+| Measure | Effect | Side effect |
+|---|---|---|
+| `warp` parameterization | gap ≈0 (−0.06 to 0.14pp) | peak accuracy below softmax N=2 |
+| Hard-ST selection | selection gap ÷3, convergence 2.1×, accuracy +0.56pt | currently a Python implementation, 2× wall time |
+| Gumbel selection noise | gap −63% and hard ppl −14% on the language LM | single seed, applies to projection layers only |
+| hard-based model selection | avoids missing the peak | higher evaluation cost |
+
+For choosing the method itself, see [Choosing a parameterization](/en/guides/parameterization/) and
+[The experiment behind the parameterization rule](/en/explanation/results/parameterization-study/);
+for spotting the gap in learning curves, see
+[Reading training curves](/en/guides/training-curves/).
+
+{/* i18n:source=explanation/results/discretization-gap.mdx hash=24df3baf18f4 */}

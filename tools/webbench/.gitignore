@@ -1,0 +1,15 @@
+# 生成物(scripts/export_webbench.py fixtures / demo で再生成)。
+# golden fixtureが無い場合、等価性テストは skipIf で自動スキップされる
+node_modules/
+dist/
+public/models/
+public/data/
+public/mediapipe/
+src/fixtures/*.json
+
+# bench_matrix.mjs の実行毎ログ(タイムスタンプ付き、生成物)。
+# bench-baseline/ は固定ベースラインとして追跡対象(こちらは除外しない)。
+bench-results/
+
+.vercel
+.env*

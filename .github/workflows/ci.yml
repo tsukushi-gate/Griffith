@@ -1,0 +1,58 @@
+name: ci
+
+on:
+  push:
+    branches: [main, 'feature/**', 'fix/**', 'experiment/**', 'docs/**', 'chore/**']
+  pull_request:
+
+# 既定の GITHUB_TOKEN 権限を最小化する。
+# 書き込みが必要なジョブだけ job レベルで permissions を上書きする。
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      # ruffはローカル(dev extra)と同版に固定する(非固定だと最新版の新規則で
+      # ローカルgreen/CI redの環境差が出る。uv.lock更新時はここも同期すること)
+      - run: uvx "ruff==0.12.0" check .
+
+  # 型チェック: core/encodingのみ厳格化する段階導入
+  type:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - run: uv sync --extra dev --extra cpu
+      # --no-sync 必須: torchはコア依存なので、素の `uv run` は既定extra(=cpu無し)へ
+      # 環境を同期し直し、PyPI版(CUDA)torchでcpu index版を上書きしてtorchvisionとABIが割れる。
+      - run: uv run --no-sync mypy griffith_logic/core griffith_logic/encoding
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      # Linux解決ではcu128版torchが入るため初回は重い(キャッシュで吸収)
+      # editor extra はエディタバックエンドのテスト(fastapi)に必要
+      - run: uv sync --extra dev --extra cpu --extra editor --extra figures
+      # カバレッジはratchet運用(下限=基線-1。CONTRIBUTING参照)。
+      # 再較正: learning除外後の実測81.4%→下限80(母集団変更に伴う基線再設定+引き上げ)
+      # --no-sync 必須(理由は type ジョブのコメント参照)
+      - run: >
+          uv run --no-sync pytest -m "not slow and not cuda and not paper and not hdl and not hdl_vhdl and not learning" -q
+          --cov=griffith_logic --cov-report=term --cov-fail-under=80
+
+# hdlジョブ(iverilog/ghdl等価性)とlearningテスト(学習収束=AI実行)はCIから除外(ユーザー判断)。
+# 実行手段: ローカル `uv run pytest -m hdl` / `uv run pytest -m learning` / `make test-all`。

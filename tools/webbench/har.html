@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>行動認識 — ブラウザ推論デモ</title>
+  <link rel="stylesheet" href="/src/app.css" />
+</head>
+<body class="bg-bg font-sans text-fg antialiased">
+  <div id="shell"></div>
+  <main class="px-4 py-6 md:pl-72 md:pr-8">
+    <h1 class="text-xl font-bold">行動認識</h1>
+    <p class="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
+      スマートフォンの加速度・角速度(9チャンネル)を 2.56 秒ぶん切り出し、
+      歩行・階段の上り下り・着席・起立・横臥の6種類を判定します(UCI-HAR)。
+      センサの記録を実時間で流し続けます(1.28 秒ごとに次の窓へ進みます)。
+      記録は同じ行動がまとまって並んでいて 1 つの行動がおよそ 30 秒続くので、
+      早送りや「次の行動へ」で切り替わりを確認できます。
+      比較対象は同じタスクを学習した MLP と 1D CNN(いずれも ONNX Runtime Web)です。
+    </p>
+    <p class="mt-2 max-w-3xl text-sm leading-relaxed text-muted">
+      モデル: 論理ゲート回路(<span data-meta="kLabel">—</span>)、
+      入力 <span data-meta="inputBits">—</span>ビット(<span data-meta="preprocLabel">—</span>)、
+      クラス数 <span data-meta="nClasses">—</span>(<span data-meta="labels">—</span>)。<span data-about="recipe"></span>
+    </p>
+    <p class="mt-3 max-w-3xl rounded-lg border border-line bg-panel p-3 text-xs leading-relaxed text-muted"
+       data-note="concurrency"></p>
+    <p id="position" class="mt-4 text-sm font-medium">—</p>
+    <div id="grid"></div>
+    <p class="mt-6 max-w-3xl text-xs leading-relaxed text-muted">
+      データの出典: UCI Machine Learning Repository, Human Activity Recognition Using Smartphones。
+      窓は 50% 重なりで連続しているため、順に送るとセンサの実ストリーム再生になります。
+    </p>
+  </main>
+  <script type="module" src="/src/har_main.ts"></script>
+</body>
+</html>

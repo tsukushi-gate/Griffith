@@ -1,0 +1,239 @@
+---
+title: 'Frequently asked questions'
+description: 'What "no GPU needed" actually means, how this differs from difflogic, the accuracy gap against real-valued NNs, where LLMs stand today, which tasks fit, whether you need an FPGA, and licensing. The places expectations tend to drift, answered up front.'
+---
+
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+This page answers questions about **direction and scope** — what works today, what doesn't yet,
+written honestly and only as far as measurements and citations support. For operational trouble see
+[Troubleshooting](/en/guides/troubleshooting/); for definitions see the
+[Glossary](/en/explanation/glossary/).
+
+## Scope and claims
+
+### Why can you say "no GPU needed"?
+
+**It's inference that doesn't need a GPU.** Miss that and your expectations will be off.
+
+| | Training | Inference (deployment) |
+|---|---|---|
+| What happens | continuously relaxed LUTs optimized with PyTorch's **real-valued arithmetic** | bitwise ops on a **pure Boolean circuit** fixed by argmax |
+| GPU | **helps a lot**; effectively required at scale | **not needed**, and not a single multiplier |
+| Runs on | PyTorch (CUDA / MPS / CPU) | CPU / FPGA / ASIC |
+
+During training, "which gate each neuron becomes" is relaxed into something differentiable so
+gradients can flow, so the compute profile is that of an ordinary real-valued neural network. The
+GPU stops being necessary **after** `model.eval()` fixes the truth tables by argmax
+([the soft/hard two phases](/en/explanation/dlgn/)).
+
+For a sense of scale (→ [Run a training job](/en/guides/training/)):
+
+- smoke (k=16, 2 layers) — seconds, on CPU
+- quick (k=2000, 3 layers, 3 epochs) — minutes
+- standard (k=16,000, 6 layers, 50 epochs) — minutes to tens of minutes (GPU)
+- paper reproduction (k=64,000, 6 layers, 200+ epochs) — hours → [Cloud GPU](/en/guides/cloud-gpu/)
+
+### Is CUDA required for training?
+
+**No.** The CUDA kernels are an optional fast path; where they aren't available the code falls back
+to Python automatically (and runs on CPU / MPS). Most of the tutorials on this site are marked
+"environment: CPU only (no GPU)" and complete as such.
+
+That is a clear difference from difflogic / BinaryBrain, which require CUDA. But **the fallback is
+slow**. MPS never uses the CUDA kernels, and raising fan-in grows the basis count as $2^N$, so
+running an N=6 configuration on a local Mac isn't realistic
+([Troubleshooting](/en/guides/troubleshooting/)).
+
+### How does this differ from difflogic (the original implementation)?
+
+The original paper's implementation (Petersen et al., NeurIPS 2022) is **two-input gates only,
+softmax, CUDA required**, and trains a fully connected DLGN. This library generalizes that and adds
+the **downstream** pipeline that follows training.
+
+| | difflogic | griffith-logic |
+|---|---|---|
+| Compute unit | two-input gates only (16 kinds) | **N-input LUTs (N = 2 / 4 / 6)** |
+| Parameterization | 16-gate softmax only | **five schemes** (softmax / independent / iwp / raw / warp) |
+| CUDA | required | **not required** (CPU / MPS supported, Python fallback) |
+| Convolution | unsupported | supported (CDDLGN via complete trees of N-input LUTs) |
+| Learning rule | backprop | backprop / AP / DFA / ES |
+| After training | — | **IR (JSON) → Verilog / VHDL**, three-way equivalence checking |
+| Tooling | — | visual editor, unified `griffith` CLI |
+
+"difflogic-compatible" means the **N=2 + `softmax` parameterization** mode. In that setting you're
+on the same footing as the paper — and in fact, on the same recipe (6 layers, τ=10, 200k
+iterations) we reach **97.84%** hard accuracy, above the paper's 97.69% for the small
+configuration.
+
+For the wider lineage see [DLGN taxonomy and lineage](/en/explanation/taxonomy/); for the
+differences between schemes see [Choosing a parameterization](/en/guides/parameterization/).
+
+## Accuracy and limits
+
+### Can it beat a real-valued neural network on accuracy?
+
+**Depends on the task. Roughly on par at MNIST scale; a gap remains at CIFAR-10 scale.** Here are
+the numbers.
+
+| Model | MNIST | CIFAR-10 |
+|---|---|---|
+| DiffLogic (Petersen, NeurIPS 2022) | 98.47% | 62.14% |
+| LogicTreeNet-L (NeurIPS 2024) | **99.35%** | 84.99% |
+| LogicTreeNet-G (NeurIPS 2024) | — | **86.29%** |
+| A conventional CNN (for reference) | about 99.5% | about 93% |
+
+Measured MNIST results in this library (all **backprop**, on test):
+
+- **hard 97.84%** — the official DLGN recipe (6 layers, τ=10, 200k iterations)
+- **hard 97.74% / soft 98.30%** — softmax N=2, 6 layers, τ=10, bs=128, lr=0.01, 50 epochs
+- **hard 98.02%** — Hard-ST (CAGE), 6 layers × 64,000 gates
+
+So **MNIST is within 1–2 points of a conventional CNN, while CIFAR-10 is still 6–10 points
+behind** — and parameter efficiency per unit of accuracy can trail a dense real-valued NN.
+
+:::note[If you quote these accuracies]
+A DLGN accuracy figure means nothing without the **learning rule, soft/hard, train/test,
+architecture, and epoch count**. Soft and hard are different things, so never use a bare number
+like "MNIST 98%". The learning rule matters a great deal too: on the same fully connected MNIST
+configuration, Akiho Propagation — which uses no backprop — reaches only **soft ≈ 0.90 / hard ≈
+0.85** ([Learning rules](/en/explanation/learning-rules/)).
+:::
+
+### Do LLMs work?
+
+**Today this is at the character-level language model stage**, not a practical LLM.
+
+`LogicGPT` is a decoder-only Transformer whose attention, FFN, and output head are all built from
+logic gates, with no real-valued matrix multiplication anywhere. Trained as a character LM on Tiny
+Shakespeare, the tutorial configuration (d_model=192, 2 layers, 32-character context, 1500 steps,
+48,640 parameters, 106 seconds on CPU) brings **val bpc from 4.954 down to 3.134** (the uniform
+baseline is log₂32 = 5.00). Generated text goes as far as word-like spellings, line breaks, and
+speaker lines such as `ROMEO:`.
+
+On the full recipe (Tiny Shakespeare, vocabulary 65, T=64, 20k steps, A10G) the hard-perplexity
+ladder degrades as more of the model is turned into logic.
+
+| Configuration | hard ppl | Discretization gap |
+|---|---|---|
+| L0 (all floating point = ceiling) | 4.9–5.0 | ≈ 0 |
+| L0b (FFN only turned into logic) | 7.88 | 0.30 |
+| L1 (+ gated projections) | 19.24 | 0.50 |
+| L3-C (+ MUX selector) | 15.5–15.95 | 0.29 |
+| **L3-C + Gumbel calibration** | **13.31** | **0.107** |
+
+To be equally honest about generation quality: greedy decoding from L3-C + Gumbel collapses into
+**200 characters of nothing but line breaks**, and only temperature sampling gets it back to
+word-fragment level (even floating-point L0 falls into short repetition loops).
+
+The bottleneck is the **discretization gap**. A gap of 0.02–0.05 on sequential MNIST becomes
+0.3–0.5 nats — roughly ten times larger — on a language model. Gumbel calibration cut that by 63%,
+but the floating-point ceiling is still out of reach. To run it yourself, see
+[Logic-gate GPT](/en/tutorials/logic-gpt/) and [The logic ladder](/en/tutorials/logic-ladder/).
+
+### Can't you just "convert" a pretrained model into logic gates?
+
+**You can convert, but it generally loses to training from scratch.** This is a measured negative
+result.
+
+The reason is structural: systems that turn arithmetic into circuits while preserving it
+(the LogicNets family) and systems that learn Boolean logic freely (the difflogic family) are
+maximally different. Transcribing existing weights takes away exactly what makes a native DLGN
+strong — freedom to pick any Boolean function.
+
+Conversion is worth it **when you want a hardware-faithful arithmetic circuit**; if native DLGN
+performance is the goal, training from scratch is the answer
+([Taxonomy and lineage](/en/explanation/taxonomy/)).
+
+### Which tasks fit, and which don't?
+
+**Good fit**
+
+- You want inference on an **FPGA / ASIC** (no multipliers, direct LUT mapping, low power)
+- **Latency is tight** (a combinational circuit answers in a handful of clocks)
+- The data can't leave the device, so it must be processed **locally**
+- The inputs are already **binary or categorical** (thermometer-coded features, bitmaps, n-gram
+  presence, and so on)
+
+**Poor fit / caveats**
+
+- **Reusing a large pretrained model rarely pays off** (see above)
+- **Parameter efficiency per unit of accuracy** can trail a dense real-valued NN
+- **Sequence modeling and language** are fragile under discretization (about ten times the gap of
+  vision tasks)
+- Training itself is real-valued computation, so **training cost is no lower than an ordinary NN's**
+
+In practice the answer is usually **going hybrid** — turning a bounded part into logic. Something
+like "keep attention in PyTorch, replace only the MLP with LUTs" drops straight into the middle of
+an `nn.Module` ([Build a hybrid NN](/en/tutorials/hybrid/)).
+
+## Practical prerequisites
+
+### Can I use this without an FPGA?
+
+**Yes.** An FPGA is the exit you can take at the end of the road, not an entry requirement.
+
+1. **Everything closes inside PyTorch** — `model.eval()` gives you the same hard inference as the
+   discrete circuit. Most of the tutorials on this site need nothing more
+2. **The IR runs under numpy** — `simulate()` is bit-exact, and `simulate_trace()` lets you follow
+   the intermediate bits layer by layer ([Working with the IR](/en/guides/ir/))
+3. **Generating HDL needs no simulator either** — `griffith export-hdl` only converts
+4. **Equivalence checking is optional** — without iverilog / ghdl those tests skip automatically
+
+Note that the support tooling for real FPGA hardware (`mdl-fpga`) is **a preview guide, not yet
+integrated into the main package** ([Burn it to an FPGA](/en/guides/fpga/)).
+
+### If it "burns to an FPGA", is accuracy guaranteed too?
+
+**No.** These are two separate things.
+
+Equivalence checking (three-way equivalence) guarantees **bit-level agreement between the IR and
+the hardware** — not that the continuous model you trained and the discrete circuit have the same
+accuracy. Rounding a model whose truth tables haven't settled on 0/1 can cost a lot of accuracy: in
+one shortened recipe, a model at eval acc 0.803 in continuous form **collapsed to 0.211** once its
+entries were rounded.
+
+**Always check hard-eval accuracy before you burn.** How to read it is in
+[Reading training curves](/en/guides/training-curves/); for a configuration where the gap is
+structurally zero, see [DWN](/en/tutorials/dwn/).
+
+### Which fan-in (N) should I pick?
+
+It's decided by the use case. As a rule of thumb: **6 to minimize FPGA area, 2 for CPU/GPU
+inference speed, 2 for training stability.** The pairing with parameterization is settled
+knowledge: **N=2 goes with `softmax`, N≥4 with `independent` (or `warp`) plus a higher learning
+rate.** Never pick `softmax` at N≥4 — the hard table degenerates structurally
+([Choosing a parameterization](/en/guides/parameterization/)).
+
+## About the project
+
+### What about the license and commercial use?
+
+**Apache-2.0, provisionally (not yet finalized).** The repository ships a `LICENSE`
+(Apache-2.0) together with `NOTICE` and `THIRD_PARTY_NOTICES.md`, and the package metadata's
+`license` field says `Apache-2.0`. Treat this as a **provisional choice**: it may be revisited
+before the public release.
+
+You can therefore plan on using, redistributing and commercially using Griffith under
+Apache-2.0 terms — but **the `LICENSE` file at the repository root is always authoritative**.
+Attribution for third-party code and data is collected in `THIRD_PARTY_NOTICES.md`. If you need a
+decision, see [CONTRIBUTING](/en/contributing/) and get in touch directly.
+
+### How do I contribute?
+
+The test suite is layered from L1 (mathematical properties) through L5 (hybrid / HDL equivalence),
+and the convention when adding a new component is to **write the tests first**, in the order
+"reference implementation → gradient check → property test → convergence test"
+([The test suite](/en/contributing/testing/)). How to write documentation is in
+[Writing docs](/en/contributing/docs/).
+
+## What to read next
+
+<CardGrid>
+  <LinkCard title="What is a DLGN?" href="/en/explanation/dlgn/" description="Continuous relaxation and discretization, the soft/hard two phases, and fan-in as a knob." />
+  <LinkCard title="DLGN taxonomy and lineage" href="/en/explanation/taxonomy/" description="Arithmetic DLGN vs. native DLGN vs. 6-LUT DLGN, and why conversion doesn't work." />
+  <LinkCard title="Troubleshooting" href="/en/guides/troubleshooting/" description="An index you can look up from the error message you actually got." />
+  <LinkCard title="Design decisions" href="/en/explanation/design-decisions/" description="Why the IR was made the source of truth, and other choices that pay off later." />
+</CardGrid>
+
+{/* i18n:source=explanation/faq.mdx hash=d374f391cb5b */}

@@ -1,0 +1,44 @@
+{
+  "name": "griffith-logic-webbench",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "predev": "npm run mediapipe:setup",
+    "dev": "vite",
+    "prebuild": "npm run mediapipe:setup",
+    "build": "tsc --noEmit && npm run asbuild:release && npm run asbuild:simd && npm run asbuild:mt && vite build",
+    "serve": "node serve.mjs",
+    "mediapipe:setup": "node scripts/copy_mediapipe_assets.mjs && node scripts/fetch_mediapipe_models.mjs",
+    "pretest": "npm run asbuild:release && npm run asbuild:simd",
+    "test": "vitest run",
+    "build:runtime": "tsc --noEmit && npm run asbuild:release && npm run asbuild:simd && npm run asbuild:mt && vite build -c vite.lib.config.ts",
+    "test:watch": "vitest",
+    "asbuild:debug": "asc assembly/index.ts --target debug",
+    "asbuild:release": "asc assembly/index.ts --target release",
+    "asbuild:simd": "asc assembly/index-simd.ts --target release-simd",
+    "asbuild": "npm run asbuild:debug && npm run asbuild:release && npm run asbuild:simd && npm run asbuild:mt",
+    "serve:pages": "SERVE_ROOT=/tmp/pages-test PORT=8788 node serve.mjs",
+    "bench:matrix": "node scripts/bench_matrix.mjs",
+    "bench:gpu-alu": "node scripts/gpu_alu_bench.mjs",
+    "asbuild:mt": "asc assembly/index-simd.ts --target release-simd-mt"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.35",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-wasm": "^4.22.0",
+    "@tensorflow/tfjs-backend-webgpu": "^4.22.0",
+    "onnxruntime-web": "1.23.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.1.0",
+    "@webgpu/types": "^0.1.71",
+    "assemblyscript": "^0.28.19",
+    "playwright": "^1.62.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~5.9.2",
+    "vite": "^7.1.0",
+    "vitest": "^4.1.9"
+  }
+}

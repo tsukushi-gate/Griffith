@@ -1,0 +1,61 @@
+/* 全デモ画面の共通スタイル(Tailwind CSS v4、CSS-first設定)。
+ *
+ * 従来は13枚のHTMLがそれぞれインラインの <style> を持っていて、値が少しずつ
+ * ずれていた。ここ1枚に集約する。 */
+@import "tailwindcss";
+
+/* v4 はこのCSSファイルからの相対パスでクラス名を走査する。既定の自動検出だと
+ * public/models(45MB のモデルJSON)まで舐めに行くので、対象を明示列挙する。 */
+@source "../*.html";
+@source "./*.ts";
+@source "./ui/**/*.ts";
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* 配色は OS のライト/ダーク設定に追従する(トグルは持たない)。
+ * 旧ページの `color-scheme: light dark` と同じ挙動。 */
+:root {
+  color-scheme: light dark;
+  --c-bg: #ffffff;
+  --c-fg: #0f172a;
+  --c-card: #ffffff;
+  --c-panel: #f8fafc;
+  --c-muted: #64748b;
+  --c-line: #e2e8f0;
+  --c-accent: #2563eb;
+  --c-danger: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --c-bg: #0b1220;
+    --c-fg: #e2e8f0;
+    --c-card: #111a2b;
+    --c-panel: #0f1829;
+    --c-muted: #94a3b8;
+    --c-line: #1e293b;
+    --c-accent: #60a5fa;
+    --c-danger: #f87171;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-fg: var(--c-fg);
+  --color-card: var(--c-card);
+  --color-panel: var(--c-panel);
+  --color-muted: var(--c-muted);
+  --color-line: var(--c-line);
+  --color-accent: var(--c-accent);
+  --color-danger: var(--c-danger);
+}
+
+/* 推論結果の canvas はモデル解像度(64〜128px)を拡大表示するので、
+ * 補間せずドットのまま出す。 */
+@utility pixelated {
+  image-rendering: pixelated;
+}
+

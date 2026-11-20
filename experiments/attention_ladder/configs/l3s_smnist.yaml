@@ -1,0 +1,6 @@
+task: smnist            # classification
+stage: L3-S             # 正規化のBool化(S案/対照: norm=softmax_int。射影/スコアはL2のまま)
+model: {d_model: 128, n_heads: 4, n_layers: 2, mlp_ratio: 2, attention: logic_proj, ffn: logic, score: xnor_popcount, norm: softmax_int, qk_bits: 128, v_bits: 128, n_inputs: 2, parameterization: warp, proj_depth: 1, tau: 1.0, dropout: 0.0}
+train: {epochs: 10, batch_size: 128, lr: 1.0e-3, weight_decay: 0.0}
+seeds: [0, 1, 2]
+wandb: {enabled: true, group: attention_ladder, tags: [L3-S, smnist]}

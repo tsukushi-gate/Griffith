@@ -1,0 +1,260 @@
+---
+title: 'GPU(CUDA / Metal)で動かす'
+description: 'バンドルから CUDA / Metal のソースを生成し、ホストのコードから呼ぶ手順。最適化の自動選択(判定表)、batch=1 で GPU が遅くなる場面、verify-metal での整数一致の検証、CUDA を NVIDIA 機で検証する方法。'
+---
+
+デプロイキットは、同じバンドルから **CUDA(NVIDIA GPU)** と **Metal(Apple GPU)** のソースも生成する。
+このページは、生成コマンドの使い方、ホストのコードからの呼び出し方、最適化が **自動で選ばれる仕組み**、
+そして出荷前の検証の仕方をまとめる。バンドルを作るところまでは [クイックスタート](/guides/deploy-quickstart/) と同じである。
+
+:::tip[先に知っておくこと]
+**batch=1 の推論では GPU が C より速いとは限らない。** 小さなモデルを 1 枚ずつ流すと、GPU の起動オーバーヘッドが支配的になる。
+GPU が効くのは、まとめて大量に流す(batch が大きい)場面である。速度が目的なら、先に自分のモデルで測ること。
+:::
+
+## 生成コマンド
+
+```bash
+uv run griffith deploy codegen-cuda  model.bundle.json -o out_cuda  --batch 256
+uv run griffith deploy codegen-metal model.bundle.json -o out_metal --batch 256
+```
+
+2 つはほぼ同じフラグを持つ(全フラグは [griffith CLI](/reference/cli/#griffith-deploy-codegen-cuda--codegen-metal))。よく使うものだけ挙げる。
+
+| フラグ | 意味 |
+|---|---|
+| `-o, --output DIR` | 出力ディレクトリ(必須) |
+| `--batch N` | 同時に流せる **最大** 枚数(既定 1)。実行時の枚数は 1〜N で可変。デバイスメモリはこの倍数になる |
+| `--no-auto` | 最適化の自動選択を切る(後述) |
+| `--dense-flat auto\|on\|off` | dense を平坦ネットリスト(`lut_flat`)にして生成するか(既定 `off` = 平坦化しない。`auto` = 削減率 25% 以上なら平坦化。後述の「平坦化(opt-in)」) |
+| `--dense-fuse` / `--dense-packed` | dense モデルの最適化を **明示的に** 入れる(付けると平坦化はしない) |
+| `--conv-engine split\|combined` | conv2d の実行方式を明示する |
+| `--n-streams N` | ストリームのパイプライン化(opt-in、後述) |
+| `--conv-codegen` | conv2d ごとのモデル特化カーネル(opt-in、後述) |
+| `--no-runtime` | ランタイムをコピーしない |
+
+### 何が出力されるか
+
+XOR のバンドル(1,954B)で実際に生成した結果を示す(ファイルサイズはバンドルとバージョンで変わる)。
+
+```
+$ griffith deploy codegen-metal x.bundle.json -o xm
+dense-flat(off): 不採用 — off 指定(従来経路)
+md deploy codegen-metal: auto-config conv_engine='split' dense_fuse=False dense_packed=False
+  xm/model_metal.mm (69,808B)
+  xm/mdl_metal.h (ランタイム)
+  xm/mdl_metal.mm (ランタイム)
+ビルド例: clang++ -std=c++17 -O2 -fobjc-arc -I. -framework Metal -framework Foundation model_metal.mm mdl_metal.mm your_main.mm -o app
+  (シェーダは実行時にコンパイルするので metal ツールチェーン不要)
+
+$ griffith deploy codegen-cuda x.bundle.json -o xc --batch 256
+dense-flat(off): 不採用 — off 指定(従来経路)
+griffith deploy codegen-cuda: auto-config conv_engine='split' dense_fuse=True dense_packed=False
+  xc/model_cuda.cu (5,885B)
+  xc/mdl_cuda.h (ランタイム)
+  xc/mdl_cuda.cu (ランタイム)
+  xc/mdl_gpu_kernels.h (ランタイム)
+ビルド例: nvcc -O2 -arch=sm_89 -I. model_cuda.cu mdl_cuda.cu your_main.cu -o app
+```
+
+| ターゲット | 生成されるファイル | ビルドに必要なもの |
+|---|---|---|
+| Metal | `model_metal.mm`(モデル本体 + シェーダ)、`mdl_metal.h` / `mdl_metal.mm`(ランタイム) | macOS の `clang++`(Xcode の metal ツールチェーンは **不要**。シェーダは実行時にソースからコンパイルされる) |
+| CUDA | `model_cuda.cu`(モデル本体)、`mdl_cuda.h` / `mdl_cuda.cu` / `mdl_gpu_kernels.h`(ランタイム) | `nvcc`。`-arch` は自分の GPU の compute capability に合わせる(`sm_89` は例) |
+
+カーネルの計算式は CUDA と Metal で共有しており(`runtime/gpu/mdl_gpu_kernels.h`)、
+アドレス空間の違いだけをマクロで吸収している。
+
+## ホストのコードから呼ぶ
+
+生成された `model_metal.mm` / `model_cuda.cu` は、ホスト向けに次の C 関数を公開する(`extern "C"`)。
+初回の推論呼び出しで内部の初期化(デバイス・バッファの確保、Metal はシェーダのコンパイル)が走るので、`init` を自分で呼ぶ必要はない。
+
+| | Metal | CUDA |
+|---|---|---|
+| 推論(最大 N 枚をまとめて) | `mdl_metal_infer_batch(bits, scores, n)` | `mdl_cuda_infer_batch(bits, scores, n)` |
+| 1 枚だけ | `mdl_metal_infer(bits, scores)` | `mdl_cuda_infer(bits, scores)` |
+| 入力幅 / 出力幅 / 最大枚数 | `mdl_metal_input_width()` / `_output_width()` / `_max_batch()` | `mdl_cuda_input_width()` / `_output_width()` / `_max_batch()` |
+| 画像モデル(前処理込み) | `mdl_metal_infer_image_batch(image, scores, n)` | `mdl_cuda_infer_image_batch(image, scores, n)` |
+| 後始末 | `mdl_model_shutdown()` | `mdl_cuda_shutdown()` |
+
+引数の形は同じである。
+
+- `bits` はホストメモリの `unsigned char` 配列で、`n × 入力幅` 個の 0/1(1 枚ずつ連続して並べる)
+- `scores` はホストメモリの `int` 配列で、`n × 出力幅` 個(分類なら各クラスのスコア。最大のものが予測)
+- 戻り値は成功で `0`。`n` が `--batch` で指定した最大枚数を超えると `-1`
+
+実際に動かした最小のドライバを示す(XOR の 4 パターンを **1 回の呼び出しで** 流す。`--batch 4` で生成した)。
+
+```cpp
+// main.mm — Metal 版。CUDA 版は関数名を mdl_cuda_* に替えて .cu でビルドする
+#include <stdio.h>
+extern "C" {
+int mdl_metal_infer_batch(const unsigned char *input_bits, int *scores, int n);
+void mdl_model_shutdown(void);
+}
+int main(void) {
+  unsigned char bits[4 * 2] = {0,0, 0,1, 1,0, 1,1};
+  int scores[4 * 2];
+  if (mdl_metal_infer_batch(bits, scores, 4) != 0) return 1;
+  for (int i = 0; i < 4; i++)
+    printf("xor(%d,%d) scores=%d,%d\n", bits[2*i], bits[2*i+1], scores[2*i], scores[2*i+1]);
+  mdl_model_shutdown();
+  return 0;
+}
+```
+
+```
+$ clang++ -std=c++17 -O2 -fobjc-arc -I. -framework Metal -framework Foundation \
+    model_metal.mm mdl_metal.mm main.mm -o app && ./app
+xor(0,0) scores=8,1
+xor(0,1) scores=0,8
+xor(1,0) scores=0,8
+xor(1,1) scores=8,1
+```
+
+スコアは C 版の XOR の例([クイックスタート](/guides/deploy-quickstart/#ステップ4-ビルドして実行))と同じ値になる。
+
+:::note[CUDA の呼び出し側]
+CUDA 版は `.cu` として `nvcc` でビルドする(ヘッダが `cuda_runtime.h` を使うため)。公開関数の形は上の表のとおりで、
+実機での呼び出し例は `scripts/verify_cuda_remote.py` の中のドライバにある。
+:::
+
+## 最適化は自動で選ばれる
+
+GPU 向けの最適化は、**効くかどうかがモデルの形と batch に依存する**。同じ最適化でも、モデルによっては遅くなる。
+そこで `codegen-cuda` / `codegen-metal` は、**実測で勝てると分かっている条件でだけ自動で ON** にする(既定)。
+選ばれた結果と理由は、生成時の標準出力 1 行と、生成ソース冒頭の `/* auto-config ... */` コメントに残る。
+
+先ほどの出力の `auto-config ...` の行がそれである。上の XOR は、`--batch 256` の CUDA で `dense_fuse=True` が自動で選ばれている(batch が 32 以上で、融合できる dense 層の鎖があるため)。
+`--dense-flat auto` で平坦化(22 → 3 ゲート)すると、同じ `--batch 256` でも `dense_fuse=False` になる(融合する `lut_layer` 列が残らないため)。
+`--batch 1` の Metal では `dense_fuse=False` になり、その理由(batch が 32 未満)がソース先頭のコメントに書かれる。
+
+### 判定表
+
+| 最適化 | 既定 | 自動で ON になる条件 | 根拠 |
+|---|---|---|---|
+| **conv_engine** `split` → `combined` | `split` | `max_slots_per_oc` が 8 を超える conv2d ノードが 1 つでもあれば、モデル全体を `combined` へ自動で切り替える | 1.6M ゲートの検出モデルで、`split` のまま生成すると 9 > 8 で生成時にエラーになる。`combined` なら通る |
+| **dense_fuse** | OFF | 平坦化しない(既定の `--dense-flat off`、または `auto` で削減率 25% 未満)とき、`batch >= 32` **かつ** 融合できる鎖がある(連続する dense 層 + 末尾の group_sum が共有メモリに収まる) | Apple M3 の 4 モデルで、batch=1 は 1.11〜1.34 倍、batch 32 以上は 1.20〜2.01 倍で安定して速い。CUDA でも batch 128 で 1.57〜1.58 倍 |
+| **dense_packed** | OFF | 平坦化しないときで、`dense_fuse` が自動で ON にならず、モデルが適格(非画像入力、主経路が dense と group_sum のみ)、**かつ** `batch >= 128` | batch=32 では CUDA / Metal とも複数モデルで悪化(CUDA で 0.878〜0.891 倍、Metal で 0.887 倍)。128 まで上げると悪化はほぼ消える |
+| **decode megakernel**(RDDLGN の生成) | **ON** | 収まるモデルなら常に ON。収まらない場合は従来の経路へ自動で戻る | 全実測が正(Metal 1.61〜2.10 倍、CUDA 1.71〜2.34 倍)で悪化ケースが無いため、batch の条件なしで既定 ON |
+| **n_streams** | OFF(opt-in) | **自動では ON にしない** | Metal でモデルによっては 0.66 倍に悪化。CUDA は batch=1 で 0.878 倍、最大でも 1.058 倍と効果が小さい |
+| **conv_codegen** | OFF(opt-in) | **自動では ON にしない** | 端から端の速度はほぼ変わらない(1.00〜1.04 倍)のに、生成コードが 1.78〜6.65 倍に膨らむ |
+
+数字の出典は、リポジトリの `docs/guides/deploy-optimization.md` とそこに挙げた測定ファイル(`results/deploy/` 以下)である。
+
+`dense_fuse` と `dense_packed` は併用できない。両方の条件を満たすときは、実測で上回った `dense_fuse` を優先する
+(Apple M3、batch=256、HAR 系 4 モデルで `dense_fuse` が 4 つとも上回った)。
+`dense_fuse` が使えないモデル(層幅が共有メモリの上限を超えるなど)では `dense_packed` が受け皿になる。
+
+### batch=1 で GPU を選ぶと遅くなる場面
+
+- **dense_fuse は batch=1 では自動 ON にならない。** Metal の実測(`har_dlgn_k6000_gumbel`、Apple M3)で、batch=1 は 0.81 倍と **悪化** し、batch=32 で 1.91 倍、batch=128 で 2.51 倍だった(`--dense-fuse` のヘルプ文より)。
+- **dense_packed は batch が小さいと償却できない。** 32 サンプルを 1 語に詰めるコストが、サンプルが少ないと回収できず、batch=32 でも遅くなるモデルがある。
+- **n_streams は batch=1 の CUDA で 0.878 倍**。パイプライン化のための複製が、小さなモデルでは重しになる。
+
+要するに、**1 枚ずつ低遅延で返したいなら、まず C(CPU)を測る**ほうがよい。GPU はまとめて流す用途で選ぶ。
+
+### 自動選択を上書きする
+
+```bash
+# 既定(自動 ON): 実測条件を満たせば自動で最適化される
+griffith deploy codegen-cuda model.bundle.json -o out --batch 256
+
+# 旧来の挙動に戻す(自動選択なし。conv_engine=split、dense_fuse / dense_packed は OFF)
+griffith deploy codegen-cuda model.bundle.json -o out --batch 256 --no-auto
+
+# 個別に明示する(明示した値は、自動選択の判断より常に優先される)
+griffith deploy codegen-cuda  model.bundle.json -o out --batch 256 --dense-fuse
+griffith deploy codegen-metal model.bundle.json -o out --conv-engine combined
+```
+
+- **`--no-auto`**: 判定表を使わない。明示しなかった項目は、自動選択を入れる前の既定値(`conv_engine=split`、`dense_fuse` / `dense_packed` は OFF)のままになる。**生成物を固定したいとき**(比較実験、再現性が要るとき)に使う。
+- **明示指定は常に勝つ**: `--dense-fuse` を付ければ、batch が条件を満たさなくても ON になる。付けなければ自動選択に任される。`--dense-fuse` を **外したい** ときは `--no-auto` を使う。
+- **`--n-streams` と `--conv-codegen` は自動では ON にならない**。上の表のとおり、効く条件を一意に特定できていない(または割に合わない)ためである。試すなら自分で測ってから付ける。
+
+## 回路圧縮との関係
+
+現在は、`griffith deploy bundle` は既定(`--compress fast`)で dense モデルの **ゲート数そのものを減らす lossless な sweep** を自動で適用する。
+これは **バンドルに焼かれる** ので、CUDA / Metal / C / Web のすべてのターゲットに効く(上の XOR は 32 → 22 ゲート)。
+
+### 平坦化(`--dense-flat`、opt-in)
+
+`--dense-flat`(`lut_flat`、パススルー・定数・重複を畳んだ平坦ネットリスト)は、CUDA / Metal でも **実行できる**。
+GPU 側は生成時にゲートを段(依存の深さ)ごとに並べ替え、同じ段のゲートを並列に評価する。
+信号表が共有メモリ(Metal 32KB / CUDA 48KB)に収まれば、1 枚 = 1 スレッドグループの単一起動(`fused`)になる。
+
+ただし `codegen-cuda` / `codegen-metal` / `verify-metal` の既定は **`--dense-flat off`(平坦化しない)** で、C や Web と違って自動では平坦化しない。
+GPU では平坦化すると遅くなる条件があるためである(下の注意)。使うときは `--dense-flat auto`(生成の直前に試しに平坦化し、実効ゲートの削減率が 25% 以上なら採用)か
+`--dense-flat on`(常に採用)を付ける。どちらもバンドルは変わらない。
+`--dense-fuse` / `--dense-packed` を明示したときは、それらが `lut_layer` 列を前提にするので平坦化しない。
+`bundle --dense-flat` で `lut_flat` を焼き込んだバンドルは、この既定にかかわらず GPU でもそのまま平坦ネットリストとして実行される。
+
+:::caution[平坦化で GPU が遅くなる条件]
+Apple M3 の Metal で HAR k600 / k2400 / k6000 を batch 32〜4096 で測ったところ、ゲートは約半分になるのに、
+平坦化しない場合の最良(`dense_fuse` / `dense_packed`)に対して k600 で 1.02〜1.10 倍、k2400 で 0.85〜1.15 倍、
+k6000 で batch 128 以上のとき 0.47〜0.71 倍(batch 32 は 1.02 倍)だった(GPU はゲート数より起動・転送の固定費が支配的)。
+つまり **大きいモデル(数万ゲート級)を batch 128 以上で流すと、平坦化で半分程度の速度に落ちることがある**。小さいモデルや batch 32 前後では、ほぼ同じか少し速い。
+平坦化すると自動選択の `dense_fuse` / `dense_packed` は使われなくなるので、試すときは
+既定(off)と `--dense-flat auto` を `scripts/bench_dense_gpu.py` で比べてから選ぶこと。CUDA の `lut_flat` は NVIDIA 実機で実行・計測していない(生成コードの構文検査まで。確かめるなら `scripts/verify_cuda_remote.py --dense-flat on`)。
+段分けの仕組みと実測の図は [圧縮と最適化の一覧](/reference/deploy-optimizations/) の「GPU での平坦化」にある。
+:::
+
+## 出荷前の検証
+
+どのターゲットも、基準は `ir/simulate.py`(numpy の素朴実装)の整数出力である。生成物が **1 ビットも違わない** ことを確かめてから出荷する。
+
+### Metal: `verify-metal`
+
+macOS、Apple GPU、`clang++` が必要である。生成した Metal をビルドして実行し、`simulate` と突き合わせる。
+Apple M3 の Mac で、XOR のバンドルに対して実行した結果を示す(所要は約 4.7 秒、うち大半は `uv` とビルドの起動)。
+
+```
+$ uv run griffith deploy verify-metal x.bundle.json --dense-flat auto
+Metal等価性検証: x.bundle.json(サンプル3件、conv_codegen=False, dense_fuse=False)
+  dense-flat(auto): 採用 — 実効ゲート 22 → 3(削減率 86.4%)。削減率が閾値以上(86.4% >= 25%)
+md deploy codegen-metal: auto-config conv_engine='split' dense_fuse=False dense_packed=False
+  サンプル1/3: 一致(2要素)
+  サンプル2/3: 一致(2要素)
+  サンプル3/3: 一致(2要素)
+一致: 経路=bits + dense-flat(lut_flat) 出力2要素 × 3サンプル(整数厳密、ゴールデンは元バンドルIRのsimulate)
+```
+
+ここでは平坦化した経路を確かめるため `--dense-flat auto` を付けている(既定の off では平坦化せず、`codegen-metal` の既定と同じ従来経路を検証する)。
+サンプル数は `-n`、乱数シードは `--seed` で変える。`--dense-fuse` / `--conv-codegen` を付けると、その生成オプションを検証する。
+最後の「一致」の行が出れば合格で、不一致なら例外で止まる。
+
+:::note[大きいモデルについて]
+ここでは XOR だけを実行した。MNIST の画像モデルは学習にデータの取得が要るため、このページの作成時には走らせていない。
+実モデルでは、`verify-metal` で整数一致を確かめたうえで、`scripts/bench_deploy.py` で自分のモデルと batch を測ること。
+:::
+
+### CUDA: リモートの NVIDIA 機で検証する
+
+`codegen-cuda` はコード生成のみで、`verify-cuda` に相当するサブコマンドは無い。手元に NVIDIA GPU が無い場合のために、
+**ssh 先の GPU 機でビルドと実行まで行って `simulate` と突き合わせる** スクリプトが `scripts/verify_cuda_remote.py` である。
+
+```bash
+uv run python scripts/verify_cuda_remote.py \
+    --host user@gpu-host \
+    --models har_dlgn_k600_gumbel --arch sm_89
+```
+
+このスクリプトは、モデルからバンドルと CUDA ソースを生成し、ランタイムごと rsync し、リモートで `nvcc` ビルドして、
+ランダム入力(ビット列と生画像の両経路)で実行し、`simulate` の結果と **整数で厳密に** 比較する。
+
+- **NVIDIA GPU と `nvcc` を持つマシンに ssh できること** が要る。このリポジトリの手元の Mac では実行できない。
+- `--models` は `tools/webbench/public/models/` にあるモデル名を渡す。`--arch` は自分の GPU の compute capability に合わせる(既定 `sm_89`)。
+- `--bench` を付けると性能も測れる。`--batch` で生成時の最大枚数を指定できる。
+- `--dense-flat on`(または `auto`)を付けると、平坦化した CUDA 経路(`lut_flat`)を検証する。既定は `codegen-cuda` と同じ `off`。
+- ストリーム版(`--n-streams`)の検証は `scripts/verify_cuda_stream_remote.py`。
+
+検証済みの GPU と CUDA のバージョンは [対応プラットフォーム](/reference/platform-support/#gpu-cuda) にある。
+
+## 次に読む
+
+- [デプロイキット クイックスタート](/guides/deploy-quickstart/) — バンドルを作る手順と C 実行ファイルまで
+- [自分のモデルをデプロイする](/guides/deploy-your-model/) — 学習済みモデルから Python / C / GPU へ
+- [griffith CLI](/reference/cli/#griffith-deploy) — `griffith deploy` の全サブコマンドとフラグ
+- [対応プラットフォーム](/reference/platform-support/) — どこまで検証済みかの一覧
+- [配布バンドル仕様](/reference/deploy-bundle/) — バンドルの形式と `about.compress`

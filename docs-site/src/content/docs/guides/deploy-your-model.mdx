@@ -1,0 +1,238 @@
+---
+title: '自分のモデルをデプロイする'
+description: '学習済みの PyTorch モデルを export_ir で IR にし、モデル doc に前処理・ラベル・読み出しを添えてバンドル化し、Python / C / GPU / Web で動かすまで。Python API で CLI と同じ回路圧縮を効かせる方法と、出荷前のチェックリスト。'
+---
+
+[クイックスタート](/guides/deploy-quickstart/) は、XOR を例に「IR → バンドル → C」を CLI で通した。
+このページは、**自分で学習したモデル** を同じ道に乗せるための手引きである。
+どの情報をどこに書くか、Python からバンドルを作って推論するにはどうするか、出荷前に何を確かめるかをまとめる。
+
+全体の流れは次のとおり。
+
+```
+学習済み torch モデル
+  → export_ir()            IR(真理値表)に確定
+  → モデル doc(dict/JSON)   ir + preproc + labels + readout + ...
+  → griffith deploy bundle  バンドル(.bundle.json)
+  → codegen-c / -cuda / -metal / -web   各ターゲットへ
+```
+
+## 1. 学習済みモデルを IR にする
+
+`export_ir()` は、`LutLayer` や `GroupSum` などでできた `nn.Sequential` の直列モデルを IR に変換する。
+**`model.eval()` を先に呼ぶ** のが約束である(連続値の重みが、ハードな真理値表に確定する)。
+
+```python
+from griffith_logic.export import export_ir
+from griffith_logic.ir import validate
+from griffith_logic.ir.serialize import ir_to_dict
+
+model.eval()
+ir = export_ir(model, input_width=2, name='xor')
+validate(ir, target='hdl')           # IR の構造チェック
+ir_dict = ir_to_dict(ir)             # JSON にできる dict
+```
+
+- `input_width` は入力のビット数。画像など形のある入力では `input_shape=` を使う(`export_ir` の引数)。
+- 書き出し前に **PyTorch の hard eval と IR の simulate を整数で照合** するので、合わなければここで止まる。
+- 動く完全な例は `examples/06_deploy_c/export_model.py`(XOR)と `examples/29_deploy_mnist.py`(MNIST)。
+
+## 2. モデル doc を組み立てる
+
+`griffith deploy bundle` が読むのは「モデル doc」という JSON である。**必須なのは `ir` だけ** で、
+ほかのキーは足したぶんだけバンドルに引き継がれる。
+
+| キー | 何を書くか |
+|---|---|
+| `ir` | `ir_to_dict(export_ir(...))`。**真実源**で、これだけは必須 |
+| `preproc` | 入力をビット列にする規則の宣言(下記) |
+| `labels` | クラス名の配列(`["WALKING", ...]`)。あると C に `mdl_labels[]` が生成される |
+| `readout` | 出力の読み出し方。分類は `class_scores`、セグメンテーションは `spatial_scores`、検出は `detection` |
+| `eval` | 精度などの実測値(表示用) |
+| `about` | 由来(チェックポイント、レシピ、wandb run id など)。圧縮の結果は `about.compress` に自動で入る |
+| `demo_samples` | デモ兼検証用の実サンプル。あれば、ゲート削減の検証が実データでも行われる |
+
+最小の例は、クイックスタートと同じ `{"ir": ...}` である。ラベルも付けるなら次のようにする。
+
+```python
+doc = {'ir': ir_dict, 'labels': ['xor=0', 'xor=1']}
+```
+
+### `preproc` の kind
+
+`preproc.kind` は「入力をどうビット列にしたか」の宣言で、バンドルが何をするかは kind で決まる。
+
+| `kind` | 入力 | バンドルでの扱い |
+|---|---|---|
+| `raw`(省略時) | すでに 0/1 のビット列 | 前処理なし。C は `mdl_infer(bits, scores)` にビット列を渡す |
+| `thermometer` | 実数の特徴量(センサ値など) | 宣言として記録される(平均・標準偏差・閾値・ビット順)。**バンドルは整数記述子にコンパイルしない**。ビット列への変換はアプリ側で、宣言と同じ規則で行う |
+| `image_thermometer` | u8 画像 | **整数記述子(`preproc_desc`)にコンパイルされる**。C に `mdl_infer_image()` が生成され、画像をそのまま渡せる |
+| `image_lowlevel` | u8 画像 | 同上。thermometer に加えて、エッジ・曲率・色差・彩度の比較チャネルを持つ |
+
+画像の kind では、`mean` / `std`(画像チャネルごと)、`thresholds`(チャネルごとの閾値の表)、`height` / `width` が要る。
+`image_lowlevel` は、さらに `edge_thresholds` / `curv_thresholds` / `chroma_thresholds` と、
+`edge_offsets` / `curv_offsets` / `chroma_pairs` を持てる。
+バンドル化のときに `preproc_desc` へコンパイルされ、**浮動小数点を使わずに** 画像からビット列を作れるようになる
+(仕組みは [配布バンドル仕様](/reference/deploy-bundle/#preproc_desc-節))。
+端末側に浮動小数点が要らなくなる点が、組み込みで効く。
+
+:::caution[前処理の規則は学習時と一致させる]
+`preproc` は「学習のときに使った符号化」を **そのまま書く** ものである。ここがずれると、IR は正しいのにスコアが合わない。
+画像の kind は、バンドル化の段で `preproc_desc` と IR の入力幅が合っているかも検査する(合わなければ生成時にエラー)。
+:::
+
+## 3. バンドル化とコード生成(CLI)
+
+doc を JSON に書き出して、あとはクイックスタートと同じ手順である。
+
+```bash
+uv run griffith deploy bundle my_model.json -o my.bundle.json
+uv run griffith deploy info my.bundle.json --strict
+uv run griffith deploy codegen-c my.bundle.json -o out_c
+uv run griffith deploy verify-c  my.bundle.json -n 8
+```
+
+- C は [クイックスタート](/guides/deploy-quickstart/)、ESP32 は [ESP32 に載せる](/guides/deploy-esp32/)、iPhone は [iPhone に載せる](/guides/deploy-ios/)
+- GPU(CUDA / Metal)は [GPU で動かす](/guides/deploy-gpu/)
+- Web は `codegen-web`(バンドルをそのまま配る。[クイックスタート](/guides/deploy-quickstart/))
+
+`bundle` は既定(`--compress fast`)で、秒で終わる **lossless なゲート削減**(dense は sweep、conv2d は再合成)を自動で適用する。
+`codegen-c` / `verify-c` は既定(`--dense-flat auto`)で、C 生成の段で平坦化を試し、削減率が閾値以上なら採用する。
+どちらも精度は変わらない。
+
+## 4. Python で推論する
+
+バンドルは Python だけでも読んで実行できる。基準となる実装(golden model)の `ir.simulate` を使う。
+
+```python
+import numpy as np
+from griffith_logic.deploy import load_bundle
+from griffith_logic.ir.serialize import ir_from_dict
+from griffith_logic.ir.simulate import simulate
+
+bundle = load_bundle('my.bundle.json')       # 版・構造の検証つき
+graph = ir_from_dict(bundle['ir'])
+
+bits = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=np.uint8)  # [N, 入力ビット幅]
+scores = simulate(graph, bits)               # [N, 出力幅] の整数スコア
+pred = scores.argmax(axis=1)
+```
+
+入力の詰め方は次のとおり。
+
+- **ビット列の入力(`raw` など)**: `uint8` の `[N, 入力ビット幅]`、値は 0 か 1。`bundle['ir']['inputs'][0]['width']` が入力幅。
+- **画像入力(`image_*`)**: 前処理の記述子で u8 画像をビット列にしてから `simulate` に渡す。
+
+  ```python
+  from griffith_logic.deploy.preproc_desc import build_preproc_descriptors, encode_bits
+
+  plan = build_preproc_descriptors(bundle['preproc'])
+  # images_u8: [N, 画像チャネル, H, W] の uint8
+  bits = encode_bits(plan, images_u8)       # [N, channels*H*W] の 0/1
+  scores = simulate(graph, bits)
+  ```
+
+`simulate` は素朴な numpy 実装で、速さのためのものではない(基準として正しいことが価値)。大量に流すなら C や GPU を使う。
+
+## 5. Python API でバンドルを作る(CLI と同じ圧縮に注意)
+
+Python からバンドルを作るには `build_bundle()` を使う。**ただし、`build_bundle()` と `generate_c()` は回路圧縮を自動では適用しない。**
+既定で圧縮が効くのは CLI(`griffith deploy bundle` と `codegen-c`)だけである。
+`build_bundle(doc)` だけで作ると、ゲートの削減もなく、`about.compress` も付かない(XOR で確認すると、`about` 自体が無かった)。
+
+CLI と同じ結果にするには、圧縮を自分で呼ぶ。
+
+| CLI の既定 | Python で同じことをする |
+|---|---|
+| `bundle --compress fast`(sweep と conv2d 再合成) | `apply_compress(doc, level='fast')` を `build_bundle` の **前** に呼ぶ(conv2d の再合成も行う。止めるなら `resynth=False`)。結果は `attach_compress_info` で `about.compress` に記録する |
+| `codegen-c --dense-flat auto`(C 生成時だけ平坦化) | `resolve_dense_flat(bundle, mode='auto')` で C 生成用のバンドルを作り、`generate_c` に渡す |
+| `codegen-c` が平坦化時に付ける `--dense-batch`(既定 32) | `generate_c(..., dense_batch=32)` を明示する。`generate_c` の既定は `dense_batch=0`(バッチ入口なし) |
+
+```python
+from griffith_logic.deploy import build_bundle, save_bundle
+from griffith_logic.deploy.compress import apply_compress, attach_compress_info
+from griffith_logic.deploy.flatten_dense import resolve_dense_flat
+from griffith_logic.deploy.cbackend import generate_c
+
+# --- bundle --compress fast と同じ ---
+doc, info, _ = apply_compress(doc, level='fast')   # 'none' / 'fast' / 'max'
+doc = attach_compress_info(doc, info)              # about.compress に記録
+bundle = build_bundle(doc, verify=True)
+save_bundle(bundle, 'my.bundle.json')
+
+# --- codegen-c --dense-flat auto と同じ ---
+c_bundle, decision = resolve_dense_flat(bundle, mode='auto')
+files = generate_c(c_bundle, name='model', validate=False,
+                   dense_flat_decision=decision)   # {ファイル名: ソース文字列}
+```
+
+XOR で実行した結果は次のとおり(`examples/33_bundle_python.py`)。
+
+```
+圧縮(compress=fast): 適用 sweep
+dense-flat(auto): 採用 — 実効ゲート 22 → 3(削減率 86.4%)。削減率が閾値以上(86.4% >= 25%)
+```
+
+- `apply_compress` は `(新しい doc, 記録用の info, 各パスの要約)` を返す。元の doc は書き換えない。
+- `level='max'` は探索をより深く(上限 5)して追加検証も行う(実モデルで分オーダー)。`level='none'` で圧縮なし。
+- conv2d の再合成だけを直接呼ぶ `resynth_doc_lossless(doc)` は、既定で `verify='simulate'`(golden model の `ir/simulate` と整数照合)で検証する。CLI の `--compress fast`(と `apply_compress(level='fast')`)だけが、速い `verify='fast'`(木ごとの真理値表の全数照合と高速な前向き計算)を明示して使う。
+- `resolve_dense_flat` は **バンドル自体は変えず**、C 生成用の複製だけを平坦化する。`mode` は `'auto'` / `'on'` / `'off'`。
+- 平坦化(`lut_flat`)は `codegen-c` / `codegen-web` が生成時に自動で判定する。`codegen-cuda` / `codegen-metal` も実行できるが既定は `off`(`--dense-flat auto` / `on` で opt-in。大きいモデルで遅くなる場合があるため)。どのターゲットもバンドルに焼く必要はない([GPU で動かす](/guides/deploy-gpu/#回路圧縮との関係))。
+- C をビルドして Python と突き合わせるところまでを通した実行可能な例が `examples/33_bundle_python.py`。
+
+```bash
+uv run python examples/33_bundle_python.py
+```
+
+```
+入力   Python scores  C scores   予測  正解
+(0, 0)  [8, 1]         [8, 1]        0     0
+(0, 1)  [0, 8]         [0, 8]        1     1
+(1, 0)  [0, 8]         [0, 8]        1     1
+(1, 1)  [8, 1]         [8, 1]        0     0
+```
+
+## 6. deploy 前に確認すること
+
+出荷前に、次の 4 つを順に確かめる。
+
+1. **整数一致を確かめる(`verify-c`)**
+
+   ```bash
+   uv run griffith deploy verify-c my.bundle.json -n 8 --seed 1
+   ```
+
+   最後に「一致: ... 出力 N 要素 × 8 サンプル(整数厳密 ...)」が出れば、生成 C は `simulate` と 1 ビットも違わない。
+   `verify-c` は `codegen-c` と同じ平坦化の判定で C を作り、**平坦化前のバンドルの IR を `simulate` したもの** と突き合わせる。
+   GPU なら `verify-metal`(Mac)、CUDA はリモートの NVIDIA 機([GPU で動かす](/guides/deploy-gpu/#出荷前の検証))、Web は `verify-web`。
+
+2. **バンドルの中身と整合を見る(`info`)**
+
+   ```bash
+   uv run griffith deploy info my.bundle.json --strict
+   ```
+
+   ノードの種類と数、クラス数、圧縮の結果(`圧縮(compress=...)`)、`codegen-c` 既定での平坦化の見込み、ゲート数の削減が表示される。
+   `--strict` は命令列を IR から作り直して完全一致まで確かめる。
+
+3. **サイズを見る**: 配信するなら `bundle` が出力するバンドルのバイト数、組み込みなら `codegen-c` が出力する `model.c` / `model.h` のサイズと、
+   ビルドした実行ファイルの `.rodata` を確認する。
+
+4. **作業 RAM を見る(`MDL_CTX_BYTES`)**: 生成された `model.h` の `MDL_CTX_BYTES` が、**推論中に書き換わる作業領域のバイト数** である。
+   これが対象デバイスの空き RAM に収まるかを確かめる。dense-flat は信号表のぶん `MDL_CTX_BYTES` が増えるので、
+   RAM が厳しいマイコンでは `codegen-c --dense-flat off` にして、`model.h` の `MDL_DENSE_FLAT` が 0 になることを確認する。
+   実機の数字は [ESP32 に載せる](/guides/deploy-esp32/) の測定表を参照。
+
+:::note[うまくいかないとき]
+- **`export_ir` で止まる**: 照合に失敗している。`model.eval()` を呼んだか、未対応のレイヤが無いかを確認する。
+- **スコアが PyTorch と合わない**: `preproc` の宣言が学習時と違う可能性が高い。IR の `simulate` と C が一致していても、前処理がずれていれば精度は出ない。
+- **検出モデルの出力**: ランタイムが返すのはスコアマップまでで、ボックスへの復号はアプリ側の仕事([デモモデルを用意する](/guides/deploy-models/))。
+:::
+
+## 次に読む
+
+- [デプロイキット クイックスタート](/guides/deploy-quickstart/) — XOR で C 実行ファイルまで
+- [GPU(CUDA / Metal)で動かす](/guides/deploy-gpu/) — 同じバンドルを GPU で動かす
+- [デモモデルを用意する](/guides/deploy-models/) — 実データの 3 モデル(MNIST / 行動認識 / 顔検出)
+- [配布バンドル仕様](/reference/deploy-bundle/) — `preproc` / `preproc_desc` / `readout` / `about` の仕様
+- [griffith CLI](/reference/cli/#griffith-deploy) — `griffith deploy` の全サブコマンド

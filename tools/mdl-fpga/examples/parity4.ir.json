@@ -1,0 +1,39 @@
+{
+  "format": "magicdelta-ir",
+  "version": "0.2.0",
+  "metadata": {
+    "name": "parity4",
+    "note": "4bit偶数パリティ(XOR木)。mdl-fpgaの最小サンプル(手書き・決定的)"
+  },
+  "inputs": [{"id": "x", "width": 4, "semantics": "raw_bits"}],
+  "outputs": [{"id": "y", "width": 1, "semantics": "raw_bits"}],
+  "nodes": [
+    {
+      "id": "xor_l1",
+      "type": "lut_layer",
+      "params": {
+        "in_width": 4,
+        "out_width": 2,
+        "n_inputs": 2,
+        "indices": [[0, 2], [1, 3]],
+        "truth_tables": ["0x6", "0x6"]
+      }
+    },
+    {
+      "id": "xor_l2",
+      "type": "lut_layer",
+      "params": {
+        "in_width": 2,
+        "out_width": 1,
+        "n_inputs": 2,
+        "indices": [[0], [1]],
+        "truth_tables": ["0x6"]
+      }
+    }
+  ],
+  "edges": [
+    {"src": "x", "dst": "xor_l1"},
+    {"src": "xor_l1", "dst": "xor_l2"},
+    {"src": "xor_l2", "dst": "y"}
+  ]
+}

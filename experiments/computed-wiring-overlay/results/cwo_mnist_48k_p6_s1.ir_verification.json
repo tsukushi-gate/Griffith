@@ -1,0 +1,145 @@
+{
+  "generated_at": "2026-09-11T00:12:17.739247+09:00",
+  "ir_path": "outputs\\computed-wiring-overlay\\ir\\cwo_mnist_48k_p6_s1.ir.json",
+  "run_dir": "outputs\\computed-wiring-overlay\\cwo_mnist_48k_p6_s1",
+  "checkpoint": "outputs\\computed-wiring-overlay\\cwo_mnist_48k_p6_s1\\checkpoints\\latest.pt",
+  "validate_target": "hdl",
+  "validate_warnings": [],
+  "total_gates": 48000,
+  "layers": [
+    {
+      "layer": 0,
+      "node_id": "n1_lutlayer",
+      "kind": "rot",
+      "s_a": 1,
+      "s_b": 28,
+      "in_width": 784,
+      "out_width": 8000,
+      "n_inputs": 2,
+      "n_gates": 8000,
+      "closed_form": true,
+      "slots": 16000,
+      "matched": 16000,
+      "all_match": true,
+      "pair_difference": 27
+    },
+    {
+      "layer": 1,
+      "node_id": "n2_lutlayer",
+      "kind": "rot",
+      "s_a": 0,
+      "s_b": 4,
+      "in_width": 8000,
+      "out_width": 8000,
+      "n_inputs": 2,
+      "n_gates": 8000,
+      "closed_form": true,
+      "slots": 16000,
+      "matched": 16000,
+      "all_match": true,
+      "pair_difference": 4
+    },
+    {
+      "layer": 2,
+      "node_id": "n3_lutlayer",
+      "kind": "rot",
+      "s_a": 0,
+      "s_b": 20,
+      "in_width": 8000,
+      "out_width": 8000,
+      "n_inputs": 2,
+      "n_gates": 8000,
+      "closed_form": true,
+      "slots": 16000,
+      "matched": 16000,
+      "all_match": true,
+      "pair_difference": 20
+    },
+    {
+      "layer": 3,
+      "node_id": "n4_lutlayer",
+      "kind": "rot",
+      "s_a": 0,
+      "s_b": 90,
+      "in_width": 8000,
+      "out_width": 8000,
+      "n_inputs": 2,
+      "n_gates": 8000,
+      "closed_form": true,
+      "slots": 16000,
+      "matched": 16000,
+      "all_match": true,
+      "pair_difference": 90
+    },
+    {
+      "layer": 4,
+      "node_id": "n5_lutlayer",
+      "kind": "rot",
+      "s_a": 0,
+      "s_b": 400,
+      "in_width": 8000,
+      "out_width": 8000,
+      "n_inputs": 2,
+      "n_gates": 8000,
+      "closed_form": true,
+      "slots": 16000,
+      "matched": 16000,
+      "all_match": true,
+      "pair_difference": 400
+    },
+    {
+      "layer": 5,
+      "node_id": "n6_lutlayer",
+      "kind": "rot",
+      "s_a": 0,
+      "s_b": 1800,
+      "in_width": 8000,
+      "out_width": 8000,
+      "n_inputs": 2,
+      "n_gates": 8000,
+      "closed_form": true,
+      "slots": 16000,
+      "matched": 16000,
+      "all_match": true,
+      "pair_difference": 1800
+    }
+  ],
+  "closed_form_layers": 6,
+  "all_indices_match_closed_form": true,
+  "metadata_wiring": {
+    "source": "computed-wiring-overlay",
+    "rule": "rot: idx[g] = (g + s) mod W_in / stretched_rot: idx[g] = ((2*g*W_in + W_out) // (2*W_out) + s) mod W_in",
+    "layers": [
+      {
+        "kind": "rot",
+        "s_a": 1,
+        "s_b": 28
+      },
+      {
+        "kind": "rot",
+        "s_a": 0,
+        "s_b": 4
+      },
+      {
+        "kind": "rot",
+        "s_a": 0,
+        "s_b": 20
+      },
+      {
+        "kind": "rot",
+        "s_a": 0,
+        "s_b": 90
+      },
+      {
+        "kind": "rot",
+        "s_a": 0,
+        "s_b": 400
+      },
+      {
+        "kind": "rot",
+        "s_a": 0,
+        "s_b": 1800
+      }
+    ]
+  }
+}

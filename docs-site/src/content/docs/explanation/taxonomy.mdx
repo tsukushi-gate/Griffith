@@ -1,0 +1,129 @@
+---
+title: 'DLGNの分類と系譜'
+description: '算術演算DLGN / native DLGN / 6-LUT DLGN の3分類。普通のMLP→FPGAコンパイルとの違い、fan-inの選び方、ハイブリッドの位置づけ。'
+---
+
+「DLGN」と一口に言っても、その中には性質のかなり違う 3 系統がある。ここでは
+**何をもって DLGN と呼ぶのか**、その内部の系譜、そして「普通の MLP を FPGA にコンパイルする」
+アプローチとの断絶を整理する。前提は [DLGNとは何か](/explanation/dlgn/)。
+
+## 1. 何をもって DLGN と呼ぶか
+
+核は **「ニューロン = 積和演算(MAC)ユニット」を「論理ゲート / LUT(ブール関数)」に置き換えた NN** である。
+学習時は「各ニューロンがどのゲートになるか」を微分可能に緩和して勾配学習し、学習後は argmax で
+離散ゲートに固定して **乗算ゼロの純ブール回路** にする。
+
+判定の本質軸は次の 3 つ。
+
+1. **計算単位** がブール関数(ゲート / LUT)か、MAC か
+2. **ゲート選択が学習されるか**(softmax 緩和や EFD → 離散化)
+3. **推論が乗算フリーの論理か**
+
+この 3 軸を満たせば DLGN である。その内部で **fan-in / パラメータ化 / 配線 / ゲートの入手方法** が
+違うのが、以下の分類になる。
+
+## 2. 3分類
+
+| | **算術演算DLGN**<br/>(LogicNets 系) | **native DLGN**<br/>(difflogic 系) | **6-LUT DLGN**<br/>(DWN 系) |
+|---|---|---|---|
+| ゲートの入手 | 量子化+疎化+popcount閾値からの**厳密lowering**(数学的導出であって学習ではない) | **16ゲートのsoftmaxを勾配で自由学習** | n入力LUTを**EFD勾配で学習** |
+| 意味論 | **算術を保持**(popcount木=足し算、閾値=活性) | 任意ブール関数の自由な組合せ(算術は不要) | 任意の n 入力ブール関数 |
+| fan-in | 疎化後 N(例 32/48)→ 加算木 | **2入力(16ゲート)** | **6入力(LUT6)** |
+| 配線 | 疎化で選ばれた重要入力に確定対応(意味がある) | 固定ランダム(配線自体に意味はない) | **学習可能マッピング** |
+| 「重み」の正体 | **重み = 回路トポロジ**(重みがそのまま回路) | 「どのゲートか」の選択(学習後は捨てる) | LUT 内容 + 配線 |
+| MNIST での規模感 | 大: 約 418k LUT | 小: 24k ゲート以下(約 1/50) | 超小: 約 4.6k LUT(FPGA) |
+| 本ライブラリでの実体 | `export/lowering.py` などが吐く**変換の出力物** | `layers/lut.py`(softmax)+ 各モデル | `models/dwn.py` |
+
+出典: Umuroglu et al. (LogicNets, 2020) / Petersen et al. (difflogic, NeurIPS 2022) /
+Bacellar et al. (DWN, ICML 2024)。
+
+## 3. 「普通の MLP → FPGA」との違い
+
+同じ「FPGA で動く回路」でも、**乗算を残すか消すか**、**算術の意味を残すか捨てるか** で段階が違う。
+
+| 手法 | 計算 | 乗算 | FPGA 資源 |
+|---|---|---|---|
+| **MLP → FPGA(普通)** | MAC(重み×活性の積和) | **残る** | DSP / 乗算器 + 加算器 |
+| **量子化MLP → LUT**(= 算術演算DLGN) | 積和を **popcount 加算木** で(量子化+疎化+真理値表列挙) | **消える**が**算術の意味は保持** | LUT(加算木) |
+| **native DLGN**(difflogic) | 各ニューロンが**学習された2入力論理ゲート** | 元から無い | LUT(論理) |
+| **6-LUT DLGN**(DWN) | 学習された6入力LUT + 学習配線 | 元から無い | LUT6 直マップ |
+
+要点は 3 段階目の断絶にある。**「普通の MLP → FPGA」は乗算を回路化するだけで、中身は MLP のまま**。
+**算術演算DLGN は量子化 MLP の算術を厳密に LUT 化したもの**(重み = 回路。乗算は消えるが足し算の構造は残る)。
+そして **native DLGN は算術ごと捨てて、最初から「論理」を学ぶ** ── ここが根本的に非連続な飛躍である。
+
+## 4. 「既存モデルの変換」が効かない理由
+
+「事前学習済みの強い MLP を native DLGN に転用すれば強くなるのでは」という発想は自然だが、
+社内で 3 経路(蒸留 / 疎化 fan-in 集合の転写初期化 / 層別二値蒸留)を実測したところ、
+**いずれもスクラッチ学習を上回らなかった**。転写初期化に至っては大きく劣化した。
+
+理由は分類で説明できる。**算術演算DLGN(密な算術・重み=回路)と native DLGN(疎な自由ブール論理)は
+最大限に異質** であり、native DLGN の強みは「ゲートを自由に離散論理として学べること」にある。
+そこへ算術構造を転写すると、**その自由を算術の型に縛る** ことになり、むしろ制約として働く。
+
+→ **変換に価値があるのは「ハードウェア忠実な算術回路」が目的のときだけ。native DLGN が目的なら
+スクラッチ学習が正解**。強い teacher からの知識蒸留は「teacher がスクラッチ DLGN より大幅に強い」
+場合に限って意味を持つ。
+
+## 5. 本ライブラリのモデルはどこに位置するか
+
+**学習系のモデルはほぼすべて native DLGN**(`n_inputs=2`, `parameterization='softmax'`)であり、
+違いはゲート方式ではなく **アーキテクチャ** だけである。
+
+| モデル | 分類 | 中身 |
+|---|---|---|
+| **dlgn**(`layers/lut.py` + `LutStack`) | native DLGN | 2入力16ゲートsoftmax、MLP 的な積み重ね |
+| **conv-dlgn**(`conv.py::LutConv2d`) | native DLGN (conv) | 木構造 + OR プーリング(LogicTreeNet 系) |
+| **rddlgn** | native DLGN (recurrent seq2seq) | LutStack + リカレント encoder-decoder |
+| **attention** | native DLGN (attention seq2seq) | **Attention ごと全部が論理**(LogicAttention) |
+| **logic-gpt** | native DLGN (decoder-only) | LutStack + 因果 self-attention |
+| **DWN**(`models/dwn.py`) | **6-LUT DLGN** | 6入力LUT + 学習配線(唯一の非2入力) |
+| **算術演算DLGN** | ―(モデルではなく**変換の出力物**) | popcount 加算木回路 |
+
+## 6. 「FPGA なら全部 6-LUT でよいのでは」への注意
+
+推論・FPGA 面積の面では 6-LUT が有利である(物理セルが LUT6 なので 6 入力は 1 セルに直マップでき、
+2 入力ではセルを持て余す。DWN は MNIST を 4.6K LUT で解き、FINN の 83K に対して約 1/18)。
+だが **6-LUT DLGN の弱点は訓練側に集中している**。
+
+1. **EFD 勾配は近似** ── 2入力 softmax は厳密勾配だが、n 入力 LUT は近似になり fan-in が大きいほど最適化が不安定
+2. **過学習しやすい** ── 表現力 $2^{2^6}$ は暗記に十分で、Spectral Regularization などの正則化がほぼ必須
+3. **学習配線(Learnable Mapping)が脆い** ── 実測でも学習配線版が固定配線版に負けたり、hard 精度が崩壊する例がある。DWN 論文自身も「第1層のみ学習配線」を定石としている
+4. **fan-in の収穫逓減**(6 入力あたりで頭打ちになる)
+5. **訓練メモリの爆発**(64 エントリ/ゲート + 配線行列)
+6. **CPU/GPU では遅い**(テーブル参照になりビット並列が破綻する)
+
+difflogic が 2 入力を選んだのは「FPGA に最適だから」ではなく、**訓練の綺麗さ(厳密勾配の 16 ゲート)と
+CPU/GPU 速度** のためである。結論として **fan-in はデプロイ依存のノブ** と捉えるのが正しい。
+
+| 目的 | 有利な fan-in |
+|---|---|
+| FPGA 実装面積 | 6 |
+| CPU / GPU 推論速度 | 2 |
+| 訓練の安定性 | 2 |
+
+## 7. ハイブリッド(部分論理ゲート化)の位置づけ
+
+全部を論理にせず、**一部だけを LUT に置き換える** 流儀もある。代表例が LL-ViT
+(Nag et al., ICFPT 2025)で、**ViT の MLP(channel mixer)だけを LUT ニューロンに置換し、
+Attention は通常の Transformer のまま残す**。
+
+- 全体像: **ハイブリッド(部分LGN)** ── すべてがゲートではない
+- MLP: DWN 由来の EFD で学習する n 入力 LUT(= 6-LUT / DWN 系)
+- Attention: 通常の multi-head self-attention(**乗算あり = DLGN ではない**)
+- 入出力ブリッジ: thermometer encoding(実数→ビット)と conditional summation(4bit 量子化 = 算術が残る)
+- 本ライブラリでの対応: `hybrid/`(`replace_mlp_with_lut`)と `encoding/bridges.py`
+
+対比として、本ライブラリの DLGN Attention 系モデルは **Attention ごと全部を論理化** している。
+同じ「LUT × Attention」でも立ち位置が違う点に注意。3 分類で言えば、
+**LL-ViT の中身の LUT は 6-LUT(DWN)系だが、モデル全体は純 DLGN ではなく
+「LUT × Transformer のハイブリッド」** という二層の位置づけが正確である。
+
+## 参考文献
+
+- Petersen et al., *Deep Differentiable Logic Gate Networks*, NeurIPS 2022 — native DLGN の起点
+- Petersen et al., *Convolutional Differentiable Logic Gate Networks*, NeurIPS 2024 (Oral) — conv 版
+- Bacellar et al., *Differentiable Weightless Neural Networks*, ICML 2024 — 6-LUT DLGN
+- Umuroglu et al., *LogicNets*, FPL 2020 — 算術演算DLGN
+- Nag et al., *LL-ViT*, ICFPT 2025 — ハイブリッド

@@ -1,0 +1,77 @@
+# boards/ ピン表・検出署名の出典(SPDX)
+
+board JSON のピン・IDCODE は創作禁止(実配線事故防止)。転記元を必ずここに記録する。
+
+## tang-nano-20k.json(転記)
+
+- ピン表(clock/LED6/BTN2/BL616_UART):
+  litex-boards `litex_boards/platforms/sipeed_tang_nano_20k.py`
+  SPDX-License-Identifier: BSD-2-Clause
+  Copyright (c) 2023 Icenowy Zheng <uwu@icenowy.me>
+  https://github.com/litex-hub/litex-boards
+  commit 4f4caad16f97e5214837e75719af396f69cc2f8c(取得、
+  コピーを references/tang-nano-20k/litex-boards/ に保存)
+- 照合ソース(独立2ソース目): sipeed/TangNano-20K-example の公式 .cst 群
+  https://github.com/sipeed/TangNano-20K-example
+  commit e23949a0a77381b94960cbc4e97a7c5e5ba8d222(取得、
+  コピーを references/tang-nano-20k/sipeed-examples/ に保存)
+  → clk=4 / leds[0..5]=15..20 / uart_rx=70 / uart_tx=69 / BTN0(S1)=88 /
+  BTN1(S2)=87 を references/tang-nano-20k/gen_board_json.py で機械照合し
+  完全一致を確認(手打ち転記なし。JSON は同スクリプトで機械生成)。
+  ピン88は top.cst(rst)+picorv32 fpga_project.cst(resetn)+nestang.cst(s1)、
+  ピン87は audio.cst(rst)+hdmi.cst(I_key)の複数例で照合
+- 極性: LED active-low(litex 命名 `led_n` + blink_leds.v の `assign leds =
+  ~leds_value` の2証拠。実機 selftest でも整合)/ **BTN は正論理
+  (押下=High / idle=Low)を実機 A/B 実験で確定**:
+  ~BTN[1] リセットの top は hw-check 0/8(常時リセット)、リセット無効化版は
+  8/8 PASS → idle=Low を実測。当初の active-low 推定(picorv32 例の resetn)は
+  9K 系移植とみられ本ボードに非適合。Sipeed audio 例の rst(正論理、pin87)と整合
+- デバイス文字列 GW2AR-LV18QN88C8/I7: litex GowinPlatform.__init__ 第1引数と
+  Sipeed picorv32 fpga_project.cst ヘッダ「Part Number:」の2ソース一致
+- detection.ofl_board = tangnano20k / cable = ft2232:
+  ローカル openFPGALoader v1.1.1 `--list-boards` 実出力(tangnano20k → ft2232)
+  および litex `OpenFPGALoader(cable="ft2232")` から転記
+- 資源数(LUT4 20736 / FF 15552 / BSRAM 828K/46 / SDR SDRAM 64Mbit):
+  Sipeed 公式 wiki https://wiki.sipeed.com/hardware/en/tang/tang-nano-20k/nano-20k.html
+  仕様表から転記
+- BL616 USB VID/PID(0x0403:0x6010): 実機採取。
+  `detect --json` の pyserial 列挙(COM5/COM6 の2ポート、description
+  「USB Serial Port … FTDI」)および openFPGALoader --scan-usb で確認。
+  BL616 の FT2232 エミュレーションで ID は汎用 FTDI のため補助署名扱い。
+  ドライバ既定(FTDI VCP が両チャネルを掴む)では openFPGALoader が
+  `unable to open ftdi device: -4` になる=Interface 0(JTAG)を Zadig で
+  WinUSB に切替が必要(UART 側 B チャネルの COM は残る)
+- JTAG IDCODE: 未採取(上記ドライバ切替後に openFPGALoader --detect の
+  生出力から転記予定)
+
+## de10-lite.json(転記)
+
+- ピン表(clock/LED/SW/KEY/HEX/GPIOヘッダ):
+  litex-boards `litex_boards/platforms/terasic_de10lite.py`
+  SPDX-License-Identifier: BSD-2-Clause
+  Copyright (c) 2019 msloniewski <marcin.sloniewski@gmail.com>
+  https://github.com/litex-hub/litex-boards
+  commit 3abf3a1815d321e5a5c9adc1f5f03745aa74ed89(取得)
+- 照合ソース(独立2ソース目): zhelnio/ahb_lite_adc_max10
+  `board/de10_lite/de10_lite_adc.qsf`(Terasic System Builder 系の実プロジェクト qsf)
+  https://github.com/zhelnio/ahb_lite_adc_max10
+  → clock+LED10+SW10+KEY2+HEX48 の全ピンをスクリプトで機械照合し完全一致を確認
+  (手打ち転記なし。生成スクリプトは scratch で実行、JSON は機械生成)
+- JTAG IDCODE(0x031050dd = MAX 10 dual-supply 10M50D):
+  openFPGALoader `src/part.hpp`
+  SPDX-License-Identifier: Apache-2.0
+  https://github.com/trabucayre/openFPGALoader
+  (実機採取で確認後、de10-lite.json の jtag_idcodes_note を更新する)
+- 資源数: Terasic DE10-Lite 製品ページ(50K LE / 1,638 Kbit M9K /
+  144 multipliers / 64MB SDRAM)+ Intel MAX 10 10M50 公称 LE 数 49,760
+
+## de0-cv.json
+
+- 社内先行実験 `demo/fpga/pins_de0cv.md`(golden platform_setup.tcl と
+  Terasic DE0-CV マニュアル Table 3-7 の 2 ソース突合記録)。
+  KEY/HEX は独立 2 ソースの golden qsf(tfbninja/Quartus,
+  fb39ca4/quartus-vhdl-starter)との照合済み。詳細は各フィールドの note と
+  リポジトリの THIRD-PARTY.md を参照
+- detection.jtag_idcodes = 0x02b050dd: 実機 DE0-CV(電源 ON・USB-Blaster 接続)の
+  jtagconfig 生出力「02B050DD  5CE(BA4|FA4)」から採取。
+  ※ Web 文書の例示値 0x02B040DD(5CGT 系)とは別物であることを実機で確認

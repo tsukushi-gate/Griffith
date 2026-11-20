@@ -1,0 +1,328 @@
+---
+title: 'デモモデルを用意する'
+description: 'デプロイキットで動かす 3 つのデモモデル(MNIST / 行動認識 UCI-HAR / 顔検出 WIDER FACE)を、学習済みの成果物から配布バンドルにするまでの手順。'
+---
+
+[デプロイキット クイックスタート](/guides/deploy-quickstart/) は XOR という最小のモデルで流れを示した。
+このページは、実機やブラウザで **見栄えのする 3 つのデモモデル** を用意する手順をまとめる。
+どれも最終的には同じ **配布バンドル(`.bundle.json`)** になり、C / CUDA / Metal / Web のどのターゲットにも流せる。
+
+:::note[このページの位置づけ]
+各モデルを **ゼロから学習する** 手順は、チュートリアル側にある。ここでは「学習済みの成果物を受け取って
+バンドルにする」ところから始める。ゲート数・サイズの実測値は、末尾の [規模の表](#規模の表) にある
+(MNIST は [チュートリアル](/tutorials/deploy-mnist/) で作ったバンドルの値である)。
+:::
+
+## 3 つのデモモデル
+
+| モデル | 解くタスク | 出力の形 | 入手と変換 |
+|---|---|---|---|
+| **MNIST** | 手書き数字(0〜9)の画像を見て、何の数字かを当てる | 10 クラスのスコア | [チュートリアル](/tutorials/deploy-mnist/) で学習 → バンドル |
+| **行動認識(UCI-HAR)** | 腰に付けたスマートフォンのセンサ値から、歩く・座る・寝るなど 6 種類の動作を当てる | 6 クラスのスコア | 学習済み IR を取得 → `export_webbench.py ir` → バンドル |
+| **顔検出(WIDER FACE)** | 写真の中の顔がどこにあるかを見つける | 顔らしさのスコアマップ(ボックスはアプリ側で復号) | 学習済みチェックポイント → `export_webbench.py det-ckpt` → バンドル |
+
+入力・出力の幅などの仕様は、バンドルを作ったあとに `griffith deploy info` で確かめられる。
+
+```bash
+uv run griffith deploy info out_examples/demo_models/<name>.bundle.json --strict
+```
+
+## 一括で揃える
+
+行動認識(3 モデル)と顔検出をまとめて取得し、バンドルまで作るスクリプトを用意している。
+
+:::caution[現状は開発チーム内のみ(公開配布先は未定)]
+この節のスクリプトが取得する学習済みモデル(行動認識 3 本と顔検出)は、現在 **開発チームの非公開の wandb プロジェクトにだけ** 置いてあり、
+公開の配布先(GitHub Release など)はまだ決まっていない。そのため、外部の方はこの節の手順をそのままでは再現できない。
+公開配布先が決まったら、この節を更新する。
+
+外部の方は、次の方法で同じ流れを試せる。
+
+- MNIST は [チュートリアル](/tutorials/deploy-mnist/) で学習からバンドルまで作れる
+- 行動認識は [行動認識(UCI-HAR)](/tutorials/har/) で(このページのモデルより小さい)教材用モデルを学習できる。学習済みの IR があれば、下の「行動認識(UCI-HAR)」節の `export_webbench.py ir` でバンドルにできる
+- 自分のモデルは [自分のモデルをデプロイする](/guides/deploy-your-model/) の手順でバンドルにできる
+:::
+
+```bash
+uv run python scripts/fetch_demo_models.py          # = all(har + face)
+uv run python scripts/fetch_demo_models.py har      # 行動認識 3 モデルだけ
+uv run python scripts/fetch_demo_models.py face     # 顔検出だけ(約 5〜6 分)
+```
+
+スクリプトは wandb の Artifact(学習済み IR と顔検出のチェックポイント)を **読み取り専用** で取得する。
+認証は環境変数 `WANDB_API_KEY`(または `--env-file`)を使う。取得元の entity と project は既定値を持たないので、
+`--wandb-entity` / `--wandb-project`(または環境変数 `WANDB_ENTITY` / `WANDB_PROJECT`)で指定する
+(どちらも無いまま wandb からの取得が必要になると、指定方法を示して止まる)。主なオプションは次のとおり。
+
+| オプション | 意味 |
+|---|---|
+| `--wandb-entity` / `--wandb-project` | 取得元の wandb entity / project(既定は環境変数 `WANDB_ENTITY` / `WANDB_PROJECT`) |
+| `--out-dir` | 出力先(既定 `out_examples/demo_models`) |
+| `--offline` | wandb に接続しない(キャッシュ済みのときだけ動く) |
+| `--har-root` / `--no-download` | UCI-HAR の置き場所 / 無いときに自動ダウンロードしない |
+| `--force` | 既存のバンドル・C 生成物を作り直す |
+| `--no-verify-c` / `--verify-samples` | 生成 C の整数一致検証を省く / その枚数を変える |
+| `--resynth lossless` | 顔検出の conv2d 木を、シミュレーション検証つきで強制的に lossless 再合成する。出力は `det_face_lut_k256_resynth.*` の別名で、通常版は触らない(既定の `--compress fast` でも再合成は効く) |
+| `--compress {none,fast,max}` | バンドル化の前に適用する lossless な回路圧縮(既定 `fast`)。`griffith deploy bundle --compress` と同じ意味で、モデルの種類によらず同じ。結果はバンドルの `about.compress` に残る。`none` で圧縮なし、`fast` は秒で終わる削減をすべて(dense は sweep、conv2d は再合成)、`max` は探索をより深くして検証も増やす(実モデルで分オーダー) |
+
+対象はモデル名(`har_dlgn_k2400` など)で 1 本だけ指定することもできる。
+
+出力先は `out_examples/demo_models/` である(リポジトリの `.gitignore` に入っているので、コミットされない)。
+できあがるファイルは、モデル名 `har_dlgn_k600` / `har_dlgn_k2400` / `har_dlgn_k6000` / `det_face_lut_k256` ごとに次のとおり。
+
+| ファイル | 中身 |
+|---|---|
+| `<name>.model.json` | webbench 形式のモデル(IR・前処理・ラベル・`readout`) |
+| `<name>.bundle.json` | 配布バンドル。以降のページでの入力はこれ |
+| `<name>.verify_c.json` | 生成 C が `ir/simulate.py` と整数一致したかの記録 |
+| `c/<name>/` | 生成した `model.c` / `model.h` とランタイム |
+| `summary.json` | 全モデルのゲート数・各サイズ・`MDL_CTX_BYTES`・入力幅・精度の一覧 |
+
+以降のページのコマンド例では、バンドルを `out_examples/demo_models/<name>.bundle.json` と書く。
+
+実機で動かすときのサンプル入力(正解ラベルと期待スコアつき)は、別のスクリプトで作る。
+
+```bash
+uv run python scripts/make_device_samples.py \
+    --bundle out_examples/demo_models/har_dlgn_k6000.bundle.json
+uv run python scripts/make_device_samples.py \
+    --bundle out_examples/demo_models/det_face_lut_k256.bundle.json --n 8
+```
+
+`--bundle` は複数回指定できる。入力データはバンドルから自動で判定され(`--dataset` で上書き可)、
+行動認識は UCI-HAR のテスト窓をクラス均等に 50 件(`-n` で変更)、顔検出は合成画像を 10 件選ぶ。
+出力は `out_examples/demo_models/samples/<name>.json`(と C 埋め込み用の `<name>_samples.h`)で、
+**期待スコアは常にホスト側の `ir/simulate.py` の整数出力** である。
+
+サンプルは **バイト列の hex**(入力 `i` はバイト `i/8` のビット `i%8`、LSB-first)で持ち、
+ESP32 / iPhone のデモが読み込んで、実機の出力が期待スコアと一致するかを照合する。
+画像入力のモデルでは `bits` の代わりに `image`(u8 の NCHW、3×128×128 = 49,152 バイトの hex)を持つ。
+
+## MNIST
+
+MNIST は **チュートリアルで学習して、そのままバンドルにする** 流れを通しで追う。
+手順の本体は [MNIST をデプロイする](/tutorials/deploy-mnist/) にある。
+
+画像入力のモデルでは、バンドルの `preproc` 節に「画素値を二値チャネルに符号化する規則」が入る。
+バンドル化の際にこれが **整数記述子**(`preproc_desc`)へコンパイルされるので、端末側に浮動小数点は要らない。
+`preproc_desc` を持つバンドルからは、生成された C に `mdl_infer_image()` が追加され、u8 の画像をそのまま渡せる。
+
+## 行動認識(UCI-HAR)
+
+行動認識は **画像ではなくセンサ特徴量を入力する dense モデル**(conv を含まない全結合型の LUT 網)である。
+学習の流れは [行動認識(UCI-HAR)](/tutorials/har/) にある。ここでは学習済みの IR を受け取った状態から始める。
+
+`scripts/fetch_demo_models.py har` を実行すると、36,000 ゲートの `har_dlgn_k6000`、9,600 ゲートの中間版 `har_dlgn_k2400`、
+2,400 ゲートの小型版 `har_dlgn_k600` の 3 モデルが、バンドルまで一度に作られる。
+
+:::note[チュートリアルのモデルとは別物]
+[行動認識(UCI-HAR)](/tutorials/har/) のチュートリアルで学習するのは、3 層・9,000 ゲート・hard accuracy 0.885 の **教材用の小さなモデル** である。
+ここで取得する k600 / k2400 / k6000 は、wandb に残してある **別の学習済みモデル** で(層数・ゲート数・精度が違う。精度は下の「入力の形と精度」を参照)、
+チュートリアルのモデルをそのまま使うわけではない。
+:::
+
+```bash
+uv run python scripts/fetch_demo_models.py har
+uv run griffith deploy verify-c out_examples/demo_models/har_dlgn_k600.bundle.json -n 8
+```
+
+入力は UCI-HAR の生の慣性信号 9 チャネル × 128 ステップを、次の規則で 4,608 ビットにしたものである。
+
+- 学習データのチャネルごとの平均・標準偏差で標準化する
+- チャネルごとに、標準化後の学習データの分位点 `(i+1)/(T+1)`(`T=4`)を閾値にして thermometer 符号化する(`z > 閾値` で 1)
+- ビットの並びは `((ch*128) + t)*4 + thr`
+
+この前処理の宣言はバンドルの `preproc` 節に入るので、サンプルの入力ビット列も同じ規則で作られている。
+
+学習済みの IR(`*.ir.json`)を自分で用意した場合は、`export_webbench.py ir` に渡すと
+`tools/webbench/public/models/<label>.json` に **すでにバンドルとして** 書き出される。ラベルは JSON 配列で渡す。
+
+```bash
+uv run python scripts/export_webbench.py ir path/to/har.ir.json \
+    --label har \
+    --labels '["WALKING","WALKING_UPSTAIRS","WALKING_DOWNSTAIRS","SITTING","STANDING","LAYING"]'
+```
+
+入力が二値化済みの特徴量でなく前処理の宣言が要る場合は、`--preproc-json` で宣言を渡す(省略時は `kind: raw`)。
+書き出されたバンドルは、そのままコード生成に使える。`--resynth lossless` や `.mdlb` 形式にしたいときだけ、
+もう一度 `griffith deploy bundle` に通せばよい(バンドルを入力にしても同じ形で出る)。
+
+```bash
+uv run griffith deploy bundle tools/webbench/public/models/har.json -o out_examples/har.bundle.json
+```
+
+dense 専用のモデルは、C のコード生成に `--dense-batch N` を付けると **バッチ軸をパックした経路** が生える。
+単枚の経路に比べてスループットが上がるので、大量の入力をまとめて流す用途で試す価値がある。
+
+既定の `--dense-flat auto` で平坦化が効いたときは、`--dense-batch` を付けなくても **32 枚単位のバッチ入口 `mdl_infer_batch_packed`** が自動で生成される(`--dense-batch 0` で抑止、`--dense-batch N` で最大枚数)。
+32 枚まとめて流すと、1 枚ずつ流すより 1 枚あたり HAR k600 で 1.7 倍、k6000 で 5.9 倍、MNIST で 5.4 倍速かった(Apple M3、ホストの C)。
+1 枚だけをこの入口に流すと逆に 5〜12 倍遅いので、**バッチ専用**で使う。1 枚ずつの遅延は従来の `mdl_infer` が最良である。
+
+## 顔検出(WIDER FACE)
+
+顔検出は **CenterNet 方式の検出モデル(`CenterNetLUT`)** で、畳み込みを含む LUT 網である。
+`scripts/fetch_demo_models.py face` は、wandb の学習済みチェックポイントから `det_face_lut_k256.bundle.json` を作る
+(内部で下の `export_webbench.py det-ckpt` と同じ変換を、`--demo-samples 0` 相当で行う)。
+自分のチェックポイント(`best.pt`)から作るときは、`export_webbench.py det-ckpt` を直接使う。
+
+```bash
+uv run python scripts/export_webbench.py det-ckpt path/to/best.pt \
+    --label det_face --demo-samples 0
+```
+
+`--demo-samples 0` は、**データセットの実画像をバンドルに埋め込まない** という指定である(次の注意を参照)。
+公開・配布するバンドルは必ずこの指定で作ること。実機・シミュレータの計測に使った顔検出のサンプルは、
+実画像ではなく **合成画像(全 0・全 255・乱数・勾配・市松・描画した顔風イラスト)** で、ラベルを持たない。
+期待値はホスト `ir/simulate.py` の出力で、目的は整数一致とレイテンシの計測である。
+
+:::caution[WIDER FACE のライセンス]
+WIDER FACE は **非商用・研究目的** で使えるデータセットである。**サンプル画像は再配布できない**。
+`--demo-samples` を 0 以外にすると、実データセット由来の画像が base64 でバンドルに埋め込まれるため、
+**そのバンドルを第三者へ公開配布してはならない**。このサイトのデモや配布物は、画像を含まないバンドルだけを使う。
+:::
+
+### ボックスの復号はアプリ側で行う
+
+ランタイムが返すのは **スコアマップまで** で、ボックスへの復号(ピーク抽出 + NMS)は入っていない。
+復号に必要な情報は、バンドルの `readout` 節(`kind: "detection"`)に入っている。
+
+| `readout` のキー | 意味 |
+|---|---|
+| `heads` | 出力列の中の 3 つのヘッド(`hm` / `size` / `off`)。それぞれ先頭位置(`offset`)・チャネル数・高さ・幅・倍率(`scale`)を持つ |
+| `output_stride` | 入力画像に対するスコアマップの縮小率 |
+| `top_k` / `threshold` | 上位何個までを、どのスコア以上で採るか |
+| `n_classes` | クラス数 |
+
+出力の整数列は 3 ヘッドを連結したもので、実数値は `値 × scale` で復元する(`hm` は `popcount / hm_group` で `[0,1]`)。
+復号の手順は次のとおり。
+
+1. `hm`(ヒートマップ)に **3×3 の max pooling** をかけ、周囲より大きいピークだけを残す(NMS)
+2. 全クラス・全位置を降順に並べ、上位 `top_k` 個のうち `threshold` を超えるものを採る
+3. ピーク位置 `(x, y)` と `off`(`dx`, `dy`)から中心を `(x + dx, y + dy) × output_stride` で求める
+4. `size`(正規化された幅・高さ)に `output_stride × マップの幅(高さ)` を掛けて、ピクセル単位の幅・高さにする
+
+この手順の **参照実装は `tools/webbench/src/detdecode.ts`** にある(Python 側の `decode_detections` とビット等価に移植したもの)。
+自分のアプリに組み込むときは、これを C や Swift に写せばよい。
+
+## 規模の表
+
+バンドル化したあとの規模は、デプロイ先の選び方(フラッシュ・RAM に収まるか)に直結する。
+値は `out_examples/demo_models/summary.json`(`scripts/fetch_demo_models.py` の出力)から転記した実測で、
+MNIST の行だけは [チュートリアル](/tutorials/deploy-mnist/) の実行出力の値である。
+バンドルサイズは既定圧縮(`--compress fast`)を入れる前の、圧縮なしのバンドルのものなので、作り直すと小さくなることがある。
+
+| モデル | ゲート数 | バンドルサイズ(JSON / gzip) | `MDL_CTX_BYTES` | 生成 `model.c` のサイズ |
+|---|---|---|---|---|
+| MNIST(`mnist`) | 4,000 | 57,862 B / 18,864 B | 4,000 B | 40,902 B |
+| 行動認識 k600(`har_dlgn_k600`) | 2,400 | 38,140 B / 13,918 B | 1,200 B | 25,743 B |
+| 行動認識 k2400(`har_dlgn_k2400`) | 9,600 | 149,823 B / 51,982 B | 4,800 B | 104,824 B |
+| 行動認識 k6000(`har_dlgn_k6000`) | 36,000 | 565,260 B / 197,524 B | 12,000 B | 400,462 B |
+| 顔検出(`det_face_lut_k256`) | 命令列化後 2,686(重み共有 14,784) | 271,122 B / 79,026 B | 1,544,000 B | 121,387 B |
+| 顔検出 + `--resynth lossless`(`det_face_lut_k256_resynth`) | 命令列化後 2,319(重み共有 14,784) | 264,592 B / 75,430 B | 1,544,000 B | 112,463 B |
+
+:::tip[Python API と CLI で既定の圧縮が違う]
+`griffith deploy bundle` / `codegen-c` の CLI は、現在は **回路圧縮を既定で自動適用** する(bundle は `--compress fast`、codegen-c は `--dense-flat auto`)。
+Python から `build_bundle()` や `generate_c()` を直接呼ぶ場合は、この既定は **入らない**(圧縮なしの回路になる)。
+同じ結果にしたいときは CLI を使うか、`griffith_logic.deploy.compress.apply_compress` などを自分で呼ぶ。
+詳しくは [自分のモデルをデプロイする](/guides/deploy-your-model/) を参照。
+:::
+
+<details>
+<summary>入力の形と精度</summary>
+
+- **MNIST**(`LutLayer` 2 層 × 2,000 ゲート): 入力は 400 ビット(20×20 の二値画像)、出力 10 クラス。
+  テスト 2,000 枚での hard 精度は **0.867**。生成 C と PyTorch の hard eval は整数で一致した(10,000 要素の差分 0)。
+  バンドルは `examples/29_deploy_mnist.py` が `out_examples/deploy_mnist/mnist.bundle.json` に書く
+- **行動認識 k600**(4 層): 入力は 4,608 ビット(9 チャネル × 128 ステップ × 4 閾値)、出力 6 クラス。
+  ホスト `ir/simulate.py` での全 2,947 窓のテスト精度は **0.8049**
+- **行動認識 k2400**(4 層): 入力・出力は k600 と同じ。全 2,947 窓の精度は **0.8911**
+- **行動認識 k6000**(6 層): 入力・出力は k600 と同じ。同じ全 2,947 窓での精度は **0.9009**
+- **顔検出**: 入力は u8 の 3×128×128 画像(前処理後の二値入力幅は 2,834,432 ビット)、出力は 5,120 要素のスコアマップ。
+  学習時の `best_hard_mAP` は 0.3326(WIDER FACE が手元に無いと再現できないので、このサイトでは再計測していない)
+- 実機・シミュレータの計測に使った 50 窓は、全体の部分集合なので、表の精度とは別の値になる
+  (k600 は 38/50、k2400 は 38/50、k6000 は 40/50、MNIST は 42/50)
+
+</details>
+
+顔検出の「ゲート数」は、重み共有のまま数えると 14,784、展開後の命令列にすると 2,686 になる。
+空間に展開して素朴に並べると 55,574,528 個の LUT 相当になるが、ランタイムはそれを命令列として回すので、
+`model.c` は 121 KB に収まる。
+
+`MDL_CTX_BYTES` は **1 つのコンテキストが要る作業 RAM**、つまり推論中に書き換わる領域の大きさである。
+重みと命令列は含まれず、そちらは `static const` として `.rodata`(マイコンではフラッシュ)に載り、全コンテキストで共有される。
+顔検出の 1,544,000 B は小型マイコンの RAM を超えるので、[ESP32](/guides/deploy-esp32/) には載らない。
+
+## ゲート数を減らす(lossless)
+
+:::tip[既定でゲートは自動的に減る]
+`griffith deploy bundle` は既定(`--compress fast`)で、秒で終わる lossless な削減を自動で適用する(dense は **sweep**、conv2d は **再合成**)。
+C を生成する `griffith deploy codegen-c` / `verify-c` は既定(`--dense-flat auto`)で、**実効ゲートの削減率が 25% 以上なら平坦化(`lut_flat`)を自動で採用**する。
+どちらも **lossless**(任意の入力で出力が整数のまま変わらない)で、変換の前後で `ir/simulate.py` の出力が一致することを検証してから使う。
+dense と conv2d が混在するなど適用できなかった圧縮は自動でスキップされ、理由が `about.compress` の `skipped` に残る(対象のない圧縮は載せない)。切りたいときは下の表のとおり。デプロイキット全体で行われる圧縮と最適化は [圧縮と最適化の一覧](/reference/deploy-optimizations/) にまとめてある。
+:::
+
+| 段 | 既定 | 何をするか | 手動で切る・変える |
+|---|---|---|---|
+| `bundle --compress` | `fast` | dense は定数・重複(CSE)・未参照のゲートを除く(sweep)。conv2d は木の lossless 再合成(探索ゲート数の上限 4、木ごとの真理値表の全数一致と実サンプルの前向き計算で検証)。conv2d の命令列化は全レベルで行う | `--compress none`(無変換)、`--no-sweep`(sweep だけ切る)。`--compress max` で探索上限 5 と ir/simulate による追加検証(実モデルで分オーダー) |
+| `codegen-c` / `verify-c` `--dense-flat` | `auto` | 試行して削減率 ≥ 25% なら、パススルー・定数を除いた平坦ネットリスト(`lut_flat`)にして表駆動の C を出す(`codegen-web` も既定で同じ判定(閾値 0)。`codegen-cuda` / `codegen-metal` は既定 `off` で、`--dense-flat auto` を付けたときだけ閾値 25% で判定。バンドルは変わらない) | `--dense-flat off`(従来の C)、`on`(常に採用)、`--dense-flat-min-reduction R`(閾値) |
+
+個別フラグ `--sweep` / `--resynth lossless` / `bundle --dense-flat`(IR に焼く)は互換のため残り、**指定すれば `--compress` より優先**される。
+`--dense-batch` は平坦化と併用できる(平坦化したモデルでは、指定しなくても 32 枚単位のバッチ入口が既定で付く)。
+
+| 圧縮 | 対象 | 何を減らすか | 実測の効果 | 注意 |
+|---|---|---|---|---|
+| sweep(`--compress fast`) | dense(`lut_layer` の列) | 定数・重複(CSE)・未参照のゲート | 実行ゲートで約 10〜20% 減(k6000 36,000 → 28,636、k2400 9,600 → 8,681、k600 2,400 → 1,989、MNIST 4,000 → 3,615) | `MDL_CTX_BYTES` がやや増える |
+| 平坦化(`--dense-flat auto`) | dense(C / Web は既定。CUDA / Metal は opt-in) | sweep に加え、パススルー・定数を除いた平坦ネットリストにして実行する | 実効ゲートで約 45〜58% 減(k6000 36,000 → 15,124、k2400 9,600 → 4,886、k600 2,400 → 971、MNIST 4,000 → 2,210) | GPU(Metal 実測)では大きいモデルで遅くなる場合がある(k6000 で batch 128 以上のとき 0.47〜0.71 倍(batch 32 は 1.02 倍))ので、CUDA / Metal の既定は `off`。信号表のぶん `MDL_CTX_BYTES` が増える(k6000 で 12,000 B → 25,736 B)。RAM が厳しいなら `--dense-flat off` |
+| conv 再合成(`--compress fast`) | conv(顔検出など) | conv2d の木を再合成して命令列のゲートを減らす | 顔検出で 1,279 → 1,077 ゲート(-15.8%)、再合成は 1.2 秒(Apple M3)。コードサイズ(model.c)-4〜7%、バイナリ -9〜10%、配信サイズはほぼ不変(-0.6〜1.7%) | **速度は変わらなかった**(下記)。効くのはフラッシュの小さい環境 |
+
+結果は `about.compress`(`{level, applied, skipped, gates, always}`)に残り、`griffith deploy info` が 1 行で表示する。conv2d の命令列化は全レベルで行うので `always` に記録される。`codegen-c` は平坦化の採否と削減率を標準出力と `model.h` の先頭コメント・`#define MDL_DENSE_FLAT 1/0` に出す。
+
+再合成の探索は高速化した(必要変数の数 e から下限 e-1 ゲートを求め、すでに下限の木は飛ばす。探索は必要変数だけに絞る。検証も軽くする)。同じ上限なら旧探索と**ゲート単位で同じ結果**になる。Apple M3 の実測は、顔検出 上限 4 で 1.2 秒(1,279 → 1,077)、上限 5 で 1.2 秒(→ 1,076)、少数クラス k64 は 1.3 秒 / 3.0 秒(1,509 → 1,316 / 1,314)、seg k128 は 1.9 秒 / 8.2 秒(2,815 → 2,636 / 2,625)。以前の実装では顔検出で 253.5 秒かかっていた。
+以下の計測は、sweep と平坦化の両方を適用した値(手動の `--sweep --dense-flat` と同じ回路)である。
+
+```bash
+# 既定のまま(dense: sweep が自動、C 生成で平坦化を自動判定)
+uv run griffith deploy bundle out_examples/demo_models/har_dlgn_k6000.model.json \
+    -o out_examples/demo_models/har_dlgn_k6000.bundle.json
+uv run griffith deploy info out_examples/demo_models/har_dlgn_k6000.bundle.json   # 圧縮の適用結果と、codegen-c 既定の見込み
+uv run griffith deploy codegen-c out_examples/demo_models/har_dlgn_k6000.bundle.json -o out_examples/har_c   # 平坦化の採否と削減率を表示
+
+# 切る(従来どおり、学習時のゲート数のまま)
+uv run griffith deploy bundle out_examples/demo_models/har_dlgn_k6000.model.json --compress none \
+    -o out_examples/demo_models/har_dlgn_k6000.plain.bundle.json
+uv run griffith deploy codegen-c out_examples/demo_models/har_dlgn_k6000.plain.bundle.json --dense-flat off -o out_examples/har_plain_c
+
+# conv(顔検出): 取得の段で再合成した別名の成果物 det_face_lut_k256_resynth.* を作る
+uv run python scripts/fetch_demo_models.py face --resynth lossless
+```
+
+各オプションの全引数は [`griffith deploy bundle`](/reference/cli/#griffith-deploy-bundle) にある。
+
+### 実測の効果(要点)
+
+詳しい表は [ESP32 に載せる](/guides/deploy-esp32/#ゲート削減の効果)(実機)と
+[iPhone に載せる](/guides/deploy-ios/#ゲート削減の効果シミュレータ)(シミュレータ、ホスト CPU 値)にある。
+
+- **ESP32 実機**では、sweep と平坦化の両方を適用した版(手動の `--sweep --dense-flat`)が 4 モデルすべてで最速だった。k6000 は 26.60 ms から 12.69 ms、MNIST は 725.2 µs から 324.7 µs。
+  出力は全件で素と整数一致している(lossless の実機での確認)。ただし k2400 の flat(5,785.5 µs から 782.2 µs の 7.4 倍)は、
+  ゲートの削減率だけでは説明できず、**原因は調べていない**
+- **iOS シミュレータ**(ホスト CPU)では、flat は HAR で素比 1.4〜1.9 倍だが、**MNIST では sweep と同等で、速くならなかった**。
+  ゲートが減っても、削減率が小さい(MNIST は flat で -44.8%)モデルでは、表駆動のコストで相殺されることがある。**測ってから使うこと**
+- **顔検出の `--resynth lossless`** は、ゲートを 13.7% 減らしたが、**1 推論の時間は変わらなかった**(1,584 µs と 1,577 µs)。
+  時間は前処理と画像の畳み込み側が支配しているとみられる。ゲート数の削減は、バンドルや `model.c` の大きさ(121,387 B から 112,463 B)には効く
+- メモリは、flat で flash(`.rodata`)が減り、静的 DRAM が増える。**RAM の小さいマイコンでは、先に `MDL_CTX_BYTES` を確かめる**
+
+### モデルの選び方: k6000 と k2400
+
+同じ行動認識でも、学習時のゲート数が違う版を選べる。**k6000 から k2400 にすると、ゲート数は 3.75 分の 1 になり、
+全 2,947 窓の精度は 0.9009 から 0.8911 へ 1.0 ポイント下がる**(ホスト `ir/simulate.py`)。速度は、ESP32 実機の素で 26.60 ms から 5.79 ms(約 4.6 倍)、
+iOS シミュレータ(ホスト CPU)の素で 3.9 倍速い(同じ 12 回計測の sweep 同士では 3.4 倍、flat 同士では 2.9 倍)。
+最適化オプションでゲートを削るより、**学習時から小さいモデルを選ぶ** ほうが、速度への効きは大きい。
+ただし 50 窓のサンプルの正解率(k6000 80%、k2400 76%)は全体の代表ではないので、精度は全 2,947 窓の値で比べること。
+
+## 次に読む
+
+- [デプロイキット クイックスタート](/guides/deploy-quickstart/) — XOR で通しの流れを確かめる
+- [ESP32 に載せる](/guides/deploy-esp32/) — 3 モデルをマイコンで動かす
+- [iPhone に載せる](/guides/deploy-ios/) — 3 モデルを複数同梱したアプリを作る
+- [配布バンドル仕様](/reference/deploy-bundle/) — `readout` 節を含むバンドルの形式

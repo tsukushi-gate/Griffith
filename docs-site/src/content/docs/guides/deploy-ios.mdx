@@ -1,0 +1,334 @@
+---
+title: 'iPhone に載せる'
+description: '学習済み DLGN を iPhone(Xcode / SwiftUI)で動かす手順と、iPhone 17 実機・シミュレータの実測。生成 C をブリッジングヘッダ経由で Swift から呼び、複数モデル(画像モデル含む)を 1 つのアプリに同梱し、シミュレータと実機でビルドする。'
+---
+
+デプロイキットが生成する C は、Swift から **C 相互運用でそのまま呼べる**。Objective-C のラッパも JNI のような
+橋渡し層も要らず、ブリッジングヘッダで C のヘッダを見せるだけでよい。aarch64 の NEON 経路はコンパイル時に自動で有効になる。
+このページは、その **iPhone 向けの手順と、実機・シミュレータでの実測結果** をまとめる。
+
+:::note[iPhone 17 実機で 5 モデルが整数一致した]
+**iPhone 17(iPhone18,3、iOS 26.6.2)の実機** で、5 モデルすべてが動き、出力スコアがホストの `ir/simulate.py` と **整数一致** した。
+実機の時間は下の「実測表(iPhone 17 実機)」にある。シミュレータの時間は **Apple Silicon の Mac(ホスト CPU)でのネイティブ実行時間** であり、
+iPhone の値ではない(「実測表(シミュレータ)」はそのように明記してある)。検証状況は [対応プラットフォーム](/reference/platform-support/) で確認できる。
+:::
+
+## 前提
+
+- macOS と **Xcode**(iOS SDK 入り)
+- 実機で動かす場合は、Apple ID(無料アカウントでも可)を Xcode に登録済みで、iPhone を開発者モードにしていること
+- 本リポジトリを clone し、`uv sync --extra dev --extra cpu` を済ませていること(モデル生成に使う)
+
+## プロジェクトの構成
+
+SwiftUI のデモアプリは `examples/31_deploy_ios/` にある。
+
+| ファイル | 役割 |
+|---|---|
+| `gen_model.py` | バンドルとサンプルから、モデル 1 つぶんのファイルを `Models/<name>/` へ作る |
+| `gen_xcodeproj.py` | `GriffithDemo.xcodeproj` を生成する(`gen_model.py` が最後に呼ぶ) |
+| `GriffithDemo/` | アプリ本体(SwiftUI のビュー・推論の呼び出し・ブリッジングヘッダ) |
+| `Models/` | モデルごとの生成 C とサンプル(生成物。モデルの数だけ並ぶ) |
+
+C のランタイム(`runtime/c/src/mdl_kernels.c`)は **複製せず、リポジトリ内のものを相対パスで参照** する。
+全モデルで共通の 1 つだけをリンクする。
+
+## 手順
+
+### 1. モデルを取り込む
+
+モデルごとに `gen_model.py` を 1 回走らせる。何度実行してもよく、他のモデルのファイルには触らない。
+
+```bash
+uv run python examples/31_deploy_ios/gen_model.py har_dlgn_k600 \
+    --bundle out_examples/demo_models/har_dlgn_k600.bundle.json \
+    --samples out_examples/demo_models/samples/har_dlgn_k600.json
+```
+
+`<name>`(上の例では `har_dlgn_k600`)は小文字英数字と `_` だけで、C のシンボルの接頭辞になる。
+バンドルとサンプルの用意は [デモモデルを用意する](/guides/deploy-models/) を参照。
+取り込んだモデルは `Models/*/` を走査して、**すべて自動でアプリに同梱される**。
+引数なしで XOR だけを入れるなら `bash examples/31_deploy_ios/setup_xor.sh` が学習から取り込みまで一括で行う。
+
+3 つのデモモデルを入れるときは、次のように回す。
+
+```bash
+D=out_examples/demo_models
+for n in har_dlgn_k6000 har_dlgn_k600 det_face_lut_k256; do
+  uv run python examples/31_deploy_ios/gen_model.py $n \
+      --bundle $D/$n.bundle.json --samples $D/samples/$n.json
+done
+```
+
+`gen_model.py` は `--dense-flat {auto,on,off}`(既定 `auto`)も持つ。`codegen-c` の同名オプションにそのまま渡され、
+dense の 2 入力 `lut_layer` 列を平坦ネットリスト `lut_flat` にするかを決める。
+`auto` は実効ゲート削減率が 25% 以上のときだけ採用し、`on` は常に、`off` は一切平坦化しない。
+判定結果と、平坦化後の実行ゲート数は標準出力に出る。平坦化は信号表のぶん作業メモリ(`MDL_CTX_BYTES`)が増えるので、
+メモリを優先するなら `--dense-flat off` を使う。ESP32 側の同名オプションは [ESP32 に載せる](/guides/deploy-esp32/#1-モデルを生成する) を参照。
+
+### 2. 生成 C をブリッジングヘッダで呼ぶ
+
+Swift から C を呼ぶには、**ブリッジングヘッダ**(Xcode の `SWIFT_OBJC_BRIDGING_HEADER` で指定)に C のヘッダを書く。
+このデモでは、モデル固有の `model.h` はブリッジングヘッダに入れず、**共通の記述子 `gd_model`(`GdModel.h`)だけ** を見せる。
+
+```c
+/* GriffithDemo-Bridging-Header.h */
+#include "GdModel.h"
+```
+
+`gd_model` はモデル名・入出力幅・`MDL_CTX_BYTES`・ゲート数と、コンテキストの初期化・推論の関数ポインタを持つ。
+Swift 側は `gd_model_count()` と `gd_model_at(i)` でモデルを列挙し、記述子越しに推論を呼ぶ。
+作業領域(`MDL_CTX_BYTES` ぶん)は呼び出し側が確保して `ctx_init` に渡すので、推論中のヒープ確保は C 側で起きない。
+
+#### 画像モデル(顔検出)の経路
+
+顔検出のように入力が u8 の画像であるモデルは、`samples.json` が `bits` の代わりに
+`image`(u8 の NCHW = 3×128×128 = 49,152 バイトの hex)を持つ。`gen_model.py` は、生成された `model.h` に
+`mdl_infer_image_ctx` があれば画像モデルとみなし、次のように変える。
+
+- 記述子 `gd_model` の `input_kind` を 1(画像)に、`input_bytes` を `C×H×W` に設定する
+- unity ラッパが呼ぶ関数を、前処理込みの **`mdl_infer_image_ctx`**(u8 画像をそのまま渡す)にする
+- アプリは `image` をバイト列にデコードして渡す。ビット列への展開は C 側が整数で行うので、Swift に浮動小数点は要らない
+
+ラベルが無い(`label: null`)モデルは、画面の正解率を「—」とし、代わりに **ホスト `ir/simulate.py` の期待スコアとの整数一致 n / N** と
+レイテンシを表示する。画像モデルの作業 RAM(`MDL_CTX_BYTES`)は 1.5 MB と大きいが、実行時に 1 回だけ確保する。
+画像モデルでは `mdl_threads.c` は同梱しない(単一スレッド実行)。
+
+### 3. 複数モデルを同梱するときのシンボル衝突対策
+
+生成された `model.c` は、どのモデルでも **同じ名前の関数**(`mdl_infer_ctx` や `mdl_ctx_init` など)と、
+型の定義(`mdl_ctx`)を持つ。そのまま複数のモデルをリンクすると、**リンク時にシンボルが衝突する**。
+
+このデモは **モデルごとの「unity ラッパ」`<name>_unit.c`** で解決している。
+
+1. `model.c` が外部に公開するシンボルを、ラッパの中で `#define mdl_infer_ctx <name>_mdl_infer_ctx` のように **モデル名つきへ置換**する
+2. その状態で `model.c` を `#include` し、置換を `#undef` で戻す
+3. モデルごとに `const gd_model gd_model_<name>` を 1 つだけ公開する
+
+ランタイム(`mdl_kernels.c`)は全モデル共通で 1 つだけリンクするので、置換の対象にしない。
+`model.h` を ブリッジングヘッダに入れないのも同じ理由で、モデルごとに型が重なるのを避けるためである。
+この仕組みは `gen_model.py` が自動生成するので、利用者が意識するのは「モデル名を付けて取り込む」ことだけでよい。
+
+### 4. ビルドと実行
+
+Xcode で `examples/31_deploy_ios/GriffithDemo.xcodeproj` を開き、実行先を選んで Run する。
+コマンドラインからは `xcodebuild` を使う。スキーム名や実行先は `xcodebuild -list` と `xcrun simctl list devices` で確認する。
+
+#### シミュレータ
+
+```bash
+xcodebuild -project examples/31_deploy_ios/GriffithDemo.xcodeproj -scheme GriffithDemo \
+    -destination 'platform=iOS Simulator,name=<シミュレータ名>' \
+    -derivedDataPath /tmp/griffith_dd build
+xcrun simctl boot "<シミュレータ名>" || true
+xcrun simctl install booted /tmp/griffith_dd/Build/Products/Debug-iphonesimulator/GriffithDemo.app
+xcrun simctl launch --console-pty booted com.example.griffithdemo
+```
+
+シミュレータは署名が要らないので、まずここで動作を確かめる。Apple Silicon の Mac では、シミュレータも aarch64 で動く。
+`<シミュレータ名>` は `xcrun simctl list devices available` に出る機種名にする(最新 OS に無い機種名だと解決に失敗する)。
+計測に使ったのは iPhone 17(iOS 26.5)で、**C は Debug 構成でも `-O3`** でビルドされる。
+
+#### 起動引数で自動実行して結果を回収する
+
+起動引数 `-gd_autorun 1 -gd_model <name>` を付けると、アプリは起動直後に指定モデルを自動実行する
+(スクリーンショットや CI 向け)。結果は **標準出力に `RESULT {json}` を 1 行**、`os_log`
+(subsystem `com.example.griffithdemo`)にも出る。
+
+```bash
+xcrun simctl launch --console-pty booted com.example.griffithdemo -gd_autorun 1 -gd_model har_dlgn_k600
+```
+
+`--console-pty` で標準出力を端末へ流すと `RESULT` 行を回収できる。`simctl launch` は、シミュレータの起動直後に
+30 秒でタイムアウトすることがある(再実行で通る)。下の実測表は **Release** 構成の値である。
+`xcodebuild` に `-configuration Release` を足してビルドし、インストールするパスは
+`Build/Products/Release-iphonesimulator/GriffithDemo.app` になる。
+
+#### 実機(署名)
+
+実機にはコード署名が要る。Xcode の **Signing & Capabilities** で **Team を選ぶ**(無料の Apple ID でも個人 Team が使える)。
+コマンドラインでは、Team ID を渡し、プロビジョニングの自動更新を許可する。
+
+```bash
+xcrun devicectl list devices                       # 接続中の実機(Identifier / 名前)
+xcodebuild -project examples/31_deploy_ios/GriffithDemo.xcodeproj -scheme GriffithDemo \
+    -configuration Release -destination 'id=<udid>' -allowProvisioningUpdates \
+    DEVELOPMENT_TEAM=<チームID> PRODUCT_BUNDLE_IDENTIFIER=com.example.<あなたの名前>.griffithdemo \
+    -derivedDataPath /tmp/griffith_dd build
+xcrun devicectl device install app --device <udid> \
+    /tmp/griffith_dd/Build/Products/Release-iphoneos/GriffithDemo.app
+for m in xor har_dlgn_k600 har_dlgn_k6000 det_face_lut_k256 mnist; do
+  xcrun devicectl device process launch --terminate-existing --console --device <udid> \
+      com.example.<あなたの名前>.griffithdemo -- -gd_autorun 1 -gd_model $m | tee /tmp/ios_dev_$m.log
+done
+```
+
+:::caution[アプリの引数の前に `--` が要る]
+`devicectl device process launch` では、**アプリへ渡す引数の前に `--` を置く**。無いと `-gd_autorun` を `devicectl` 自身のオプションと解釈し、
+`Please specify a 'timeout' value between 5 and ...` のようなエラーで失敗する。
+:::
+
+生成された `.xcodeproj` は、バンドル ID(`com.example.griffithdemo`)と `DEVELOPMENT_TEAM` が空の状態で作られる。
+自分の環境で動かすときは、バンドル ID を他人と被らない値に変えること(`gen_xcodeproj.py` の `BUNDLE_ID`、または Xcode 上で変更)。
+初回は iPhone 側で **「設定 → 一般 → VPN とデバイス管理」から開発元を信頼** する操作と、
+「設定 → プライバシーとセキュリティ」での **デベロッパモード** の ON が要る。
+アプリは `RESULT` を出したあとも終了しないので、行が出たら Ctrl-C で止める。
+
+`devicectl --console` でアプリの標準出力を端末へ流す経路は、**iPhone 17 実機で確認した**(`RESULT` の JSON 行を端末で回収できた)。
+Release ビルドは、無料の個人 Team でも `-allowProvisioningUpdates` の指定だけでプロビジョニングプロファイルが自動作成された。
+`RESULT` が出ないときは、画面の「結果 JSON を共有」から AirDrop やメモへ送る、
+`os_log` を Console.app で見る、スクリーンショットを撮る、のいずれかで代替できる。
+計測するときは、機内モード・低電力モード OFF・充電ケーブル接続・画面点灯にする(熱で数 % 落ちる)。
+
+署名なしで実機向けのコンパイルだけを確かめるなら、次のとおり(この手順は確認済み)。
+
+```bash
+xcodebuild -project examples/31_deploy_ios/GriffithDemo.xcodeproj -scheme GriffithDemo \
+    -destination 'generic/platform=iOS' -configuration Release build CODE_SIGNING_ALLOWED=NO
+```
+
+## 何を確かめるか
+
+アプリは各モデルについて、同梱したサンプルを推論し、**出力スコアが期待値と一致するか** と
+**1 推論あたりの時間** を画面に出す。一致の基準はホスト(Mac)で `ir/simulate.py` と整数一致した生成 C の出力である。
+つまり iPhone の結果が期待スコアと違えば、それは実機側のビルドか環境の問題として切り分けられる。
+
+## 実測表(iPhone 17 実機)
+
+**iPhone 17(iPhone18,3)、iOS 26.6.2(Build 23G90)の実機** で計測した。Release 構成(C は `-O3`、aarch64 の NEON 経路)で、
+`xcrun devicectl device process launch --console` の標準出力に出る `RESULT` 行から回収した。時間は 1 推論あたりの **中央値** である
+(短い推論をまとめて回して割る方式は、シミュレータと同じ)。バンドルは現行の既定(`bundle --compress fast`、`codegen-c` の dense-flat は `auto`)で作り、
+XOR・MNIST・行動認識の 3 種は `auto` が平坦ネットリスト `lut_flat` を採用した。
+
+| モデル | 実行ゲート数 | `MDL_CTX_BYTES` | 窓・枚数 | 正解率 | スコア整数一致 | 1 推論(中央値、実機) |
+|---|---:|---:|---:|---|---|---:|
+| XOR | 3 | 24 B | 4 | 4/4 | 4/4 | 10.6 ns |
+| 行動認識 k600 | 971 | 6,180 B | 50 | 38/50(76%) | 50/50 | 0.64 µs |
+| MNIST | 2,210 | 4,612 B | 50 | 42/50(84%) | 50/50 | 1.73 µs |
+| 行動認識 k6000 | 15,124 | 25,736 B | 50 | 40/50(80%) | 50/50 | 8.07 µs |
+| 顔検出 `det_face_lut_k256` | 1,279 | 1,373,440 B | 8 | —(ラベル無し) | 8/8 | 0.803 ms |
+
+- **全モデルがホスト `ir/simulate.py` と整数一致** した(`score_mismatch` は 0)。正解率はホスト実行・シミュレータと同じ値である
+- 行動認識 k600 / k6000 は、webbench の公開モデル(`tools/webbench/public/models/har_dlgn_k*_gumbel.json`)から作ったバンドルである。MNIST はチュートリアル 29 のモデル
+- 顔検出は `tools/webbench/public/models/bundles/det_face_lut_k256.bundle.json` をそのまま使った(再合成していない。実行ゲート 1,279)。
+  入力は **合成画像 8 枚** で、ラベルが無いので正解率は出さず、期待スコアとの整数一致だけを見ている。0.803 ms は前処理込みの時間である
+- 測定は **各モデル 1 回** で、シミュレータ側の「素 / sweep / flat」(12 回の中央値)と違い、繰り返しによるぶれは見ていない。
+  これらの値は wandb には記録していない(この環境に認証情報が無かった)。生データは `results/deploy/devices/ios_device_*_20261014.json` と
+  集約 `ios_device_summary_20261014.json` にある
+
+#### シミュレータ(ホスト CPU)との比較
+
+同じモデルを同じ経路(`lut_flat`)で測った値は、下の「ゲート削減の効果」の flat 列にある。ゲート数と `MDL_CTX_BYTES` は実機と一致している。
+
+| モデル | シミュレータ flat(ホスト CPU) | iPhone 17 実機(中央値) | 比 |
+|---|---:|---:|---:|
+| 行動認識 k600 | 1.25 µs | 0.64 µs | 約 2.0 倍速い |
+| MNIST | 2.98 µs | 1.73 µs | 約 1.7 倍速い |
+| 行動認識 k6000 | 15.42 µs | 8.07 µs | 約 1.9 倍速い |
+
+この iPhone 17 の C は、**今回測ったモデルでは、Apple Silicon の Mac のシミュレータ(ホスト CPU)より 1.7〜2.0 倍速かった**。
+ただし、ホスト CPU の機種、シミュレータ側が 12 回の中央値・実機側が 1 回であること、負荷や電源状態の違いは揃えていない(シミュレータ側の計測中はホストの負荷が高く、load average は約 20 だった。`results/deploy/devices/ios_summary_20261007.json`)。この比は他のモデルや機種へ一般化しないこと。
+XOR と顔検出は、シミュレータ側の表が現行の既定でない回路(XOR 32 ゲート、顔検出 2,686 ゲート)なので、同じ条件の比較をしていない。
+
+## 実測表(シミュレータ)
+
+:::caution[時間はホスト CPU の値]
+下表は **iPhone 17 シミュレータ(iOS 26.5)上の値で、実体は Apple Silicon の Mac(ホスト CPU)でのネイティブ実行時間** である。
+iPhone 実機の値ではない。実機の値は、すぐ下の「実測表(iPhone 17 実機)」を見ること。
+:::
+
+Release 構成(C は `-O3`)で、`xcrun simctl launch --console-pty` の標準出力に出る `RESULT` 行から回収した。
+時間は 1 推論あたりで、短い推論を約 200 µs 分まとめて回して割り、3 回測って最小を採っている
+(平均はサンプル間の平均)。
+
+| モデル | ゲート数 | 入力 | `MDL_CTX_BYTES` | 窓・枚数 | 正解率 | スコア整数一致 | 1 推論(平均、ホスト CPU) |
+|---|---:|---|---:|---:|---|---|---:|
+| XOR | 32 | 2 bit | 32 B | 4 | 4/4 | 4/4 | 0.042 µs |
+| 行動認識 k600 | 2,400 | 4,608 bit | 1,200 B | 50 | 38/50(76%) | 50/50 | 2.20 µs |
+| 行動認識 k6000 | 36,000 | 4,608 bit | 12,000 B | 50 | 40/50(80%) | 50/50 | 32.9 µs |
+| MNIST | 4,000 | 400 bit(20×20 二値) | 4,000 B | 50 | 42/50(84%) | 50/50 | 3.24 µs |
+| 顔検出 `det_face_lut_k256` | 2,686 | u8 画像 3×128×128 | 1,544,000 B | 10 | —(ラベル無し) | 10/10 | 1.76 ms |
+
+(この表は以前の計測で、既定圧縮が入る前の、圧縮なしの回路である。k2400 と sweep・flat・resynth は下の「ゲート削減の効果」に別の計測として載せる。)
+
+- 行動認識の 50 窓は UCI-HAR のテスト窓から作った部分集合で、全体の精度(k600 80.5%、k6000 90.1%)とは別の数である。
+  正解率はホスト実行と同じ値になった
+- 顔検出は CenterNet のスコアマップ(5,120 要素)を出す画像モデルで、合成画像 10 枚に対するホスト `ir/simulate.py` の出力と
+  **全て整数一致** した(ラベルが無いので正解率は出さない)。1 枚 1.76 ms は、`mdl_infer_image_ctx` が前処理も含めて走った時間である
+- 同一バイナリの再実行でも **±数 %〜10 %** ぶれる(k6000 の平均は 29.6〜33.0 µs の範囲だった)ので、
+  表の値は 1 回の測定として読むこと
+
+### アプリのサイズ
+
+実機向けの署名なし Release ビルド(`generic/platform=iOS`、5 モデル同梱、arm64)の大きさは次のとおり。
+
+| 項目 | サイズ |
+|---|---:|
+| `.app` 内のファイル合計 | 1,951,086 B |
+| 主バイナリ | 709,840 B |
+| 署名なし `.ipa`(zip) | 433,067 B |
+
+モデルごとの増分(バイナリ内の `__text` + `__const` + `__data`、bss 除く)と、`samples.json`(Bundle に入るサンプル)は次のとおり。
+
+| モデル | バイナリ増分 | samples JSON |
+|---|---:|---:|
+| XOR | 1,196 B | 251 B |
+| 行動認識 k600 | 11,514 B | 64,871 B |
+| 行動認識 k6000 | 162,843 B | 65,184 B |
+| 顔検出 | 115,507 B | 1,096,547 B |
+| MNIST | 19,154 B | 13,320 B |
+
+顔検出の samples は画像の hex が大半を占めるので、本番のアプリには要らない。`mdl_ctx`(顔検出で約 1.5 MB)は
+バイナリには入らず、実行時にだけ確保する。
+
+### ゲート削減の効果(シミュレータ)
+
+:::caution[ここでも時間はホスト CPU の値]
+この節の時間も **iPhone 17 シミュレータでの、Apple Silicon の Mac(ホスト CPU)上の実行時間** で、iPhone 実機の値ではない。
+:::
+
+[デモモデルを用意する](/guides/deploy-models/#ゲート数を減らすlossless) で説明した lossless なゲート削減(`--sweep`、`--sweep --dense-flat`、`--resynth lossless`)を、
+iOS のデモアプリでも計測した。素(raw)・sweep・flat の 3 通りを同じバイナリ(15 モデル同梱)に入れ、順序を入れ替えながら
+6 回 × 2 セット = **12 回** 実行して、各実行の中央値の中央値を採った(測定中のホスト負荷が高く、6 回だけでは速い・遅いの 2 つに
+揺れたため、12 回にした)。**全 144 実行で `score_mismatch` は 0** で、正解率(50 窓)も素・sweep・flat で同一だった
+(k6000 80%、k2400 76%、k600 76%、MNIST 84%)。
+
+| モデル | 素 | sweep | flat | 実行ゲート 素 / sweep / flat | ctx 素 / sweep / flat | 素÷flat |
+|---|---:|---:|---:|---|---|---:|
+| 行動認識 k6000 | 29.81 µs | 23.46 µs | 15.42 µs | 36,000 / 28,636 / 15,124 | 12,000 / 13,872 / 25,736 B | 1.93 倍 |
+| 行動認識 k2400 | 7.67 µs | 6.93 µs | 5.35 µs | 9,600 / 8,681 / 4,886 | 4,800 / 6,284 / 11,896 B | 1.43 倍 |
+| 行動認識 k600 | 1.98 µs | 1.65 µs | 1.25 µs | 2,400 / 1,989 / 971 | 1,200 / 1,396 / 6,180 B | 1.58 倍 |
+| MNIST | 3.22 µs | 2.92 µs | 2.98 µs | 4,000 / 3,615 / 2,210 | 4,000 / 3,616 / 4,612 B | 1.08 倍 |
+
+- **sweep は 1.1〜1.3 倍**(素÷sweep は k6000 1.27 倍、k600 1.20 倍、k2400 1.11 倍、MNIST 1.10 倍)。ゲートの削減率にほぼ見合う。
+- **flat は HAR 3 モデルで素比 1.4〜1.9 倍**、sweep 比でも 1.3〜1.5 倍で、ゲートが約半分になる k6000 で最大になる。
+  **MNIST は flat が sweep と同等**(sweep 比 0.98、わずかに遅い)で、ゲートが 3,615 から 2,210 へ減っても時間は減らなかった。
+  原因は切り分けていない(表駆動の 1 ゲートあたりのコストが sweep 後の専用ループより高いとみられるが、確かめていない)。
+  同じ MNIST が ESP32 実機では flat で半減する点と合わせて、ホストでの傾向をそのまま実機に当てはめてはいけない
+- **flat は ctx が増える**(k6000 で 12,000 B から 25,736 B)。時間と引き換えに作業メモリが 2〜5 倍になる
+- **k6000 から k2400 への乗り換え**: 速度比は素 3.89 倍、sweep 3.39 倍、flat 2.88 倍。ゲート数は 3.75 分の 1 で、
+  ホスト `ir/simulate.py` での全 2,947 窓の精度は 0.9009 から 0.8911 へ **1.0 ポイント** 下がる
+- **顔検出の `--resynth lossless`**: ゲートは 2,686 から 2,319 へ減る(-13.7%、再合成に 253.5 秒)が、**1 推論の時間は
+  1,584 µs から 1,577 µs で差がない**(1.004 倍)。`MDL_CTX_BYTES` も 1,544,000 B のまま変わらない。
+  時間は前処理と画像の畳み込み側が支配的で、ゲート数に依存しないとみられる(未切り分け)
+
+15 モデル(素・sweep・flat を含む)を同梱した署名なしの実機向け Release ビルドも通った。`.app` 内のファイル合計は
+**4,034,511 B**(主バイナリ 1,214,432 B、署名なし zip 987,636 B)である。上の「アプリのサイズ」(5 モデル)とは同梱数が違う。
+集約は `results/deploy/devices/ios_summary_20261007.json` の `comparisons_flat_12runs` にある。
+
+## トラブルシューティング
+
+| 症状 | 原因と対処 |
+|---|---|
+| リンク時に `duplicate symbol` が出る | 複数モデルの `model.c` を unity ラッパなしで直接リンクしている。`gen_model.py` で取り込み直し、`<name>_unit.c` 経由にする |
+| `No account for team` や署名エラー | Xcode の Signing で Team を選ぶ。`-allowProvisioningUpdates` を付け、`DEVELOPMENT_TEAM` に正しい Team ID を渡す |
+| 実機で `Untrusted Developer` と出て起動しない | iPhone の「設定 → 一般 → VPN とデバイス管理」で開発元を信頼する |
+| モデルを追加したのにアプリに出ない | `gen_model.py` を実行して `gd_registry.c` と `.xcodeproj` を更新したか確認する(Xcode のプロジェクトを開き直す) |
+| `mdl_kernels.c` が見つからない | ランタイムは `runtime/c/` を相対パスで参照する。リポジトリの外へ `examples/31_deploy_ios/` だけを移していないか確認する |
+
+## 次に読む
+
+- [デモモデルを用意する](/guides/deploy-models/) — アプリに同梱するバンドルとサンプルの作り方
+- [デプロイキット クイックスタート](/guides/deploy-quickstart/) — C ソース生成と整数一致の検証
+- [対応プラットフォーム](/reference/platform-support/) — iOS を含む検証段階の一覧
+- [ESP32 に載せる](/guides/deploy-esp32/) — もう一つの実機ターゲット

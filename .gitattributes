@@ -1,0 +1,2 @@
+# 生成物ゴールデンは改行変換を含む一切の正規化を禁止(byte 契約の保全)
+tools/mdl-fpga/tests/goldens/** -text
