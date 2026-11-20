@@ -1,0 +1,17 @@
+# griffith-logic
+
+> 微分可能論理ゲートNN(DLGN)を PyTorch で学習し、IR(JSON)経由で Verilog/VHDL を生成して FPGA へ載せるためのライブラリ。
+
+- 学習時は連続緩和(soft)で微分可能、推論時は argmax 離散化(hard)で純粋な Boolean 回路になる。
+- IR(JSON)が真実源。PyTorch hard eval ⇔ IR simulate ⇔ HDL シミュレーションの3段一致をテストで保証している。
+- ドキュメントの本文は日本語。/en/ 配下は未翻訳ページを日本語へフォールバックする。
+
+## Documentation Sets
+
+- [Abridged documentation](https://tsukushi-gate.github.io/Griffith/llms-small.txt): a compact version of the documentation for griffith-logic, with non-essential content removed
+- [Complete documentation](https://tsukushi-gate.github.io/Griffith/llms-full.txt): the full documentation for griffith-logic
+
+## Notes
+
+- The complete documentation includes all content from the official documentation
+- The content is automatically generated from the same source as the official documentation

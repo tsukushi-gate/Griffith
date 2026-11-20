@@ -1,0 +1,609 @@
+<!DOCTYPE html><html lang="en" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Platform Support | Griffith</title><link rel="canonical" href="https://tsukushi-gate.github.io/Griffith/en/reference/platform-support/"/><link rel="alternate" hreflang="ja" href="https://tsukushi-gate.github.io/Griffith/reference/platform-support/"/><link rel="alternate" hreflang="en" href="https://tsukushi-gate.github.io/Griffith/en/reference/platform-support/"/><link rel="alternate" hreflang="x-default" href="https://tsukushi-gate.github.io/Griffith/reference/platform-support/"/><link rel="sitemap" href="/Griffith/sitemap-index.xml"/><link rel="shortcut icon" href="/Griffith/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.4.4"/><meta name="generator" content="Starlight v0.42.7"/><meta property="og:title" content="Platform Support"/><meta property="og:type" content="article"/><meta property="og:url" content="https://tsukushi-gate.github.io/Griffith/en/reference/platform-support/"/><meta property="og:locale" content="en"/><meta property="og:description" content="How far each deploy-kit target (C / CUDA / Metal / Web) has been verified. Verification levels by compiler, OS, CPU architecture, GPU, and SIMD path, plus the C runtime portability contract."/><meta property="og:site_name" content="Griffith"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="How far each deploy-kit target (C / CUDA / Metal / Web) has been verified. Verification levels by compiler, OS, CPU architecture, GPU, and SIMD path, plus the C runtime portability contract."/><script type="module" src="/Griffith/_astro/Head.astro_astro_type_script_index_0_lang.CBfaj9GZ.js"></script><script type="module" src="/Griffith/_astro/Head.astro_astro_type_script_index_1_lang.BxFcvEww.js"></script><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme = storedTheme || 'dark';
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'dark') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/Griffith/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/Griffith/_astro/common.B49jf9hK.css"><style>@layer starlight.components{.card-grid:where(.astro-7qmvx3iy){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-7qmvx3iy)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-7qmvx3iy){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-7qmvx3iy){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-7qmvx3iy)>:nth-child(2n){transform:translateY(var(--stagger-height))}}.sl-link-card:where(.astro-zaaezwya){border:1px solid var(--sl-color-gray-5);box-shadow:var(--sl-shadow-sm);border-radius:.5rem;grid-template-columns:1fr auto;gap:.5rem;padding:1rem;display:grid;position:relative}a:where(.astro-zaaezwya){line-height:var(--sl-line-height-headings);text-decoration:none}a:where(.astro-zaaezwya):before{content:"";position:absolute;inset:0}.stack:where(.astro-zaaezwya){flex-direction:column;gap:.5rem}.title:where(.astro-zaaezwya){color:var(--sl-color-white);font-weight:600;font-size:var(--sl-text-lg)}.description:where(.astro-zaaezwya){color:var(--sl-color-gray-3);line-height:1.5}.icon:where(.astro-zaaezwya){color:var(--sl-color-gray-3)}.sl-link-card:where(.astro-zaaezwya):hover{background:var(--sl-color-gray-7,var(--sl-color-gray-6));border-color:var(--sl-color-gray-2)}.sl-link-card:where(.astro-zaaezwya):hover .icon:where(.astro-zaaezwya){color:var(--sl-color-white)}}
+@layer starlight.components{svg:where(.astro-hkc32dio){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em;overflow:visible}}
+@layer starlight.components{starlight-tabs:where(.astro-scn3uvmv){display:block}.tablist-wrapper:where(.astro-scn3uvmv){overflow-x:auto}:where(.astro-scn3uvmv)[role=tablist]{border-bottom:2px solid var(--sl-color-gray-5);padding:0;list-style:none;display:flex}.tab:where(.astro-scn3uvmv){display:flex}.tab:where(.astro-scn3uvmv)>:where(.astro-scn3uvmv)[role=tab]{--sl-tab-color-border:var(--sl-color-gray-5);line-height:var(--sl-line-height-headings);box-shadow:0 2px 0 var(--sl-tab-color-border);color:var(--sl-color-gray-3);outline-offset:var(--sl-outline-offset-inside);overflow-wrap:initial;align-items:center;gap:.5rem;padding:.275rem 1.25rem;text-decoration:none;display:flex}.tab:where(.astro-scn3uvmv) :where(.astro-scn3uvmv)[role=tab][aria-selected=true]{--sl-tab-color-border:var(--sl-color-text-accent);color:var(--sl-color-white);font-weight:600}.tablist-wrapper:where(.astro-scn3uvmv)~[role=tabpanel]{margin-top:1rem}}
+@layer starlight.components{.sl-steps{--bullet-size:calc(var(--sl-line-height) * 1rem);--bullet-margin:.375rem;counter-reset:steps-counter var(--sl-steps-start,0);padding-inline-start:0;list-style:none}.sl-steps>li{counter-increment:steps-counter;padding-inline-start:calc(var(--bullet-size) + 1rem);min-height:calc(var(--bullet-size) + var(--bullet-margin));padding-bottom:1px;position:relative}.sl-steps>li+li{margin-top:0}.sl-steps>li:before{content:counter(steps-counter);top:0;width:var(--bullet-size);height:var(--bullet-size);line-height:var(--bullet-size);font-size:var(--sl-text-xs);text-align:center;color:var(--sl-color-white);background-color:var(--sl-color-gray-6);box-shadow:inset 0 0 0 1px var(--sl-color-gray-5);border-radius:99rem;font-weight:600;position:absolute;inset-inline-start:0}.sl-steps>li:after{--guide-width:1px;content:"";top:calc(var(--bullet-size) + var(--bullet-margin));bottom:var(--bullet-margin);width:var(--guide-width);background-color:var(--sl-color-hairline-light);position:absolute;inset-inline-start:calc((var(--bullet-size) - var(--guide-width)) / 2)}}@layer starlight.content{.sl-steps>li>:first-child{--lh:calc(1em * var(--sl-line-height));--shift-y:calc(.5 * (var(--bullet-size) - var(--lh)));transform:translateY(var(--shift-y));margin-bottom:var(--shift-y)}.sl-steps>li>:first-child:where(h1,h2,h3,h4,h5,h6){--lh:calc(1em * var(--sl-line-height-headings))}@supports (--prop:1lh){.sl-steps>li>:first-child{--lh:1lh}}}
+</style><script type="module" src="/Griffith/_astro/page.cNngjUgL.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">Skip to content</a><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-nen7h5rs"><div class="title-wrapper sl-flex astro-nen7h5rs"><a href="/Griffith/en" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">Griffith</span></a></div><div class="sl-flex print:hidden astro-nen7h5rs"><site-search class="astro-nen7h5rs astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;Search&quot;}"><button data-open-modal disabled aria-label="Search" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">Search</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="Search" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">Cancel</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/Griffith/_astro/Search.astro_astro_type_script_index_0_lang.BB8DaZqm.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-nen7h5rs"><nav class="md-topnav astro-nen7h5rs" aria-label="Main"><a href="/Griffith/en/getting-started/installation/" class="astro-nen7h5rs">Docs</a><a href="/Griffith/en/tutorials/xor/" class="astro-nen7h5rs">Tutorials</a><a href="/Griffith/en/reference/api/" class="astro-nen7h5rs">API</a><a href="/Griffith/en/explanation/dlgn/" class="astro-nen7h5rs">What is DLGN?</a></nav><div class="sl-flex social-icons astro-nen7h5rs"><a href="https://github.com/tsukushi-gate/Griffith" rel="me" class="sl-flex astro-n2mnl6yq"><span class="sr-only astro-n2mnl6yq">GitHub</span><svg aria-hidden="true" class="astro-n2mnl6yq astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" selected class="astro-2z5xp7gb">Dark</option><option value="light" class="astro-2z5xp7gb">Light</option><option value="auto" class="astro-2z5xp7gb">Auto</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`dark`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select language</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/Griffith/reference/platform-support/" class="astro-2z5xp7gb">日本語</option><option value="/Griffith/en/reference/platform-support/" selected class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="Main"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">Menu</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="109kfrz" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Getting Started</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/getting-started/installation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Installation</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/getting-started/quickstart/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Quickstart</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/getting-started/concepts/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Core Concepts</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Tutorials</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Gallery</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Intro Course</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/nn-basics/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Intro 1. NN &amp; PyTorch Basics</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/pytorch-mlp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Intro 2. Build an MLP in PyTorch</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/mlp-to-dlgn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Intro 3. Replace the MLP with a DLGN</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Basics</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/mnist/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">1. Train on MNIST (MLP)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/hybrid/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">2. Hybrid NN (Float + Logic)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/hdl-export/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">3. Export to HDL</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/deploy-mnist/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">4. Deploy</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/cnn-hdl-export/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">5. Export a CNN to HDL</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/learning-rules/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">6. Learning Rules beyond BP (DFA/AP)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/full-pipeline/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">7. End-to-End Walkthrough</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/xor/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Appendix: XOR Internals (Smallest Circuit)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Sequence &amp; Language</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/logic-gpt/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Transformer (Logic GPT)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/rddlgn-seq2seq/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">RNN seq2seq (RDDLGN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/logic-lstm/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">RNN: LSTM / GRU</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/logic-wavenet/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">WaveNet (Causal CNN / TCN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/logic-reservoir/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Reservoir Computing (Untrained RNN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/logic-ladder/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Logic Ladder: Transformer Step by Step</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Vision</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/logic-unet/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">U-Net (Segmentation)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/logic-resnet/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ResNet (Residual Connections)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/logic-mixer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">MLP-Mixer (Token Mixing)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/dwn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DWN (Weightless NN, Thermometer)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Generative Models</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/logic-diffusion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Diffusion Model</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/logic-vae/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">VAE (Binary-Latent Autoencoder)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/logic-gan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">GAN (Adversarial Generation)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Applications</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/attention-tour/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Attention Variants (Transformer Block)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/detection/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Object Detection (CenterNet)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/binarybrain/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">BinaryBrain-compatible API (Binary NN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/textcnn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">TextCNN (Text Classification)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/tutorials/har/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Activity Recognition (UCI-HAR, Phone Accelerometer)</span></a></li></ul></details></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Guides</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">All Guides</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/roadmap/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Learning Roadmap</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/choosing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">What Should I Use?</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/from-pytorch/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Coming from PyTorch</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/training/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Training</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/training-curves/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Reading Training Curves</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/parameterization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Parameterization</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/ir/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Working with IR</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/hdl-export/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">HDL Export</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Deploy</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="9"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/deploy-quickstart/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Deploy Kit Quickstart</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/deploy-your-model/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Deploy Your Own Model</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/deploy-models/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Prepare Demo Models</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/deploy-esp32/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Run on ESP32</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/deploy-ios/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Run on iPhone</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/deploy-web/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Run in the Browser</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/deploy-gpu/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Run on GPU (CUDA / Metal)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/fpga/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Deploy to FPGA</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/deploy-optimizations/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Compression and Optimizations</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/platform-support/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Platform Support</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/editor/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Visual Editor</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/wiring-visualization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Circuit &amp; Wiring Visualization</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/cloud-gpu/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Cloud GPU</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/guides/troubleshooting/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Troubleshooting</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Explanation</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="10"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Overview</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/dlgn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">What is DLGN?</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/nn-to-dlgn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">From NN to DLGN</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/ai-basics/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">AI Basics</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/taxonomy/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DLGN Taxonomy</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/architecture/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Architecture</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/lut-layer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">LutLayer Internals</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/learning-rules/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Learning Rules</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/design-decisions/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Design Decisions</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Results &amp; Experiments</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="11"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/results/dlgn-repro/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Paper Reproduction</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/results/parameterization-study/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Parameterization Study</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/results/discretization-gap/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Discretization Gap</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/results/architecture-survey/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Architecture Survey</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/results/world-firsts/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">World-First Claims Audit</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/results/experimental-models/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Experimental Models</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/faq/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">FAQ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/explanation/glossary/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Glossary</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Reference</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="12"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Reference Index</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Python API</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="13"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Python API</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/core/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Core Layers</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/wiring-stats/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Wiring Receptive Field &amp; Coverage</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/conv/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Convolution &amp; Spatial</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/seq2seq/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">seq2seq (RDDLGN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/logic-gpt/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Decoder-only Causal Transformer</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/datasets-logic/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Logic Function Datasets</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/datasets-vision/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Vision Datasets</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/datasets-har/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">UCI-HAR (Activity Recognition) Dataset</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/training-config/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Configuration &amp; Shared Runner</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/training-learning/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Learning Algorithms</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/hybrid/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Hybrid API</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/editor/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Editor Integration</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/dwn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DWN / LLViT</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/binarybrain/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">BinaryBrain Compatibility</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/blocks/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">General NN Blocks</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/api/attention/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Attention</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/benchmarks/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Benchmarks</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/model-zoo/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Model Zoo</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/cli/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">griffith CLI</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/ir-schema/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">IR Schema</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/platform-support/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Platform Support</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/deploy-bundle/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Deploy Bundle Spec</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/reference/deploy-optimizations/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Compression and Optimizations</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Contributing</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="14"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/en/contributing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Get Started</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/contributing/testing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Test Layers</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/contributing/docs/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Writing Docs</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/en/contributing/docs-management/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Docs Management</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"><a href="https://github.com/tsukushi-gate/Griffith" rel="me" class="sl-flex astro-n2mnl6yq"><span class="sr-only astro-n2mnl6yq">GitHub</span><svg aria-hidden="true" class="astro-n2mnl6yq astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select theme</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" selected class="astro-2z5xp7gb">Dark</option><option value="light" class="astro-2z5xp7gb">Light</option><option value="auto" class="astro-2z5xp7gb">Auto</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">Select language</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/Griffith/reference/platform-support/" class="astro-2z5xp7gb">日本語</option><option value="/Griffith/en/reference/platform-support/" selected class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">On this page<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#verification-levels" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Verification levels</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#supported-compilers-c-runtime-c99" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Supported compilers (C runtime, C99)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#supported-oses-and-execution-environments" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Supported OSes and execution environments</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#supported-cpu-architectures-the-portability-contract" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Supported CPU architectures: the portability contract</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#verification-record-by-use-case" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Verification record (by use case)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#simd-paths-by-detection-macro" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">SIMD paths (by detection macro)</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#what-is-unsupported-compared-with-similar-libraries" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">What is unsupported compared with similar libraries</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#gpu-cuda" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">GPU: CUDA</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#gpu-metal" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">GPU: Metal</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#web-browser" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Web (browser)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#hdl-fpga--asic" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">HDL (FPGA / ASIC)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#supported-node-kinds-and-unsupported-features" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Supported node kinds and unsupported features</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#related-pages" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Related pages</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/Griffith/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.C3fM4Kra.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">On this page</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Overview</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#verification-levels" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Verification levels</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#supported-compilers-c-runtime-c99" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Supported compilers (C runtime, C99)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#supported-oses-and-execution-environments" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Supported OSes and execution environments</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#supported-cpu-architectures-the-portability-contract" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Supported CPU architectures: the portability contract</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#verification-record-by-use-case" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">Verification record (by use case)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#simd-paths-by-detection-macro" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">SIMD paths (by detection macro)</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#what-is-unsupported-compared-with-similar-libraries" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">What is unsupported compared with similar libraries</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#gpu-cuda" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">GPU: CUDA</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#gpu-metal" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">GPU: Metal</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#web-browser" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Web (browser)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#hdl-fpga--asic" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">HDL (FPGA / ASIC)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#supported-node-kinds-and-unsupported-features" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Supported node kinds and unsupported features</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#related-pages" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Related pages</span></a></li></ul></nav></starlight-toc><script type="module" src="/Griffith/_astro/TableOfContents.astro_astro_type_script_index_0_lang.BpJaGz7G.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="en" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">Platform Support</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><p>A reference that gathers, on one page, <strong>“how far each target has been verified”</strong> for the targets generated by
+<code dir="auto">griffith deploy codegen-c</code> / <code dir="auto">codegen-cuda</code> / <code dir="auto">codegen-metal</code> / <code dir="auto">codegen-web</code>. For how to use the deploy kit as a whole, see the
+<a href="/Griffith/en/guides/deploy-quickstart/">Deploy Kit Quickstart</a>, and for the bundle format see the <a href="/Griffith/en/reference/deploy-bundle/">Deploy bundle spec</a>.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="verification-levels">Verification levels</h2><a class="sl-anchor-link" href="#verification-levels"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Verification levels”</span></a></div>
+<p>The “verification” columns on this page use three levels. They exist so that <strong>we never write “it works” for something we have not verified</strong>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Level</th><th>Meaning</th></tr></thead><tbody><tr><td><strong>Measured and verified</strong></td><td>Built and run on real hardware, with <strong>integer-exact agreement</strong> with <code dir="auto">ir/simulate.py</code> (the golden model) confirmed by a test or a verify command</td></tr><tr><td><strong>Build confirmed only</strong></td><td>Cross-compilation is confirmed to succeed, but nothing was run in that environment (integer agreement is unverified)</td></tr><tr><td><strong>Theoretically possible by standards conformance (unverified)</strong></td><td>The code handles it through branches or macros, but there is no build or run record</td></tr></tbody></table>
+<aside aria-label="Where the ESP32 and iOS stand" class="starlight-aside starlight-aside--note"><p class="starlight-aside__title" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="starlight-aside__icon"><path d="M12 11a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0v-4a1 1 0 0 0-1-1Zm.38-3.92a1 1 0 0 0-.76 0 1 1 0 0 0-.33.21 1.15 1.15 0 0 0-.21.33 1 1 0 0 0 .21 1.09c.097.088.209.16.33.21A1 1 0 0 0 13 8a1.05 1.05 0 0 0-.29-.71 1 1 0 0 0-.33-.21ZM12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16.001A8 8 0 0 1 12 20Z"></path></svg>Where the ESP32 and iOS stand</p><div class="starlight-aside__content"><p>The <strong>ESP32 (Xtensa)</strong> was run on real hardware, and the outputs of all 50 samples of the three activity-recognition models (k600, k2400, k6000) and MNIST matched <code dir="auto">ir/simulate.py</code> as integers, so it is “measured and verified”.
+However, <strong>a convolutional model (face detection, 128px) does not fit in DRAM on a plain ESP32 without PSRAM, and cannot be built</strong>.</p><p><strong>iOS</strong> is measured and verified <strong>both on the simulator (native execution on an Apple Silicon host) and on a real iPhone 17 (iOS 26.6.2)</strong>.
+On the device, the outputs of five models matched <code dir="auto">ir/simulate.py</code> as integers (activity recognition k6000 at 8.07 µs, face detection at 0.803 ms).
+The simulator times are host-CPU values, not real-device values.</p><p>The procedures and measured values are in <a href="/Griffith/en/guides/deploy-esp32/">Run on ESP32</a> and <a href="/Griffith/en/guides/deploy-ios/">Run on iPhone</a>.</p></div></aside>
+<div class="sl-heading-wrapper level-h2"><h2 id="supported-compilers-c-runtime-c99">Supported compilers (C runtime, C99)</h2><a class="sl-anchor-link" href="#supported-compilers-c-runtime-c99"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Supported compilers (C runtime, C99)”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Compiler</th><th>Verification level</th><th>Basis</th></tr></thead><tbody><tr><td>clang (environments where <code dir="auto">cc</code> resolves to clang; macOS by default)</td><td>Measured and verified</td><td>Host runs and benchmark measurements, plus cross-compilation (table below)</td></tr><tr><td>gcc (environments where <code dir="auto">cc</code> / <code dir="auto">gcc</code> resolves to gcc)</td><td>Build confirmed only</td><td>Confirmed that a host build with <code dir="auto">-Wall -Wextra -Werror</code> succeeds (reconfirmed on Linux with gcc 9.4.0). <strong>Cross targets (<code dir="auto">-target &#x3C;triple></code>) are out of scope because that is clang-only syntax</strong></td></tr><tr><td>clang (cross for Windows: <code dir="auto">x86_64-pc-windows-msvc</code> / <code dir="auto">x86_64-w64-windows-gnu</code>)</td><td>Build confirmed only</td><td>Confirmed down to object generation from Apple clang with <code dir="auto">-ffreestanding -DMDL_NO_LIBC</code>. Running under a real <code dir="auto">cl.exe</code> / MinGW is unverified</td></tr><tr><td>MSVC (real <code dir="auto">cl.exe</code>) / real MinGW gcc</td><td>Theoretically possible by standards conformance (unverified)</td><td><code dir="auto">mdl_simd.h</code> only has an SSE2 detection branch for the MSVC dialect (<code dir="auto">_M_IX86_FP</code>). There is no build or run record on real machines</td></tr></tbody></table>
+<p>The C runtime’s dependencies are just two C99 standard headers (<code dir="auto">&#x3C;stdint.h></code> / <code dir="auto">&#x3C;stddef.h></code>), and the only libc functions are <code dir="auto">memcpy</code> / <code dir="auto">memset</code>
+(<code dir="auto">-DMDL_NO_LIBC</code> switches to our own implementations, so libc is not needed at all).</p>
+<p>The range of compilers available for verification is also limited. The clang at hand (Apple clang 21.0.0) has cross backends only for the
+ARM / AArch64 family and the x86 family, with <strong>no backend for RISC-V / MIPS / WASM / Xtensa / MSP430</strong>.
+These are “unverified” not because of any constraint in the code but because <strong>there was no verification environment</strong>.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="supported-oses-and-execution-environments">Supported OSes and execution environments</h2><a class="sl-anchor-link" href="#supported-oses-and-execution-environments"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Supported OSes and execution environments”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Environment</th><th>Verification level</th><th>Basis</th></tr></thead><tbody><tr><td>macOS (Apple Silicon)</td><td>Measured and verified</td><td>Host runs and benchmark measurements on an Apple M3. Also the verification environment for the Metal and Web runtimes</td></tr><tr><td>Linux (x86_64 / i386, native execution)</td><td>Measured and verified</td><td>Cross-compiled, run, and confirmed down to numeric agreement</td></tr><tr><td>Bare metal (Cortex-M0 / M0+ / M3 / M4 / M4F / M7 / M33, Cortex-A family, <code dir="auto">-ffreestanding -DMDL_NO_LIBC</code>)</td><td>Build confirmed only</td><td>Cross-compilation passes only (nothing run on hardware)</td></tr><tr><td>Windows (core inference only: <code dir="auto">mdl_kernels.c</code> + the generated model)</td><td>Build confirmed only</td><td>Down to object generation via the clang cross above. <strong>The parallel helper <code dir="auto">mdl_threads.c</code> is pthread-only and not supported on Windows</strong></td></tr><tr><td>Browser (Chromium, WASM)</td><td>Measured and verified</td><td><code dir="auto">griffith deploy verify-web</code>. The only verified browser is Chromium. This is the TS / AssemblyScript Web runtime, a different thing from the C runtime’s freestanding WASM build</td></tr><tr><td>ESP32 (Xtensa, ESP-IDF)</td><td>Measured and verified (activity-recognition dense). The 128px convolutional face detector does not fit (DRAM overflow)</td><td>Run on a real ESP32-D0WDQ6 (240 MHz, 4MB flash, no PSRAM) with ESP-IDF v5.4-dev. All 50 samples of activity recognition k600 / k2400 / k6000 and MNIST matched as integers (default compression = <code dir="auto">lut_flat</code>: k600 290.7 µs, k2400 782.2 µs, k6000 12.69 ms, MNIST 324.7 µs; uncompressed: k600 410.9 µs, k6000 26.60 ms). The output still matches the uncompressed one as integers. Face detection overflows <code dir="auto">dram0_0_seg</code> by 1,394,696 B</td></tr><tr><td>iOS simulator (iPhone 17, iOS 26.5)</td><td>Measured and verified</td><td>Output matched as integers on five models (XOR, two activity-recognition models, face detection, MNIST). Times are <strong>host CPU (Apple Silicon) values</strong>, not real-device values</td></tr><tr><td>iOS device (iPhone 17, iOS 26.6.2)</td><td>Integer match confirmed on a real device</td><td>The outputs of five models (XOR, activity recognition k600 / k6000, MNIST, face detection) matched <code dir="auto">ir/simulate.py</code> as integers (Release). Medians: activity recognition k6000 (<code dir="auto">lut_flat</code>, 15,124 gates) 8.07 µs, face detection (1,279 gates, 8 synthetic images) 0.803 ms. One measurement per model. An unsigned Release build (<code dir="auto">generic/platform=iOS</code>) also succeeds</td></tr><tr><td>Android</td><td>Theoretically possible by standards conformance (unverified)</td><td>Intended to be embedded via the NDK, but there is no real-device build or run record yet</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="supported-cpu-architectures-the-portability-contract">Supported CPU architectures: the portability contract</h2><a class="sl-anchor-link" href="#supported-cpu-architectures-the-portability-contract"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Supported CPU architectures: the portability contract”</span></a></div>
+<p>The conclusion first. <strong>Any target that has a C99 (cross) compiler should work, in principle.</strong>
+The “supported architectures” are not a list of separate implementations prepared per instruction set; they are merely a list of the
+<strong>verification record of whether the same single C99 source goes through as is</strong>. The grounds are as follows.</p>
+<ul>
+<li><strong>The core is strict C99</strong>. The only headers it depends on are <code dir="auto">&#x3C;stdint.h></code> / <code dir="auto">&#x3C;stddef.h></code>, both of which the C standard obliges even freestanding implementations to provide.
+<code dir="auto">-DMDL_NO_LIBC</code> also removes the need for libc (it builds without host headers under <code dir="auto">-ffreestanding</code>)</li>
+<li><strong>Architecture-specific code (NEON / SSE2 / AVX2 intrinsics and detection macros) is isolated in the single file <code dir="auto">mdl_simd.h</code></strong>.
+On unsupported architectures, or with <code dir="auto">-DMDL_NO_SIMD</code>, it automatically falls back to a <strong>bit-identical scalar implementation</strong></li>
+<li><strong>No endianness or alignment assumptions are introduced</strong>. Bit-plane word operations are all defined by bit position (<code dir="auto">x>>5</code>, <code dir="auto">x&#x26;31</code>), and the core contains
+not a single pointer cast that reinterprets a byte sequence in memory as another integer width</li>
+<li><strong>SIMD only makes it faster and does not affect correctness</strong>. That the SIMD path and a scalar-forced build agree bit for bit on real models is pinned by a test</li>
+<li>It is pinned likewise that the generated code (<code dir="auto">model.c</code> / <code dir="auto">model.h</code>) contains no architecture-specific code</li>
+</ul>
+<aside aria-label="There is one condition we cannot state flatly" class="starlight-aside starlight-aside--caution"><p class="starlight-aside__title" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="starlight-aside__icon"><path d="M12 16a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10.67 1.47-8.05-14a3 3 0 0 0-5.24 0l-8 14A3 3 0 0 0 3.94 22h16.12a3 3 0 0 0 2.61-4.53Zm-1.73 2a1 1 0 0 1-.88.51H3.94a1 1 0 0 1-.88-.51 1 1 0 0 1 0-1l8-14a1 1 0 0 1 1.78 0l8.05 14a1 1 0 0 1 .05 1.02v-.02ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Z"></path></svg>There is one condition we cannot state flatly</p><div class="starlight-aside__content"><p>The horizontal shift of the tap plane (<code dir="auto">mdl_kernels.c</code>) <strong>treats a signed right shift of a negative value as an “arithmetic shift” (floor division in two’s complement)</strong>.
+In strict C99 this is implementation-defined, and the standard does not guarantee it unconditionally.
+It does hold on every practical C99 compiler that uses two’s complement (gcc / clang / MSVC / the major embedded toolchains),
+no known counterexample exists, and C23 spells this behavior out as standard semantics.
+So “works on C99” is most accurately understood as meaning <strong>“works on any practical C99 compiler with two’s complement and arithmetic right shift.”</strong></p></div></aside>
+<p>The contract is enforced mechanically by the following checks.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>What is checked</th><th>Corresponding test</th></tr></thead><tbody><tr><td>Architecture detection macros and inline asm do not exist outside <code dir="auto">mdl_simd.h</code></td><td><code dir="auto">TestSIMDContract</code></td></tr><tr><td>The core has no byte-reinterpreting casts</td><td><code dir="auto">TestSIMDContract</code></td></tr><tr><td>The SIMD path and the scalar path agree bit for bit on real models</td><td><code dir="auto">TestSIMDContract</code></td></tr><tr><td>The generated code also has no architecture-specific code</td><td><code dir="auto">TestSIMDContract</code></td></tr><tr><td>Only two dependency headers</td><td><code dir="auto">TestFreestanding</code></td></tr><tr><td>No heap allocation, floating point, or I/O</td><td><code dir="auto">TestFreestanding</code></td></tr><tr><td>A libc-free build (<code dir="auto">-DMDL_NO_LIBC -ffreestanding</code>) goes through</td><td><code dir="auto">TestFreestanding</code></td></tr></tbody></table>
+<p>The tests are in <code dir="auto">tests/deploy/test_c_portability.py</code>.</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="verification-record-by-use-case">Verification record (by use case)</h3><a class="sl-anchor-link" href="#verification-record-by-use-case"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Verification record (by use case)”</span></a></div>
+<p>Of the range that “should in principle work” under the contract, this groups <strong>what was actually confirmed down to a build or a run</strong> by use case.
+The source of truth is <code dir="auto">CROSS_TARGETS</code> in the same test, and backends the clang at hand does not have are skipped automatically.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Use-case group</th><th>Verification level</th><th>Target triples included</th><th>Representative devices</th></tr></thead><tbody><tr><td>Embedded ARM (Cortex-M family / Cortex-A family)</td><td>Build confirmed only</td><td><code dir="auto">thumbv6m-none-eabi</code>, <code dir="auto">armv7m-none-eabi</code>, <code dir="auto">armv7a-none-eabi</code>, <code dir="auto">thumbv7em-none-eabi</code>, <code dir="auto">armv8m.main-none-eabi</code>, <code dir="auto">aarch64-none-elf</code>, <code dir="auto">aarch64_be-none-elf</code> (big-endian)</td><td>Cortex-M0 / M0+ / M3 / M4 / M4F / M7 / M33 (STM32 and others), Cortex-A family</td></tr><tr><td>Linux x86 (i386 / x86_64)</td><td><strong>Run and confirmed down to numeric agreement</strong></td><td><code dir="auto">i386-unknown-linux-gnu</code>, <code dir="auto">x86_64-unknown-linux-gnu</code></td><td>PCs / servers</td></tr><tr><td>aarch64 host native</td><td><strong>Run and confirmed down to numeric agreement</strong> (including NEON versus scalar agreement)</td><td>(host aarch64)</td><td>Apple Silicon (measured on M3); iPhone / Android / Raspberry Pi are the same architecture</td></tr><tr><td>Windows (core inference only)</td><td>Build confirmed only (cross, <code dir="auto">-ffreestanding -DMDL_NO_LIBC</code>)</td><td><code dir="auto">x86_64-pc-windows-msvc</code>, <code dir="auto">x86_64-w64-windows-gnu</code></td><td>Windows (MSVC / MinGW ABI). Running on real machines is unverified</td></tr><tr><td>RISC-V / MIPS / WASM (C version)</td><td>Unverified because no verification environment exists (expected to work under the contract)</td><td><code dir="auto">riscv32-unknown-elf</code>, <code dir="auto">riscv64-unknown-elf</code>, <code dir="auto">riscv64-unknown-linux-gnu</code>, <code dir="auto">mipsel-unknown-linux-gnu</code>, <code dir="auto">wasm32-unknown-unknown</code></td><td>RISC-V embedded / Linux, MIPS Linux, freestanding WASM</td></tr><tr><td>Xtensa (ESP32)</td><td><strong>Run, integer agreement confirmed</strong> (activity-recognition dense; the 128px convolutional model does not fit, DRAM overflow)</td><td>(xtensa-esp-elf 13.2.0 bundled with ESP-IDF v5.4-dev)</td><td>ESP32-D0WDQ6 (no PSRAM). PSRAM boards are unverified</td></tr></tbody></table>
+<p><strong>About the Windows parallel helper</strong>: <code dir="auto">mdl_threads.c</code> (<code dir="auto">mdl_run_pool</code> and others) is pthread-only and not supported on Windows.
+The core (<code dir="auto">mdl_kernels.c</code> + the generated model) cross-builds on Windows too, but to use multiple cores you call <code dir="auto">mdl_infer_ctx</code>
+(re-entrant when the contexts differ) directly from the caller’s own threads (<code dir="auto">CreateThread</code> and the like).</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="simd-paths-by-detection-macro">SIMD paths (by detection macro)</h3><a class="sl-anchor-link" href="#simd-paths-by-detection-macro"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “SIMD paths (by detection macro)”</span></a></div>
+<p>The SIMD path is selected automatically by macros at compile time, and falls back to scalar where disabled (<code dir="auto">mdl_simd.h</code>).
+<strong>The integer output is exactly identical on every path</strong>, which is pinned by a test as part of the portability contract above.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Path</th><th>Detection macro</th><th>Verification level</th><th>Basis</th></tr></thead><tbody><tr><td>NEON</td><td><code dir="auto">__ARM_NEON</code> / <code dir="auto">__ARM_NEON__</code></td><td>Measured and verified</td><td>Run on an Apple M3. Integer-output agreement with the scalar path is pinned by a test (this Mac’s default build is NEON)</td></tr><tr><td>SSE2</td><td><code dir="auto">__SSE2__</code>, or <code dir="auto">_M_IX86_FP >= 2</code> (MSVC dialect)</td><td>Build confirmed only</td><td>The x86_64 cross-compile goes through, but there is no record of running the SSE2 path itself on real hardware</td></tr><tr><td>Scalar (fallback)</td><td>When neither of the above is present, or <code dir="auto">-DMDL_NO_SIMD</code></td><td>Measured and verified</td><td>The baseline path for all measurements. Also the comparison target for the SIMD path</td></tr><tr><td>AVX2</td><td><code dir="auto">__AVX2__</code> (MSVC unsupported)</td><td>Measured and verified</td><td>Real Xeon W-1270P (Comet Lake, 8C16T), gcc 9.4.0. For dense and conv models alike, the AVX2 build and the scalar / SSE2 builds produce byte-identical output. This verification is a manual A/B and is not a standing test. You can go back to SSE2 with <code dir="auto">-DMDL_NO_AVX2</code> / <code dir="auto">-mno-avx2</code></td></tr><tr><td>AVX-512</td><td>—</td><td>Not implemented</td><td>The verification machine has no AVX-512 and cannot run it, so implementation was put off</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="what-is-unsupported-compared-with-similar-libraries">What is unsupported compared with similar libraries</h2><a class="sl-anchor-link" href="#what-is-unsupported-compared-with-similar-libraries"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “What is unsupported compared with similar libraries”</span></a></div>
+<p>An honest inventory of what runtimes in the class of ONNX Runtime / TFLite / llama.cpp usually have, but this one does not at present.
+<strong>“Unsupported” is not “impossible”</strong> (we write only standard C99, so if a verification environment is available the build will likely go through).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Item</th><th>Status</th><th>Reason</th></tr></thead><tbody><tr><td>Run verification on RISC-V / MIPS hardware (or QEMU)</td><td>Unsupported</td><td>No cross toolchain at hand. Running also needs an emulator or real hardware</td></tr><tr><td>Build and run on real Windows (<code dir="auto">cl.exe</code> / MinGW)</td><td>Unsupported</td><td>Confirmed down to object generation via clang cross, but no Windows machine is at hand</td></tr><tr><td>Real Android device (via the NDK)</td><td>Unsupported</td><td>An embedding procedure is envisioned, but there is no real-device or NDK build record</td></tr><tr><td>A convolutional model (128px face detection) on ESP32</td><td>Not supported yet</td><td>On a plain ESP32 without PSRAM, <code dir="auto">MDL_CTX_BYTES</code> of 1,544,000 B does not fit in static DRAM (180,736 B). PSRAM boards are unverified (<a href="/Griffith/en/guides/deploy-esp32/">Run on ESP32</a>)</td></tr><tr><td>MSP430</td><td>Unsupported</td><td>Needs TI’s toolchain</td></tr><tr><td>WASM (C version, freestanding build for <code dir="auto">wasm32-unknown-unknown</code>)</td><td>Unsupported</td><td><code dir="auto">emcc</code> / <code dir="auto">wasi-sdk</code> are not at hand. WASM for browsers is already measured and verified, but that is a different source from the C runtime</td></tr><tr><td>Prebuilt binaries distributed via npm / pip</td><td>Unsupported</td><td>This repository is source-only distribution (also by design: distributables are not split per instruction set)</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="gpu-cuda">GPU: CUDA</h2><a class="sl-anchor-link" href="#gpu-cuda"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “GPU: CUDA”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Item</th><th>Contents</th><th>Verification level</th></tr></thead><tbody><tr><td>Verified GPU</td><td>RTX 4070 Ti (compute capability 8.9 = <code dir="auto">sm_89</code>)</td><td>Measured and verified</td></tr><tr><td>Verified CUDA version</td><td>CUDA 12.8</td><td>Measured and verified</td></tr><tr><td>Example build command</td><td><code dir="auto">nvcc -O2 -arch=sm_89 -I. model_cuda.cu mdl_cuda.cu your_main.cu -o app</code></td><td>—</td></tr><tr><td>Other compute capabilities / CUDA versions</td><td>No minimum-requirement check in the code; it goes through if <code dir="auto">nvcc</code> can interpret it</td><td>Theoretically possible by standards conformance (unverified)</td></tr><tr><td>Verify command</td><td><code dir="auto">codegen-cuda</code> only generates code; there is no subcommand equivalent to <code dir="auto">verify-cuda</code></td><td>—</td></tr><tr><td>Flattened netlist <code dir="auto">lut_flat</code> (<code dir="auto">--dense-flat auto</code> / <code dir="auto">on</code>)</td><td>Can be generated, but has not been run on real NVIDIA hardware (only a syntax check of the generated code; on Metal, integer agreement was confirmed on real hardware)</td><td>Unverified</td></tr></tbody></table>
+<p>CUDA kernels’ formulas are shared with Metal (the <code dir="auto">__device__</code> / <code dir="auto">device</code> difference is absorbed by a macro),
+and integer agreement with the C version is pinned by a test.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="gpu-metal">GPU: Metal</h2><a class="sl-anchor-link" href="#gpu-metal"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “GPU: Metal”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Item</th><th>Contents</th><th>Verification level</th></tr></thead><tbody><tr><td>Verified environment</td><td>Apple M3, macOS 26 series</td><td>Measured and verified</td></tr><tr><td>Toolchain requirements</td><td><code dir="auto">clang++</code> and Metal.framework are enough (detected by being on macOS, <code dir="auto">clang++</code>, and the existence of the runtime directory)</td><td>Measured and verified</td></tr><tr><td>Xcode’s metal toolchain</td><td><strong>Not needed</strong>. Shaders are compiled from source at run time, so precompiling a <code dir="auto">.metallib</code> is just an optional optimization (shorter cold start)</td><td>Measured and verified (run-time compile path)</td></tr><tr><td>Other Apple silicon (M1 / M2 / M4 and so on)</td><td>Expected to work since it is the same Metal API</td><td>Theoretically possible by standards conformance (unverified)</td></tr></tbody></table>
+<p>The verify command is <code dir="auto">griffith deploy verify-metal</code> (needs macOS + an Apple GPU + <code dir="auto">clang++</code>).</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="web-browser">Web (browser)</h2><a class="sl-anchor-link" href="#web-browser"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Web (browser)”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Item</th><th>Contents</th><th>Verification level</th></tr></thead><tbody><tr><td>Verified browser</td><td>Chromium</td><td>Measured and verified (<code dir="auto">griffith deploy verify-web</code>)</td></tr><tr><td>wasm-SIMD (<code dir="auto">release-simd.wasm</code>)</td><td>The engine preferred by default. Where unsupported, it records the reason and automatically falls back to pure TS (<code dir="auto">js</code>)</td><td>Measured and verified (output agreement of both engines, including the fallback, is pinned by a test)</td></tr><tr><td>Firefox / Safari alone</td><td>No individual measurement record</td><td>Theoretically possible by standards conformance (unverified)</td></tr><tr><td>Serving requirements</td><td><code dir="auto">threads=1</code> is the default, so no <code dir="auto">SharedArrayBuffer</code> is needed. Plain static serving without COOP/COEP headers works</td><td>Measured and verified</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="hdl-fpga--asic">HDL (FPGA / ASIC)</h2><a class="sl-anchor-link" href="#hdl-fpga--asic"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “HDL (FPGA / ASIC)”</span></a></div>
+<p>Output to Verilog / VHDL is a separate path from the deploy kit’s C / GPU / Web (<code dir="auto">griffith export-hdl</code>), but it starts from the same IR.
+It is verified by three-way equivalence (PyTorch hard eval, <code dir="auto">ir/simulate.py</code>, HDL simulation).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Item</th><th>Contents</th><th>Verification level</th></tr></thead><tbody><tr><td>Verilog</td><td>Checks the generated output with iverilog (can run locally)</td><td>Measured and verified</td></tr><tr><td>VHDL</td><td>Checks the generated output with ghdl (ghdl is officially verified in CI / cloud containers)</td><td>Measured and verified</td></tr><tr><td>Real FPGA</td><td>Tang Nano 20K / DE0-CV and others</td><td>See the supported-boards table in <a href="/Griffith/en/guides/fpga/">Deploy to FPGA</a></td></tr></tbody></table>
+<p>The procedure and the details of the check are in <a href="/Griffith/en/guides/hdl-export/">HDL Export</a>.</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="supported-node-kinds-and-unsupported-features">Supported node kinds and unsupported features</h2><a class="sl-anchor-link" href="#supported-node-kinds-and-unsupported-features"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Supported node kinds and unsupported features”</span></a></div>
+<p>The IR node kinds the C runtime supports are <code dir="auto">conv2d</code> / <code dir="auto">or_pool2d</code> / <code dir="auto">upsample2d</code> / <code dir="auto">permute</code> / <code dir="auto">concat</code> / <code dir="auto">group_sum</code> /
+<code dir="auto">lut_layer</code> (<code dir="auto">n_inputs&#x3C;=5</code>) / <code dir="auto">flatten</code>. <strong>Shapes outside the range raise at generation time</strong> (<code dir="auto">UnsupportedNode</code>),
+and nothing silently falls back to another path (so that unverified code is not shipped).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Node</th><th>Supported range</th></tr></thead><tbody><tr><td><code dir="auto">conv2d</code></td><td>General (any stride / padding; stride=1 with equal width takes the shared-shift-plane fast path)</td></tr><tr><td><code dir="auto">or_pool2d</code></td><td>kernel=2, stride=2, padding=0 only</td></tr><tr><td><code dir="auto">upsample2d</code></td><td>scale=2 (nearest neighbor) only</td></tr><tr><td><code dir="auto">permute</code></td><td>Channel axis only / the SpatialGroupSum form (<code dir="auto">[0,2,3,1]</code> + group_sum fusion)</td></tr><tr><td><code dir="auto">concat</code></td><td>Channel axis (bit planes) / score vectors (a detection model’s multi-head output)</td></tr><tr><td><code dir="auto">group_sum</code></td><td>Plain sum / SpatialGroupSum fusion</td></tr><tr><td><code dir="auto">lut_layer</code></td><td><code dir="auto">n_inputs &#x3C;= 5</code></td></tr><tr><td><code dir="auto">lut_flat</code></td><td>The flat dense netlist. <code dir="auto">griffith deploy codegen-c</code> builds it at C-generation time with the default <code dir="auto">--dense-flat auto</code> when the effective-gate reduction is at or above the threshold (<code dir="auto">bundle --dense-flat</code> can also bake it into the bundle). Now it also runs on the Web (<code dir="auto">codegen-web</code> flattens by default) and on CUDA / Metal (executing level by level in parallel; <code dir="auto">codegen-cuda</code> / <code dir="auto">codegen-metal</code> default to <code dir="auto">off</code>, opt in with <code dir="auto">--dense-flat auto</code> / <code dir="auto">on</code>). It does not appear with <code dir="auto">--dense-flat off</code></td></tr><tr><td><code dir="auto">flatten</code></td><td>Pass-through</td></tr></tbody></table>
+<p>The unsupported features that deserve particular attention are as follows.</p>
+<ul>
+<li><strong>Box decoding for detection models (CenterNet peak extraction plus NMS) is not included</strong>. What the runtime returns is up to the score map,
+and everything after that is post-processing on the application side (see <a href="/Griffith/en/guides/deploy-models/#decoding-boxes-is-the-apps-job">Prepare demo models</a> for the procedure)</li>
+<li><code dir="auto">add</code> / <code dir="auto">binarize</code> / <code dir="auto">constant</code> / generic pool / generic upsample are not implemented (they do not appear in real models)</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="related-pages">Related pages</h2><a class="sl-anchor-link" href="#related-pages"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Related pages”</span></a></div>
+<ul>
+<li><a href="/Griffith/en/guides/deploy-quickstart/">Deploy Kit Quickstart</a> — the end-to-end procedure from IR through bundling and C generation to running</li>
+<li><a href="/Griffith/en/reference/deploy-bundle/">Deploy bundle spec</a> — the bundle format</li>
+<li><a href="/Griffith/en/reference/cli/#griffith-deploy">griffith CLI</a> — all <code dir="auto">griffith deploy</code> subcommands</li>
+<li><a href="/Griffith/en/guides/deploy-esp32/">Run on ESP32</a> / <a href="/Griffith/en/guides/deploy-ios/">Run on iPhone</a> — on-device procedures</li>
+</ul>
+</div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/Griffith/en/reference/deploy-optimizations/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">Previous<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Compression and Optimizations</span></span></a><a href="/Griffith/en/guides/editor/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">Next<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Visual Editor</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>

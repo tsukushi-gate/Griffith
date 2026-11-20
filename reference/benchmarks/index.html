@@ -1,0 +1,807 @@
+<!DOCTYPE html><html lang="ja" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>ベンチマーク一覧 | Griffith</title><link rel="canonical" href="https://tsukushi-gate.github.io/Griffith/reference/benchmarks/"/><link rel="alternate" hreflang="ja" href="https://tsukushi-gate.github.io/Griffith/reference/benchmarks/"/><link rel="alternate" hreflang="en" href="https://tsukushi-gate.github.io/Griffith/en/reference/benchmarks/"/><link rel="alternate" hreflang="x-default" href="https://tsukushi-gate.github.io/Griffith/reference/benchmarks/"/><link rel="sitemap" href="/Griffith/sitemap-index.xml"/><link rel="shortcut icon" href="/Griffith/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.4.4"/><meta name="generator" content="Starlight v0.42.7"/><meta property="og:title" content="ベンチマーク一覧"/><meta property="og:type" content="article"/><meta property="og:url" content="https://tsukushi-gate.github.io/Griffith/reference/benchmarks/"/><meta property="og:locale" content="ja"/><meta property="og:description" content="モデル×データセット×hard精度×ゲート数を横断で並べた実測表。出典(実験日・環境・条件)つき。自前で測り直すための `griffith bench` の使い方も。"/><meta property="og:site_name" content="Griffith"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="モデル×データセット×hard精度×ゲート数を横断で並べた実測表。出典(実験日・環境・条件)つき。自前で測り直すための `griffith bench` の使い方も。"/><script type="module" src="/Griffith/_astro/Head.astro_astro_type_script_index_0_lang.CBfaj9GZ.js"></script><script type="module" src="/Griffith/_astro/Head.astro_astro_type_script_index_1_lang.BxFcvEww.js"></script><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme = storedTheme || 'dark';
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'dark') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/Griffith/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/Griffith/_astro/common.B49jf9hK.css"><style>@layer starlight.components{.card-grid:where(.astro-7qmvx3iy){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-7qmvx3iy)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-7qmvx3iy){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-7qmvx3iy){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-7qmvx3iy)>:nth-child(2n){transform:translateY(var(--stagger-height))}}.sl-link-card:where(.astro-zaaezwya){border:1px solid var(--sl-color-gray-5);box-shadow:var(--sl-shadow-sm);border-radius:.5rem;grid-template-columns:1fr auto;gap:.5rem;padding:1rem;display:grid;position:relative}a:where(.astro-zaaezwya){line-height:var(--sl-line-height-headings);text-decoration:none}a:where(.astro-zaaezwya):before{content:"";position:absolute;inset:0}.stack:where(.astro-zaaezwya){flex-direction:column;gap:.5rem}.title:where(.astro-zaaezwya){color:var(--sl-color-white);font-weight:600;font-size:var(--sl-text-lg)}.description:where(.astro-zaaezwya){color:var(--sl-color-gray-3);line-height:1.5}.icon:where(.astro-zaaezwya){color:var(--sl-color-gray-3)}.sl-link-card:where(.astro-zaaezwya):hover{background:var(--sl-color-gray-7,var(--sl-color-gray-6));border-color:var(--sl-color-gray-2)}.sl-link-card:where(.astro-zaaezwya):hover .icon:where(.astro-zaaezwya){color:var(--sl-color-white)}}
+@layer starlight.components{svg:where(.astro-hkc32dio){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em;overflow:visible}}
+@layer starlight.components{starlight-tabs:where(.astro-scn3uvmv){display:block}.tablist-wrapper:where(.astro-scn3uvmv){overflow-x:auto}:where(.astro-scn3uvmv)[role=tablist]{border-bottom:2px solid var(--sl-color-gray-5);padding:0;list-style:none;display:flex}.tab:where(.astro-scn3uvmv){display:flex}.tab:where(.astro-scn3uvmv)>:where(.astro-scn3uvmv)[role=tab]{--sl-tab-color-border:var(--sl-color-gray-5);line-height:var(--sl-line-height-headings);box-shadow:0 2px 0 var(--sl-tab-color-border);color:var(--sl-color-gray-3);outline-offset:var(--sl-outline-offset-inside);overflow-wrap:initial;align-items:center;gap:.5rem;padding:.275rem 1.25rem;text-decoration:none;display:flex}.tab:where(.astro-scn3uvmv) :where(.astro-scn3uvmv)[role=tab][aria-selected=true]{--sl-tab-color-border:var(--sl-color-text-accent);color:var(--sl-color-white);font-weight:600}.tablist-wrapper:where(.astro-scn3uvmv)~[role=tabpanel]{margin-top:1rem}}
+@layer starlight.components{.sl-steps{--bullet-size:calc(var(--sl-line-height) * 1rem);--bullet-margin:.375rem;counter-reset:steps-counter var(--sl-steps-start,0);padding-inline-start:0;list-style:none}.sl-steps>li{counter-increment:steps-counter;padding-inline-start:calc(var(--bullet-size) + 1rem);min-height:calc(var(--bullet-size) + var(--bullet-margin));padding-bottom:1px;position:relative}.sl-steps>li+li{margin-top:0}.sl-steps>li:before{content:counter(steps-counter);top:0;width:var(--bullet-size);height:var(--bullet-size);line-height:var(--bullet-size);font-size:var(--sl-text-xs);text-align:center;color:var(--sl-color-white);background-color:var(--sl-color-gray-6);box-shadow:inset 0 0 0 1px var(--sl-color-gray-5);border-radius:99rem;font-weight:600;position:absolute;inset-inline-start:0}.sl-steps>li:after{--guide-width:1px;content:"";top:calc(var(--bullet-size) + var(--bullet-margin));bottom:var(--bullet-margin);width:var(--guide-width);background-color:var(--sl-color-hairline-light);position:absolute;inset-inline-start:calc((var(--bullet-size) - var(--guide-width)) / 2)}}@layer starlight.content{.sl-steps>li>:first-child{--lh:calc(1em * var(--sl-line-height));--shift-y:calc(.5 * (var(--bullet-size) - var(--lh)));transform:translateY(var(--shift-y));margin-bottom:var(--shift-y)}.sl-steps>li>:first-child:where(h1,h2,h3,h4,h5,h6){--lh:calc(1em * var(--sl-line-height-headings))}@supports (--prop:1lh){.sl-steps>li>:first-child{--lh:1lh}}}
+</style><script type="module" src="/Griffith/_astro/page.cNngjUgL.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">コンテンツにスキップ</a><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-nen7h5rs"><div class="title-wrapper sl-flex astro-nen7h5rs"><a href="/Griffith/" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">Griffith</span></a></div><div class="sl-flex print:hidden astro-nen7h5rs"><site-search class="astro-nen7h5rs astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;検索&quot;}"><button data-open-modal disabled aria-label="検索" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">検索</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="検索" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">キャンセル</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/Griffith/_astro/Search.astro_astro_type_script_index_0_lang.BB8DaZqm.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-nen7h5rs"><nav class="md-topnav astro-nen7h5rs" aria-label="メインナビゲーション"><a href="/Griffith/getting-started/installation/" class="astro-nen7h5rs">ドキュメント</a><a href="/Griffith/tutorials/xor/" class="astro-nen7h5rs">チュートリアル</a><a href="/Griffith/reference/api/" class="astro-nen7h5rs">API</a><a href="/Griffith/explanation/dlgn/" class="astro-nen7h5rs">DLGNとは</a></nav><div class="sl-flex social-icons astro-nen7h5rs"><a href="https://github.com/tsukushi-gate/Griffith" rel="me" class="sl-flex astro-n2mnl6yq"><span class="sr-only astro-n2mnl6yq">GitHub</span><svg aria-hidden="true" class="astro-n2mnl6yq astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">テーマの選択</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" selected class="astro-2z5xp7gb">ダーク</option><option value="light" class="astro-2z5xp7gb">ライト</option><option value="auto" class="astro-2z5xp7gb">自動</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`dark`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">言語の選択</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/Griffith/reference/benchmarks/" class="astro-2z5xp7gb">日本語</option><option value="/Griffith/en/reference/benchmarks/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="メイン"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">メニュー</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="0tdu995" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">はじめに</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/getting-started/installation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">インストール</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/getting-started/quickstart/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">クイックスタート</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/getting-started/concepts/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">基本コンセプト</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">チュートリアル</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ギャラリー</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">入門コース</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/nn-basics/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">入門1. NNとPyTorchの基礎</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/pytorch-mlp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">入門2. PyTorchでMLPを組む</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/mlp-to-dlgn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">入門3. MLPをDLGNへ置き換える</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">基本</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/mnist/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">1. MNISTを学習する(MLP)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/hybrid/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">2. ハイブリッドNN(実数+論理)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/hdl-export/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">3. HDLへエクスポート</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/deploy-mnist/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">4. デプロイする</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/cnn-hdl-export/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">5. CNNのHDLエクスポート</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/learning-rules/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">6. 学習則(BP以外: DFA/AP)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/full-pipeline/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">7. 通しチュートリアル</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/xor/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">付録: XORで仕組みを覗く(最小の回路)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">系列・言語</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-gpt/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Transformer(論理ゲートGPT)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/rddlgn-seq2seq/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">RNNでseq2seq(RDDLGN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-lstm/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">RNN: LSTM / GRU</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-wavenet/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">WaveNet(因果CNN・TCN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-reservoir/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">リザバー計算(学習しないRNN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-ladder/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Transformerを段階的に論理化</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">視覚</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-unet/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">U-Net(セグメンテーション)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-resnet/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ResNet(残差接続)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-mixer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">MLP-Mixer(token mixing)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/dwn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DWN(二値NN・温度計符号化)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">生成モデル</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-diffusion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">拡散モデル(Diffusion)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-vae/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">VAE(二値潜在オートエンコーダ)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-gan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">GAN(敵対的生成)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">応用</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/attention-tour/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Attentionの4変種(Transformer部品)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/detection/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">物体検出(CenterNet)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/binarybrain/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">BinaryBrain互換API(二値NN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/textcnn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">TextCNN(テキスト分類)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/har/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">行動認識(UCI-HAR、スマホ加速度)</span></a></li></ul></details></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">ガイド</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/guides/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ガイド一覧</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/roadmap/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習ロードマップ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/choosing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">何を使えばいいのか</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/from-pytorch/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">PyTorchからの移行</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/training/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習を回す</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/training-curves/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習曲線の読み方</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/parameterization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">パラメータ化を選ぶ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/ir/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">IRを扱う</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/hdl-export/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">HDLエクスポート</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">デプロイ</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="9"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-quickstart/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">デプロイキット クイックスタート</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-your-model/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">自分のモデルをデプロイする</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-models/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">デモモデルを用意する</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-esp32/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ESP32に載せる</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-ios/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">iPhoneに載せる</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-web/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ブラウザで動かす</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-gpu/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">GPU(CUDA / Metal)で動かす</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/fpga/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">FPGAに焼く</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/deploy-optimizations/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">圧縮と最適化の一覧</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/platform-support/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">対応プラットフォーム一覧</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/editor/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ビジュアルエディタ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/wiring-visualization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">回路と配線の可視化</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/cloud-gpu/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">クラウドGPU</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/troubleshooting/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">トラブルシューティング</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">解説</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="10"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">解説の歩き方</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/dlgn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DLGNとは</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/nn-to-dlgn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">NNからDLGNへ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/ai-basics/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">AIの基礎</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/taxonomy/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DLGNの分類</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/architecture/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">アーキテクチャ全体像</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/lut-layer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">LutLayerの数理</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/learning-rules/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習則(BP/AP/DFA/ES)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/design-decisions/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">設計判断の記録</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">実績・実験結果</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="11"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/dlgn-repro/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">論文再現と改善</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/parameterization-study/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">パラメータ化を決めた実験</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/discretization-gap/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">離散化ギャップ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/architecture-survey/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">アーキテクチャ横断の到達点</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/world-firsts/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">世界初主張の監査</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/experimental-models/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">実験ブランチのモデル群</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/faq/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">よくある質問</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/glossary/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">用語集</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">リファレンス</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="12"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/reference/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">リファレンス索引</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Python API</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="13"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Python API</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/core/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">コア層</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/wiring-stats/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">配線の受容野・被覆率</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/conv/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">畳み込み・空間処理</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/seq2seq/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">seq2seq(RDDLGN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/logic-gpt/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">decoder-only 因果Transformer</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/datasets-logic/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">論理関数データセット</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/datasets-vision/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">視覚データセット</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/datasets-har/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">UCI-HAR(行動認識)データセット</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/training-config/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">設定管理・共通ランナー</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/training-learning/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習アルゴリズム</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/hybrid/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ハイブリッドAPI</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/editor/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">エディタ連携</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/dwn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DWN / LLViT</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/binarybrain/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">BinaryBrain互換</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/blocks/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">一般NN部品</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/attention/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Attention系</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/benchmarks/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ベンチマーク</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/model-zoo/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">モデル一覧(動物園)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/cli/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">griffith CLI</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/ir-schema/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">IRスキーマ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/platform-support/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">対応プラットフォーム</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/deploy-bundle/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">配布バンドル仕様</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/deploy-optimizations/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">圧縮と最適化の一覧</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">コントリビュート</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="14"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/contributing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">開発をはじめる</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/contributing/testing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">テスト体系(L1〜L5)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/contributing/docs/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ドキュメントを書く</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/contributing/docs-management/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ドキュメント管理</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"><a href="https://github.com/tsukushi-gate/Griffith" rel="me" class="sl-flex astro-n2mnl6yq"><span class="sr-only astro-n2mnl6yq">GitHub</span><svg aria-hidden="true" class="astro-n2mnl6yq astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">テーマの選択</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" selected class="astro-2z5xp7gb">ダーク</option><option value="light" class="astro-2z5xp7gb">ライト</option><option value="auto" class="astro-2z5xp7gb">自動</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">言語の選択</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/Griffith/reference/benchmarks/" class="astro-2z5xp7gb">日本語</option><option value="/Griffith/en/reference/benchmarks/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">目次<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">概要</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#1-画像分類" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">1. 画像分類</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#2-パラメータ化の比較同一条件" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">2. パラメータ化の比較(同一条件)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#3-学習則の比較mnist" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">3. 学習則の比較(MNIST)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#4-系列言語" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">4. 系列・言語</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#5-検出密予測生成" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">5. 検出・密予測・生成</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#6-テキスト分類実データ" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">6. テキスト分類(実データ)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#7-事前学習モデルからの変換" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">7. 事前学習モデルからの変換</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#8-cpu-だけで追試できる実測チュートリアル" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">8. CPU だけで追試できる実測(チュートリアル)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#9-自分で測る--griffith-bench" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">9. 自分で測る — griffith bench</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#関連ページ" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">関連ページ</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/Griffith/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.C3fM4Kra.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">目次</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">概要</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#1-画像分類" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">1. 画像分類</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#2-パラメータ化の比較同一条件" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">2. パラメータ化の比較(同一条件)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#3-学習則の比較mnist" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">3. 学習則の比較(MNIST)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#4-系列言語" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">4. 系列・言語</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#5-検出密予測生成" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">5. 検出・密予測・生成</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#6-テキスト分類実データ" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">6. テキスト分類(実データ)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#7-事前学習モデルからの変換" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">7. 事前学習モデルからの変換</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#8-cpu-だけで追試できる実測チュートリアル" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">8. CPU だけで追試できる実測(チュートリアル)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#9-自分で測る--griffith-bench" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">9. 自分で測る — griffith bench</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#関連ページ" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">関連ページ</span></a></li></ul></nav></starlight-toc><script type="module" src="/Griffith/_astro/TableOfContents.astro_astro_type_script_index_0_lang.BpJaGz7G.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="ja" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">ベンチマーク一覧</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><p>このライブラリで実測した数値を、<strong>モデル × データセット × hard 精度 × 規模</strong>で
+横断的に並べる。各行に<strong>いつ・どの環境で・どの条件で測ったか</strong>を付けてある。</p>
+<p>モデル単位で「代表精度・主要課題・世界初判定」を1行ずつ俯瞰したい場合は
+<a href="/Griffith/reference/model-zoo/">モデル動物園</a> を先に読むとよい。</p>
+<aside aria-label="数値の読み方" class="starlight-aside starlight-aside--caution"><p class="starlight-aside__title" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="starlight-aside__icon"><path d="M12 16a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10.67 1.47-8.05-14a3 3 0 0 0-5.24 0l-8 14A3 3 0 0 0 3.94 22h16.12a3 3 0 0 0 2.61-4.53Zm-1.73 2a1 1 0 0 1-.88.51H3.94a1 1 0 0 1-.88-.51 1 1 0 0 1 0-1l8-14a1 1 0 0 1 1.78 0l8.05 14a1 1 0 0 1 .05 1.02v-.02ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Z"></path></svg>数値の読み方</p><div class="starlight-aside__content"><ul>
+<li>掲載値はすべて <strong>hard</strong>(学習後に argmax でゲートを確定させ、<strong>純ブール回路として
+推論</strong>したときの値)を主とする。soft(学習時の連続緩和)の値は差分を見る目的でのみ併記する。</li>
+<li>断りがない限り <strong>単一シード・単一構成の実測</strong>で、シード分散は取っていない。</li>
+<li>ここに載るのは<strong>このライブラリ内の設定間比較</strong>である。外部実装との横並び比較表は、
+条件を揃えた再測定をしていないため掲載しない(先行手法を本ライブラリ上で再実装して
+比較した行には、その旨を明記している)。</li>
+<li>「要較正」と付いた行は<strong>まだ収束していない・原因未特定</strong>の記録であり、
+到達点ではなく現在地として載せている。</li>
+</ul></div></aside>
+<div class="sl-heading-wrapper level-h2"><h2 id="1-画像分類">1. 画像分類</h2><a class="sl-anchor-link" href="#1-画像分類"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “1. 画像分類”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>モデル / 構成</th><th>データセット</th><th>hard</th><th>soft</th><th>ゲート数</th><th>実験日・環境</th></tr></thead><tbody><tr><td>DLGN(softmax N=2、6層×8,000、τ=10、unique 接続、200k iter)</td><td>MNIST 20×20</td><td><strong>0.9784</strong></td><td>0.9787</td><td>48,000</td><td>2026-07-02 / Modal A10G</td></tr><tr><td>DLGN(Hard-ST 選択、6層×64,000、N=2、50k iter)</td><td>MNIST 28×28</td><td>0.9802</td><td>—</td><td>384,000</td><td>2026-04-15 / RunPod GPU</td></tr><tr><td>DLGN(Soft-Mix 選択、同上)</td><td>MNIST 28×28</td><td>0.9746</td><td>—</td><td>384,000</td><td>2026-04-15 / RunPod GPU</td></tr><tr><td>DLGN(softmax N=2、6層×16,000、50ep)</td><td>MNIST 28×28</td><td>0.9774</td><td>0.9830</td><td>96,000</td><td>2026-04-20 / RTX 5090</td></tr><tr><td>DLGN(warp N=2、同上)</td><td>MNIST 28×28</td><td>0.9611</td><td>0.9605</td><td>96,000</td><td>2026-04-20 / RTX 5090</td></tr><tr><td>DLGN(warp N=4、同上)</td><td>MNIST 28×28</td><td>0.9550</td><td>0.9564</td><td>24,000</td><td>2026-04-20 / RTX 5090</td></tr><tr><td>DLGN(softmax N=4、同上)</td><td>MNIST 28×28</td><td>0.9454</td><td>0.9566</td><td>24,000</td><td>2026-04-20 / RTX 5090</td></tr><tr><td>BinaryBrain 型(raw + BatchNorm + Binarize、N=6、10ep)</td><td>MNIST</td><td>0.9483</td><td>—</td><td>14,516</td><td>2026-04-20 / GPU</td></tr><tr><td>BinaryBrain 型(同、小規模、10ep)</td><td>MNIST</td><td>0.9308</td><td>—</td><td>3,182</td><td>2026-04-20 / GPU</td></tr><tr><td>DLGN(softmax N=6、10ep、上と同ゲート数条件)</td><td>MNIST</td><td>0.6352</td><td>—</td><td>3,180</td><td>2026-04-20 / GPU</td></tr><tr><td>Conv-DLGN(<code dir="auto">softmax16g</code> 修正後)</td><td>CIFAR-10</td><td>0.5808</td><td>—</td><td>—</td><td>2026-07-05 / GPU</td></tr><tr><td>Conv-DLGN(修正前、4 エントリ simplex)</td><td>CIFAR-10</td><td>0.4921</td><td>—</td><td>—</td><td>2026-07-05 / GPU</td></tr><tr><td>LogicMixer(20k step、<strong>要較正</strong>)</td><td>MNIST</td><td>0.671</td><td>—</td><td>—</td><td>2026-07-10 / A10G</td></tr><tr><td>LogicResNet(3ep、<strong>要較正</strong>)</td><td>MNIST</td><td>0.113</td><td>—</td><td>—</td><td>2026-07-10 / A10G</td></tr></tbody></table>
+<p>ゲート数は「層数 × 層幅」で数えた LUT 数(<code dir="auto">GroupSum</code> は含まない)。</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="2-パラメータ化の比較同一条件">2. パラメータ化の比較(同一条件)</h2><a class="sl-anchor-link" href="#2-パラメータ化の比較同一条件"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “2. パラメータ化の比較(同一条件)”</span></a></div>
+<p>MNIST 28×28・6層・τ=10・50 エポック・bs=128・lr=0.01・seed=0、RTX 5090(32GB)、2026-04-20。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th></th><th>softmax N=2</th><th>warp N=2</th><th>warp N=4</th><th>softmax N=4</th></tr></thead><tbody><tr><td>hard 精度</td><td><strong>97.74%</strong></td><td>96.11%</td><td>95.50%</td><td>94.54%</td></tr><tr><td>soft 精度</td><td>98.30%</td><td>96.05%</td><td>95.64%</td><td>95.66%</td></tr><tr><td>離散化ギャップ</td><td>0.56pp</td><td><strong>−0.06pp</strong></td><td>0.14pp</td><td>1.12pp</td></tr><tr><td>ゲート数</td><td>96,000</td><td>96,000</td><td>24,000</td><td>24,000</td></tr><tr><td>パラメータ数</td><td>1,536,000</td><td>384,000</td><td>384,000</td><td>384,000</td></tr><tr><td>訓練時間</td><td>5.0 min</td><td>3.1 min</td><td>2.1 min</td><td>1.7 min</td></tr><tr><td>訓練時 FLOPs/サンプル</td><td>16,896,000</td><td>1,920,000</td><td>1,440,000</td><td>2,976,000</td></tr><tr><td>精度 / K ゲート</td><td>0.0102</td><td>0.0100</td><td><strong>0.0398</strong></td><td>0.0394</td></tr><tr><td>精度 / M パラメータ</td><td>0.636</td><td><strong>2.503</strong></td><td>2.487</td><td>2.462</td></tr></tbody></table>
+<p>離散化後の回路はどの方式でも同一の LUT 回路になるため、<strong>推論性能に差はなく、
+違いは訓練時のみ</strong>である。選び方は <a href="/Griffith/guides/parameterization/">パラメータ化を選ぶ</a>、
+実験の詳細は <a href="/Griffith/explanation/results/parameterization-study/">パラメータ化の選び方を決めた実験</a>。</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="3-学習則の比較mnist">3. 学習則の比較(MNIST)</h2><a class="sl-anchor-link" href="#3-学習則の比較mnist"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “3. 学習則の比較(MNIST)”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>学習則</th><th>soft</th><th>hard</th><th>条件</th></tr></thead><tbody><tr><td>BP(softmax N=2)</td><td>0.983</td><td><strong>0.977</strong></td><td>6層・τ=10・50ep / RTX 5090</td></tr><tr><td>BP(Hard-ST 選択)</td><td>—</td><td><strong>0.980</strong></td><td>6層×64,000・50k iter / RunPod GPU</td></tr><tr><td>BP(Soft-Mix 選択)</td><td>—</td><td>0.975</td><td>同上</td></tr><tr><td>AP 法(Akiho Propagation、誤差ブロードキャスト型、backprop 不使用)</td><td>≈0.90</td><td>≈0.85</td><td>flat 4層×16,000・30ep</td></tr></tbody></table>
+<p>AP 法は backprop を使わずに <code dir="auto">重み += 誤差 × 基底 × 学習率</code> で LUT を直接更新する
+自社の学習則で、<strong>全結合 MLP では深さ 2〜8 のどこでも soft ≈0.90 で安定する</strong>
+(0.898〜0.909)。一方で <strong>CNN では ≈0.11 に崩壊</strong>(loss が ln 10 に固定=ランダム相当)、
+<strong>RNN(seq2seq)では chance 水準で成立しない</strong>(破綻境界は系列長 T=1 と T=2 の間)。
+崩壊の原因を「単調性の破れ」とする仮説は、単調錐への射影で単調度違反をゼロに強制しても
+3 シード全てで崩壊したため<strong>棄却</strong>されている。一方、誤差ブロードキャストの符号を
+ランダム化すると完全崩壊するため、<strong>符号の一貫性は必須</strong>である。</p>
+<p><code dir="auto">DFA</code> と <code dir="auto">EGGROLL</code>(進化戦略)も学習則として実装されているが、
+現時点で公開できる MNIST 級の実測は XOR / パリティ / 全加算器での収束確認
+(hard eval 100%)にとどまる。</p>
+<p>学習則の仕組みは <a href="/Griffith/explanation/learning-rules/">学習則(BP/AP/DFA/ES)</a> を参照。</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="4-系列言語">4. 系列・言語</h2><a class="sl-anchor-link" href="#4-系列言語"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “4. 系列・言語”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>モデル</th><th>タスク</th><th>指標</th><th>値</th><th>条件・環境</th></tr></thead><tbody><tr><td>LogicGPT L0(全 FP、天井)</td><td>Tiny Shakespeare 文字 LM</td><td>hard ppl</td><td>4.94</td><td>語彙65・T=64・20k step / A10G</td></tr><tr><td>LogicGPT L0b(FFN のみ論理)</td><td>同上</td><td>hard ppl</td><td>≈7.9</td><td>同上</td></tr><tr><td>LogicGPT L1(+射影回路化)</td><td>同上</td><td>hard ppl</td><td>19.24</td><td>同上</td></tr><tr><td>LogicGPT L2(+XNOR スコア)</td><td>同上</td><td>hard ppl</td><td>19.39</td><td>同上</td></tr><tr><td>LogicGPT L3-C(attention 完全回路化)</td><td>同上</td><td>hard ppl</td><td>15.54</td><td>soft ≈12.2、ギャップ 0.29</td></tr><tr><td><strong>LogicGPT L3-C + Gumbel</strong></td><td>同上</td><td>hard ppl</td><td><strong>13.31</strong></td><td>soft ≈12.2、ギャップ 0.107</td></tr><tr><td>LogicLSTM</td><td>遅延コピー(T=8)</td><td>hard acc</td><td><strong>1.00</strong></td><td>全 seed で ≤200 step</td></tr><tr><td>Elman 型(RDDLGN 相当)</td><td>同上</td><td>hard acc</td><td>≈0.86</td><td>800 step でも未達</td></tr><tr><td>LogicReservoir(凍結回路 + 学習 readout)</td><td>遅延ビット再生</td><td>hard acc</td><td><strong>1.00</strong></td><td>全 seed、readout のみ学習</td></tr><tr><td>DLGNAttentionTranslator</td><td>copy(seq_len=16)</td><td>hard acc</td><td>25.77%</td><td>soft 71.66%、9,352 ゲート / 156,032 params、50k step</td></tr><tr><td>RDDLGN(本ライブラリでの再実装)</td><td>copy(seq_len=16)</td><td>hard acc</td><td>15.54%</td><td>soft 22.54%、10,888 ゲート / 180,608 params、同条件</td></tr></tbody></table>
+<p>LogicGPT の構成は d=128・4 ヘッド・2 層・T=64・文字語彙 65 で、
+<strong>論理部パラメータ 33,349・チェックポイント 545KB</strong>。
+埋め込み・LayerNorm・残差加算・LM ヘッドは FP のまま残している。</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="5-検出密予測生成">5. 検出・密予測・生成</h2><a class="sl-anchor-link" href="#5-検出密予測生成"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “5. 検出・密予測・生成”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>モデル</th><th>タスク</th><th>指標</th><th>値</th><th>条件・環境</th></tr></thead><tbody><tr><td>CenterNetLUT</td><td>Multi-MNIST 検出(96×96、1 物体)</td><td>mAP(hard)</td><td><strong>0.5425</strong>(epoch 78、<strong>修正前指標・再計測待ち</strong>)</td><td>soft 0.1791、13,944 params、1,000ep・11h45m / RTX 5090。mAP は画像スコープのバグ修正前の計測</td></tr><tr><td>LogicUNet</td><td>8×8 トイ領域分割</td><td>IoU</td><td>0.875</td><td><strong>要較正</strong></td></tr><tr><td>LogicUNet</td><td>フル MNIST マスク</td><td>IoU</td><td>0.373</td><td><strong>要較正</strong></td></tr><tr><td>LogicBinaryDiffusion</td><td>binary MNIST</td><td>acc@t1</td><td>0.886</td><td>デノイズマージン +0.377(passthrough 基準 0.499)、4ep、<strong>3,937 params</strong></td></tr><tr><td>LogicVAE(二値潜在)</td><td>binary MNIST</td><td>再構成</td><td>193.6 nat/枚</td><td>KL 0.448、active_bits 0.99、30ep</td></tr><tr><td>LutAutoencoder</td><td>MNIST 再構成</td><td>Test MSE(hard)</td><td>0.0863(epoch 63)</td><td>soft 0.0438、30,784 ゲート / 492,544 params / Apple M4 Pro (MPS)</td></tr><tr><td>LogicYOLO</td><td>Multi-MNIST 検出</td><td>—</td><td>本走未実施</td><td>往復 IoU > 0.8 の構造検証まで</td></tr><tr><td>LogicGAN</td><td>8×8 二値パターン</td><td>—</td><td><strong>研究課題</strong></td><td>未調整では発散、安定化策で拮抗</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="6-テキスト分類実データ">6. テキスト分類(実データ)</h2><a class="sl-anchor-link" href="#6-テキスト分類実データ"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “6. テキスト分類(実データ)”</span></a></div>
+<p>WRIME(日本語 SNS 投稿の感情分析)、LUT ベース TextCNN。すべて hard 側の値。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>タスク</th><th>Accuracy</th><th>F1</th><th>パラメータ</th><th>参考(外部公表値)</th></tr></thead><tbody><tr><td>2 値分類</td><td>82%</td><td>—</td><td>—</td><td>—</td></tr><tr><td>8 感情 2 値分類</td><td>83.4%</td><td>0.367</td><td>約 208 万</td><td>DeBERTa-v3-base 87.0% / F1 0.630</td></tr></tbody></table>
+<p>8 感情版は DeBERTa の 1/88 のパラメータで Accuracy −3.6pt だが、<strong>F1 は −0.263 と大きく劣る</strong>
+(少数クラスの取りこぼし)。訓練時間は GPU で約 15 分。
+参考列は各モデルの公表値であり、本ライブラリ側と条件を揃えた再測定ではない。</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="7-事前学習モデルからの変換">7. 事前学習モデルからの変換</h2><a class="sl-anchor-link" href="#7-事前学習モデルからの変換"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “7. 事前学習モデルからの変換”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>経路</th><th>データセット</th><th>hard</th><th>備考</th></tr></thead><tbody><tr><td>枝刈り転写 + STE ft + int4 QAT + 加算木 lowering</td><td>MNIST</td><td><strong>0.9558</strong></td><td>teacher −2% 以内を達成、厳密 lowering、418k LUT 出力</td></tr><tr><td>同レシピの転移(fan-in 48 / bits 6)</td><td>Fashion-MNIST</td><td>0.8196</td><td>量子化・lowering はデータ非依存、fan-in 予算はタスク難度で約 1.5 倍必要</td></tr><tr><td>枝刈り転写(fan-in 32、lowering 前)</td><td>MNIST</td><td>0.9268</td><td>素朴な疎化転写は 0.097 に崩壊 → 枝刈り + STE で回復</td></tr><tr><td>公開 ResNet18(CIFAR-10、0.9498)からの KD</td><td>CIFAR-10</td><td>scratch 比 <strong>+2.3pt</strong></td><td>dense DLGN。teacher と student の実力差が利得の源泉</td></tr><tr><td>弱 teacher(MNIST)からの native DLGN 変換</td><td>MNIST</td><td>scratch 未満(3 経路とも)</td><td>負の結果。native DLGN 自体は 6〜8k ゲートで scratch 0.9739</td></tr><tr><td>公開 DistilBERT からの KD</td><td>SST-2</td><td>80.7%(+7.3pt)</td><td>73.4% → 80.7%、回復率 88.4%、α=0.25 / T=2</td></tr><tr><td>公開 nanoGPT からのデータフリー蒸留</td><td>文字 LM</td><td>BPC 2.71</td><td>教師との差 0.51 bit、学習データ無し(教師生成テキストのみ)</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="8-cpu-だけで追試できる実測チュートリアル">8. CPU だけで追試できる実測(チュートリアル)</h2><a class="sl-anchor-link" href="#8-cpu-だけで追試できる実測チュートリアル"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “8. CPU だけで追試できる実測(チュートリアル)”</span></a></div>
+<p>本サイトのチュートリアルはすべて <strong>GPU 不要・CPU のみ</strong>で完走する縮小版として
+実行・生成されている。以下はページ内に出力されている実測値である
+(所要時間は目安で、CPU の型番は固定していない)。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>チュートリアル</th><th>タスク</th><th>実測</th><th>規模</th><th>所要</th></tr></thead><tbody><tr><td><a href="/Griffith/tutorials/mnist/">MNISTを学習する</a></td><td>MNIST 20×20</td><td>soft 0.8765 / hard 0.8670</td><td>4,000 ゲート、4,000 step</td><td>約10分</td></tr><tr><td><a href="/Griffith/tutorials/hybrid/">ハイブリッドNNを作る</a></td><td>合成(Transformer ブロック 2 段)</td><td>loss 2.0758 → 1.6405</td><td>実数 8,706 + 論理 16,384 params</td><td>約5分</td></tr><tr><td><a href="/Griffith/tutorials/hdl-export/">HDLへエクスポート</a></td><td>XOR</td><td>IR simulate 予測が正解一致、Verilog 照合 ALLPASS</td><td>—</td><td>約10分</td></tr><tr><td><a href="/Griffith/tutorials/cnn-hdl-export/">CNNのHDLエクスポート</a></td><td>小規模画像分類</td><td>hard 0.760、IR 一致率 100%、Verilog ALLPASS</td><td>unroll 後 864 ゲート</td><td>約10分</td></tr><tr><td><a href="/Griffith/tutorials/learning-rules/">学習則(DFA/AP)</a></td><td>XOR</td><td>DFA / AP / BP すべて acc 1.00</td><td>AP は 7 step で早期終了、BP は 600 step</td><td>約5分</td></tr><tr><td><a href="/Griffith/tutorials/full-pipeline/">通しチュートリアル</a></td><td>XOR</td><td>hard 1.00(step 100 以降)、Verilog ALLPASS</td><td>LutLayer 2→16→16</td><td>約15分</td></tr><tr><td><a href="/Griffith/tutorials/xor/">付録: XOR</a></td><td>XOR</td><td>soft / hard とも 1.00</td><td>16 ゲート</td><td>約5分</td></tr><tr><td><a href="/Griffith/tutorials/dwn/">DWN(温度計符号化)</a></td><td>MNIST 20×20(1,200bit)</td><td>test acc 0.9540、soft-hard ロジット最大差 0.0</td><td>64 エントリ LUT、幅 (2000,1000)</td><td>約7分</td></tr><tr><td><a href="/Griffith/tutorials/binarybrain/">BinaryBrain互換API</a></td><td>MNIST(7 フレーム変調)</td><td>eval 0.8030 / 0-1 丸め後 0.2110 / BN 再較正 0.6320</td><td>LUT6 430 個、エントリ 27,520</td><td>約10分</td></tr><tr><td><a href="/Griffith/tutorials/textcnn/">TextCNN</a></td><td>合成バイグラム XOR 感情分類</td><td>soft / hard とも 1.0000(step 800 で到達)</td><td>ユニグラム上限 0.535 の課題</td><td>約5分</td></tr><tr><td><a href="/Griffith/tutorials/attention-tour/">Attentionツアー</a></td><td>連想想起ほか 4 課題</td><td>Boolean / MultiQuery / Positional は 1.0000、Pointer は soft 0.9843 / hard 0.8351</td><td>各 6,144 params(Pointer は 9,280)</td><td>約2分</td></tr><tr><td><a href="/Griffith/tutorials/logic-ladder/">論理化の梯子</a></td><td>コピー課題</td><td>hard: L0 1.000 / L1 0.746 / L2 1.000 / L3-C 0.990</td><td>800 step</td><td>約8分</td></tr><tr><td><a href="/Griffith/tutorials/logic-gpt/">論理ゲートGPT</a></td><td>Tiny Shakespeare(語彙 32)</td><td>val bpc 3.134(一様分布ベースライン 5.00)</td><td>合計 48,640 params、1,500 step</td><td>約10分</td></tr><tr><td><a href="/Griffith/tutorials/rddlgn-seq2seq/">seq2seq(RDDLGN)</a></td><td>copy / reverse(語彙 8)</td><td>copy soft 1.0000 / hard 0.9688、reverse soft 0.9980 / hard 0.9414</td><td>ゲートパラメータ 30,080</td><td>約8分</td></tr><tr><td><a href="/Griffith/tutorials/logic-lstm/">LSTM / GRU</a></td><td>遅延コピー(8 時刻)</td><td>LSTM / GRU hard 1.0000、Elman 0.5781</td><td>LSTM 1,024 / GRU 768 / Elman 256 params</td><td>約5分</td></tr><tr><td><a href="/Griffith/tutorials/logic-wavenet/">WaveNet(因果conv)</a></td><td>周期ビットパターン予測</td><td>1層(RF=2) hard 0.8167、3層(RF=8) hard 1.0000</td><td>3層で 1,536 ゲート</td><td>約5分</td></tr><tr><td><a href="/Griffith/tutorials/logic-reservoir/">リザバー</a></td><td>parity / delay-d recall</td><td>parity hard: k=1,2 は 1.0000、k=3 は 0.8223、k=4 は 0.5723。delay-d は d=0〜5 すべて満点</td><td>凍結 16,384 + readout 1,026 params(学習対象 5.9%)</td><td>約5分</td></tr><tr><td><a href="/Griffith/tutorials/logic-mixer/">Mixer</a></td><td>MNIST 28×28(16 トークン)</td><td>soft 0.6740 / hard 0.6580</td><td>3,000 step、depth 2</td><td>約8分</td></tr><tr><td><a href="/Griffith/tutorials/logic-resnet/">ResNet(厳密な恒等)</a></td><td>縮小画像分類</td><td>hard: XOR 残差 0.361 / OR 残差 0.299、恒等性の最大誤差 0.0</td><td>総ゲート数 200</td><td>約8分</td></tr><tr><td><a href="/Griffith/tutorials/logic-unet/">U-Net(密予測)</a></td><td>ノイズ入り MNIST マスク復元</td><td>test IoU 0.5678(恒等ベースライン 0.4556)</td><td>1,000 step、depth 2</td><td>約6分</td></tr><tr><td><a href="/Griffith/tutorials/logic-vae/">VAE(二値潜在)</a></td><td>MNIST 14×14</td><td>再構成 BCE 43.27 / KL 13.22 / 画素一致率 0.9073 / active bits 1.00</td><td>70,436 params、潜在 96bit</td><td>約7分</td></tr><tr><td><a href="/Griffith/tutorials/logic-gan/">GAN</a></td><td>8×8 二値パターン 4 種</td><td>安定化条件: late_g 1.459 / D acc 0.874 / hamming 3.7(素朴条件は 7.221 / 1.000 / 21.9)</td><td>両条件でモード崩壊 1/4</td><td>約8分</td></tr><tr><td><a href="/Griffith/tutorials/logic-diffusion/">拡散モデル</a></td><td>8×8 二値 MNIST(T=8)</td><td>acc@t1 0.8508(blank 0.7606 / copy 0.9380)、acc@tT 0.7544</td><td>1,633 params</td><td>約6分</td></tr><tr><td><a href="/Griffith/tutorials/detection/">物体検出</a></td><td>合成 Multi-MNIST</td><td>mAP@0.5 = 0.3003</td><td>679 ゲート、500 step</td><td>約7分</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="9-自分で測る--griffith-bench">9. 自分で測る — <code dir="auto">griffith bench</code></h2><a class="sl-anchor-link" href="#9-自分で測る--griffith-bench"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “9. 自分で測る — griffith bench”</span></a></div>
+<p>同じ土俵で測り直すためのベンチマークコマンドが同梱されている。
+レシピ YAML または保存済みチェックポイントを渡すと、
+<strong>hard eval 精度・ゲート数・forward レイテンシ</strong>を測って JSON に落とす。</p>
+<div class="expressive-code"><link rel="stylesheet" href="/Griffith/_astro/ec.q45ns.css"><script type="module" src="/Griffith/_astro/ec.0vx5m.js"></script><figure class="frame is-terminal not-content"><figcaption class="header"><span class="title"></span><span class="sr-only">ターミナルウィンドウ</span></figcaption><pre data-language="bash"><code><div class="ec-line"><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># レシピから(短時間学習 → best チェックポイントを計測)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#61AFEF;--1:#3360C1">uv</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">run</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">python</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">benchmarks/bench.py</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">configs/recipes/logic_xor.yaml</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 学習せずレイテンシとゲート数だけ測る(hard_acc は null になる)</span></div></div><div class="ec-line"><div class="code"><span style="--0:#61AFEF;--1:#3360C1">uv</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">run</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">python</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">benchmarks/bench.py</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">configs/recipes/logic_xor.yaml</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#D19A66;--1:#875D01">--skip-train</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#9FA3AA;--0fs:italic;--1:#646568;--1fs:italic"># 保存済みチェックポイントを計測</span></div></div><div class="ec-line"><div class="code"><span style="--0:#61AFEF;--1:#3360C1">uv</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">run</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">python</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">benchmarks/bench.py</span><span style="--0:#ABB2BF;--1:#383A42"> </span><span style="--0:#98C379;--1:#387138">outputs/&#x3C;run>/checkpoints/best.pt</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="クリップボードにコピー" data-copied="コピーしました！" data-code="uv run python benchmarks/bench.py configs/recipes/logic_xor.yamluv run python benchmarks/bench.py configs/recipes/logic_xor.yaml --skip-trainuv run python benchmarks/bench.py outputs/<run>/checkpoints/best.pt"><div></div></button></div></figure></div>
+<p>出力は <code dir="auto">benchmarks/results/&#x3C;日付>_&#x3C;name>.json</code> に、次の固定スキーマで保存される。</p>
+<div class="expressive-code"><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="json"><code><div class="ec-line"><div class="code"><span style="--0:#ABB2BF;--1:#383A42">{</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"name"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"..."</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"timestamp"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"..."</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"config"</span><span style="--0:#ABB2BF;--1:#383A42">: { </span><span style="--0:#E6888F;--1:#AF4238">"..."</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"..."</span><span style="--0:#ABB2BF;--1:#383A42"> },</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"metrics"</span><span style="--0:#ABB2BF;--1:#383A42">: {</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"hard_acc"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">0.0</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"total_gates"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">0</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"latency_ms_b1"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">0.0</span><span style="--0:#ABB2BF;--1:#383A42">,</span></div></div><div class="ec-line"><div class="code"><span class="indent">    </span><span style="--0:#E6888F;--1:#AF4238">"latency_ms_b128"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#D19A66;--1:#875D01">0.0</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#ABB2BF;--1:#383A42">  </span></span><span style="--0:#ABB2BF;--1:#383A42">},</span></div></div><div class="ec-line"><div class="code"><span class="indent">  </span><span style="--0:#E6888F;--1:#AF4238">"env"</span><span style="--0:#ABB2BF;--1:#383A42">: { </span><span style="--0:#E6888F;--1:#AF4238">"python"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"..."</span><span style="--0:#ABB2BF;--1:#383A42">, </span><span style="--0:#E6888F;--1:#AF4238">"torch"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"..."</span><span style="--0:#ABB2BF;--1:#383A42">, </span><span style="--0:#E6888F;--1:#AF4238">"platform"</span><span style="--0:#ABB2BF;--1:#383A42">: </span><span style="--0:#98C379;--1:#387138">"..."</span><span style="--0:#ABB2BF;--1:#383A42"> }</span></div></div><div class="ec-line"><div class="code"><span style="--0:#ABB2BF;--1:#383A42">}</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="クリップボードにコピー" data-copied="コピーしました！" data-code="{  &#x22;name&#x22;: &#x22;...&#x22;,  &#x22;timestamp&#x22;: &#x22;...&#x22;,  &#x22;config&#x22;: { &#x22;...&#x22;: &#x22;...&#x22; },  &#x22;metrics&#x22;: {    &#x22;hard_acc&#x22;: 0.0,    &#x22;total_gates&#x22;: 0,    &#x22;latency_ms_b1&#x22;: 0.0,    &#x22;latency_ms_b128&#x22;: 0.0  },  &#x22;env&#x22;: { &#x22;python&#x22;: &#x22;...&#x22;, &#x22;torch&#x22;: &#x22;...&#x22;, &#x22;platform&#x22;: &#x22;...&#x22; }}"><div></div></button></div></figure></div>
+<p>計測条件は次のとおり固定されている。</p>
+<ul>
+<li><strong>ゲート数</strong> — <code dir="auto">LutLayer</code> はニューロン数、<code dir="auto">LutConv2d</code> はツリー内部ノード数を合算。</li>
+<li><strong>レイテンシ</strong> — 再現性のため <strong>CPU 固定</strong>。ウォームアップ 5 回のあと 20 回計測の中央値を
+batch=1 と batch=128 の両方で取る(学習だけはレシピの device 設定に従う)。</li>
+<li><strong>環境</strong> — Python / PyTorch / プラットフォームを JSON に記録する。</li>
+</ul>
+<aside aria-label="レイテンシ列がない理由" class="starlight-aside starlight-aside--note"><p class="starlight-aside__title" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="starlight-aside__icon"><path d="M12 11a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0v-4a1 1 0 0 0-1-1Zm.38-3.92a1 1 0 0 0-.76 0 1 1 0 0 0-.33.21 1.15 1.15 0 0 0-.21.33 1 1 0 0 0 .21 1.09c.097.088.209.16.33.21A1 1 0 0 0 13 8a1.05 1.05 0 0 0-.29-.71 1 1 0 0 0-.33-.21ZM12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16.001A8 8 0 0 1 12 20Z"></path></svg>レイテンシ列がない理由</p><div class="starlight-aside__content"><p>上の各表は個別の実験レポートからの転記で、レイテンシは測定項目に入っていなかった。
+<code dir="auto">griffith bench</code> のスキーマは揃っているので、レイテンシつきの横断表は
+測定結果が揃い次第ここへ追加する。</p></div></aside>
+<div class="sl-heading-wrapper level-h2"><h2 id="関連ページ">関連ページ</h2><a class="sl-anchor-link" href="#関連ページ"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “関連ページ”</span></a></div>
+<ul>
+<li><a href="/Griffith/explanation/results/dlgn-repro/">論文再現と改善 — DLGN MNIST</a> — 0.9784 に至るまでの要素分解</li>
+<li><a href="/Griffith/explanation/results/parameterization-study/">パラメータ化の選び方を決めた実験</a></li>
+<li><a href="/Griffith/explanation/results/discretization-gap/">離散化ギャップの実態と対策</a></li>
+<li><a href="/Griffith/explanation/results/architecture-survey/">アーキテクチャ横断の到達点</a></li>
+</ul></div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/Griffith/reference/api/attention/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">前へ<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">Attention系</span></span></a><a href="/Griffith/reference/model-zoo/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">次へ<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">モデル一覧(動物園)</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>

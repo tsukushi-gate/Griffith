@@ -1,0 +1,608 @@
+<!DOCTYPE html><html lang="ja" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>対応プラットフォーム | Griffith</title><link rel="canonical" href="https://tsukushi-gate.github.io/Griffith/reference/platform-support/"/><link rel="alternate" hreflang="ja" href="https://tsukushi-gate.github.io/Griffith/reference/platform-support/"/><link rel="alternate" hreflang="en" href="https://tsukushi-gate.github.io/Griffith/en/reference/platform-support/"/><link rel="alternate" hreflang="x-default" href="https://tsukushi-gate.github.io/Griffith/reference/platform-support/"/><link rel="sitemap" href="/Griffith/sitemap-index.xml"/><link rel="shortcut icon" href="/Griffith/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.4.4"/><meta name="generator" content="Starlight v0.42.7"/><meta property="og:title" content="対応プラットフォーム"/><meta property="og:type" content="article"/><meta property="og:url" content="https://tsukushi-gate.github.io/Griffith/reference/platform-support/"/><meta property="og:locale" content="ja"/><meta property="og:description" content="デプロイキットの各ターゲット(C / CUDA / Metal / Web)がどこまで検証されているか。コンパイラ・OS・CPU アーキ・GPU・SIMD 経路ごとの検証段階と、C ランタイムの移植性契約。"/><meta property="og:site_name" content="Griffith"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="デプロイキットの各ターゲット(C / CUDA / Metal / Web)がどこまで検証されているか。コンパイラ・OS・CPU アーキ・GPU・SIMD 経路ごとの検証段階と、C ランタイムの移植性契約。"/><script type="module" src="/Griffith/_astro/Head.astro_astro_type_script_index_0_lang.CBfaj9GZ.js"></script><script type="module" src="/Griffith/_astro/Head.astro_astro_type_script_index_1_lang.BxFcvEww.js"></script><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme = storedTheme || 'dark';
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'dark') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/Griffith/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/Griffith/_astro/common.B49jf9hK.css"><style>@layer starlight.components{.card-grid:where(.astro-7qmvx3iy){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-7qmvx3iy)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-7qmvx3iy){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-7qmvx3iy){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-7qmvx3iy)>:nth-child(2n){transform:translateY(var(--stagger-height))}}.sl-link-card:where(.astro-zaaezwya){border:1px solid var(--sl-color-gray-5);box-shadow:var(--sl-shadow-sm);border-radius:.5rem;grid-template-columns:1fr auto;gap:.5rem;padding:1rem;display:grid;position:relative}a:where(.astro-zaaezwya){line-height:var(--sl-line-height-headings);text-decoration:none}a:where(.astro-zaaezwya):before{content:"";position:absolute;inset:0}.stack:where(.astro-zaaezwya){flex-direction:column;gap:.5rem}.title:where(.astro-zaaezwya){color:var(--sl-color-white);font-weight:600;font-size:var(--sl-text-lg)}.description:where(.astro-zaaezwya){color:var(--sl-color-gray-3);line-height:1.5}.icon:where(.astro-zaaezwya){color:var(--sl-color-gray-3)}.sl-link-card:where(.astro-zaaezwya):hover{background:var(--sl-color-gray-7,var(--sl-color-gray-6));border-color:var(--sl-color-gray-2)}.sl-link-card:where(.astro-zaaezwya):hover .icon:where(.astro-zaaezwya){color:var(--sl-color-white)}}
+@layer starlight.components{svg:where(.astro-hkc32dio){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em;overflow:visible}}
+@layer starlight.components{starlight-tabs:where(.astro-scn3uvmv){display:block}.tablist-wrapper:where(.astro-scn3uvmv){overflow-x:auto}:where(.astro-scn3uvmv)[role=tablist]{border-bottom:2px solid var(--sl-color-gray-5);padding:0;list-style:none;display:flex}.tab:where(.astro-scn3uvmv){display:flex}.tab:where(.astro-scn3uvmv)>:where(.astro-scn3uvmv)[role=tab]{--sl-tab-color-border:var(--sl-color-gray-5);line-height:var(--sl-line-height-headings);box-shadow:0 2px 0 var(--sl-tab-color-border);color:var(--sl-color-gray-3);outline-offset:var(--sl-outline-offset-inside);overflow-wrap:initial;align-items:center;gap:.5rem;padding:.275rem 1.25rem;text-decoration:none;display:flex}.tab:where(.astro-scn3uvmv) :where(.astro-scn3uvmv)[role=tab][aria-selected=true]{--sl-tab-color-border:var(--sl-color-text-accent);color:var(--sl-color-white);font-weight:600}.tablist-wrapper:where(.astro-scn3uvmv)~[role=tabpanel]{margin-top:1rem}}
+@layer starlight.components{.sl-steps{--bullet-size:calc(var(--sl-line-height) * 1rem);--bullet-margin:.375rem;counter-reset:steps-counter var(--sl-steps-start,0);padding-inline-start:0;list-style:none}.sl-steps>li{counter-increment:steps-counter;padding-inline-start:calc(var(--bullet-size) + 1rem);min-height:calc(var(--bullet-size) + var(--bullet-margin));padding-bottom:1px;position:relative}.sl-steps>li+li{margin-top:0}.sl-steps>li:before{content:counter(steps-counter);top:0;width:var(--bullet-size);height:var(--bullet-size);line-height:var(--bullet-size);font-size:var(--sl-text-xs);text-align:center;color:var(--sl-color-white);background-color:var(--sl-color-gray-6);box-shadow:inset 0 0 0 1px var(--sl-color-gray-5);border-radius:99rem;font-weight:600;position:absolute;inset-inline-start:0}.sl-steps>li:after{--guide-width:1px;content:"";top:calc(var(--bullet-size) + var(--bullet-margin));bottom:var(--bullet-margin);width:var(--guide-width);background-color:var(--sl-color-hairline-light);position:absolute;inset-inline-start:calc((var(--bullet-size) - var(--guide-width)) / 2)}}@layer starlight.content{.sl-steps>li>:first-child{--lh:calc(1em * var(--sl-line-height));--shift-y:calc(.5 * (var(--bullet-size) - var(--lh)));transform:translateY(var(--shift-y));margin-bottom:var(--shift-y)}.sl-steps>li>:first-child:where(h1,h2,h3,h4,h5,h6){--lh:calc(1em * var(--sl-line-height-headings))}@supports (--prop:1lh){.sl-steps>li>:first-child{--lh:1lh}}}
+</style><script type="module" src="/Griffith/_astro/page.cNngjUgL.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">コンテンツにスキップ</a><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-nen7h5rs"><div class="title-wrapper sl-flex astro-nen7h5rs"><a href="/Griffith/" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">Griffith</span></a></div><div class="sl-flex print:hidden astro-nen7h5rs"><site-search class="astro-nen7h5rs astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;検索&quot;}"><button data-open-modal disabled aria-label="検索" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">検索</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="検索" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">キャンセル</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/Griffith/_astro/Search.astro_astro_type_script_index_0_lang.BB8DaZqm.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-nen7h5rs"><nav class="md-topnav astro-nen7h5rs" aria-label="メインナビゲーション"><a href="/Griffith/getting-started/installation/" class="astro-nen7h5rs">ドキュメント</a><a href="/Griffith/tutorials/xor/" class="astro-nen7h5rs">チュートリアル</a><a href="/Griffith/reference/api/" class="astro-nen7h5rs">API</a><a href="/Griffith/explanation/dlgn/" class="astro-nen7h5rs">DLGNとは</a></nav><div class="sl-flex social-icons astro-nen7h5rs"><a href="https://github.com/tsukushi-gate/Griffith" rel="me" class="sl-flex astro-n2mnl6yq"><span class="sr-only astro-n2mnl6yq">GitHub</span><svg aria-hidden="true" class="astro-n2mnl6yq astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">テーマの選択</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" selected class="astro-2z5xp7gb">ダーク</option><option value="light" class="astro-2z5xp7gb">ライト</option><option value="auto" class="astro-2z5xp7gb">自動</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`dark`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">言語の選択</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/Griffith/reference/platform-support/" class="astro-2z5xp7gb">日本語</option><option value="/Griffith/en/reference/platform-support/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="メイン"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">メニュー</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="0tdu995" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">はじめに</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/getting-started/installation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">インストール</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/getting-started/quickstart/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">クイックスタート</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/getting-started/concepts/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">基本コンセプト</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">チュートリアル</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ギャラリー</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">入門コース</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/nn-basics/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">入門1. NNとPyTorchの基礎</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/pytorch-mlp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">入門2. PyTorchでMLPを組む</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/mlp-to-dlgn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">入門3. MLPをDLGNへ置き換える</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">基本</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/mnist/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">1. MNISTを学習する(MLP)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/hybrid/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">2. ハイブリッドNN(実数+論理)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/hdl-export/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">3. HDLへエクスポート</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/deploy-mnist/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">4. デプロイする</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/cnn-hdl-export/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">5. CNNのHDLエクスポート</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/learning-rules/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">6. 学習則(BP以外: DFA/AP)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/full-pipeline/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">7. 通しチュートリアル</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/xor/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">付録: XORで仕組みを覗く(最小の回路)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">系列・言語</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-gpt/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Transformer(論理ゲートGPT)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/rddlgn-seq2seq/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">RNNでseq2seq(RDDLGN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-lstm/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">RNN: LSTM / GRU</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-wavenet/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">WaveNet(因果CNN・TCN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-reservoir/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">リザバー計算(学習しないRNN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-ladder/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Transformerを段階的に論理化</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">視覚</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-unet/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">U-Net(セグメンテーション)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-resnet/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ResNet(残差接続)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-mixer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">MLP-Mixer(token mixing)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/dwn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DWN(二値NN・温度計符号化)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">生成モデル</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-diffusion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">拡散モデル(Diffusion)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-vae/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">VAE(二値潜在オートエンコーダ)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-gan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">GAN(敵対的生成)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">応用</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/attention-tour/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Attentionの4変種(Transformer部品)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/detection/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">物体検出(CenterNet)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/binarybrain/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">BinaryBrain互換API(二値NN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/textcnn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">TextCNN(テキスト分類)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/har/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">行動認識(UCI-HAR、スマホ加速度)</span></a></li></ul></details></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">ガイド</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/guides/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ガイド一覧</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/roadmap/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習ロードマップ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/choosing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">何を使えばいいのか</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/from-pytorch/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">PyTorchからの移行</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/training/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習を回す</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/training-curves/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習曲線の読み方</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/parameterization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">パラメータ化を選ぶ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/ir/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">IRを扱う</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/hdl-export/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">HDLエクスポート</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">デプロイ</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="9"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-quickstart/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">デプロイキット クイックスタート</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-your-model/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">自分のモデルをデプロイする</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-models/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">デモモデルを用意する</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-esp32/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ESP32に載せる</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-ios/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">iPhoneに載せる</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-web/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ブラウザで動かす</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-gpu/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">GPU(CUDA / Metal)で動かす</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/fpga/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">FPGAに焼く</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/deploy-optimizations/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">圧縮と最適化の一覧</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/platform-support/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">対応プラットフォーム一覧</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/editor/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ビジュアルエディタ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/wiring-visualization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">回路と配線の可視化</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/cloud-gpu/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">クラウドGPU</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/troubleshooting/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">トラブルシューティング</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">解説</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="10"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">解説の歩き方</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/dlgn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DLGNとは</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/nn-to-dlgn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">NNからDLGNへ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/ai-basics/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">AIの基礎</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/taxonomy/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DLGNの分類</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/architecture/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">アーキテクチャ全体像</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/lut-layer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">LutLayerの数理</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/learning-rules/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習則(BP/AP/DFA/ES)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/design-decisions/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">設計判断の記録</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">実績・実験結果</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="11"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/dlgn-repro/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">論文再現と改善</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/parameterization-study/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">パラメータ化を決めた実験</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/discretization-gap/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">離散化ギャップ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/architecture-survey/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">アーキテクチャ横断の到達点</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/world-firsts/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">世界初主張の監査</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/experimental-models/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">実験ブランチのモデル群</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/faq/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">よくある質問</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/glossary/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">用語集</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">リファレンス</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="12"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/reference/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">リファレンス索引</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Python API</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="13"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Python API</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/core/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">コア層</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/wiring-stats/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">配線の受容野・被覆率</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/conv/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">畳み込み・空間処理</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/seq2seq/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">seq2seq(RDDLGN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/logic-gpt/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">decoder-only 因果Transformer</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/datasets-logic/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">論理関数データセット</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/datasets-vision/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">視覚データセット</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/datasets-har/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">UCI-HAR(行動認識)データセット</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/training-config/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">設定管理・共通ランナー</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/training-learning/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習アルゴリズム</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/hybrid/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ハイブリッドAPI</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/editor/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">エディタ連携</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/dwn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DWN / LLViT</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/binarybrain/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">BinaryBrain互換</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/blocks/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">一般NN部品</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/attention/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Attention系</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/benchmarks/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ベンチマーク</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/model-zoo/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">モデル一覧(動物園)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/cli/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">griffith CLI</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/ir-schema/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">IRスキーマ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/platform-support/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">対応プラットフォーム</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/deploy-bundle/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">配布バンドル仕様</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/deploy-optimizations/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">圧縮と最適化の一覧</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">コントリビュート</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="14"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/contributing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">開発をはじめる</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/contributing/testing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">テスト体系(L1〜L5)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/contributing/docs/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ドキュメントを書く</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/contributing/docs-management/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ドキュメント管理</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"><a href="https://github.com/tsukushi-gate/Griffith" rel="me" class="sl-flex astro-n2mnl6yq"><span class="sr-only astro-n2mnl6yq">GitHub</span><svg aria-hidden="true" class="astro-n2mnl6yq astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">テーマの選択</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" selected class="astro-2z5xp7gb">ダーク</option><option value="light" class="astro-2z5xp7gb">ライト</option><option value="auto" class="astro-2z5xp7gb">自動</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">言語の選択</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/Griffith/reference/platform-support/" class="astro-2z5xp7gb">日本語</option><option value="/Griffith/en/reference/platform-support/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">目次<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">概要</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#検証段階の区分" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">検証段階の区分</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#対応コンパイラc-ランタイムc99" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">対応コンパイラ(C ランタイム、C99)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#対応-os-と実行環境" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">対応 OS と実行環境</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#対応-cpu-アーキ-移植性契約" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">対応 CPU アーキ: 移植性契約</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#検証実績用途別" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">検証実績(用途別)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#simd-経路検出マクロ別" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">SIMD 経路(検出マクロ別)</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#同種ライブラリとの比較で未対応のもの" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">同種ライブラリとの比較で未対応のもの</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#gpu-cuda" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">GPU: CUDA</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#gpu-metal" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">GPU: Metal</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#webブラウザ" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Web(ブラウザ)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#hdlfpga--asic" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">HDL(FPGA / ASIC)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#対応ノード種と非対応の機能" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">対応ノード種と非対応の機能</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#関連ページ" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">関連ページ</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/Griffith/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.C3fM4Kra.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">目次</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">概要</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#検証段階の区分" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">検証段階の区分</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#対応コンパイラc-ランタイムc99" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">対応コンパイラ(C ランタイム、C99)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#対応-os-と実行環境" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">対応 OS と実行環境</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#対応-cpu-アーキ-移植性契約" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">対応 CPU アーキ: 移植性契約</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#検証実績用途別" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">検証実績(用途別)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#simd-経路検出マクロ別" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">SIMD 経路(検出マクロ別)</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#同種ライブラリとの比較で未対応のもの" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">同種ライブラリとの比較で未対応のもの</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#gpu-cuda" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">GPU: CUDA</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#gpu-metal" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">GPU: Metal</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#webブラウザ" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">Web(ブラウザ)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#hdlfpga--asic" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">HDL(FPGA / ASIC)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#対応ノード種と非対応の機能" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">対応ノード種と非対応の機能</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#関連ページ" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">関連ページ</span></a></li></ul></nav></starlight-toc><script type="module" src="/Griffith/_astro/TableOfContents.astro_astro_type_script_index_0_lang.BpJaGz7G.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="ja" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">対応プラットフォーム</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><p><code dir="auto">griffith deploy codegen-c</code> / <code dir="auto">codegen-cuda</code> / <code dir="auto">codegen-metal</code> / <code dir="auto">codegen-web</code> が生成する各ターゲットについて、
+<strong>「どこまで検証されているか」</strong> を 1 枚にまとめたリファレンスである。デプロイキット全体の使い方は
+<a href="/Griffith/guides/deploy-quickstart/">デプロイキット クイックスタート</a>、バンドルの形式は <a href="/Griffith/reference/deploy-bundle/">配布バンドル仕様</a> を参照。</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="検証段階の区分">検証段階の区分</h2><a class="sl-anchor-link" href="#検証段階の区分"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “検証段階の区分”</span></a></div>
+<p>本ページの「検証」列は、次の 3 段階で書く。<strong>検証していないものを「動く」と書かない</strong> ための区分である。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>区分</th><th>意味</th></tr></thead><tbody><tr><td><strong>実測検証済み</strong></td><td>実機でビルドして実行し、<code dir="auto">ir/simulate.py</code>(golden model)との <strong>整数厳密一致</strong> をテストまたは検証コマンドで確認済み</td></tr><tr><td><strong>ビルドのみ確認</strong></td><td>クロスコンパイルが通ることは確認したが、その環境で実行はしていない(整数一致は未検証)</td></tr><tr><td><strong>標準準拠につき理論上可(未検証)</strong></td><td>コード上は分岐やマクロで対応しているが、ビルド・実行のどちらも実績がない</td></tr></tbody></table>
+<aside aria-label="ESP32 と iOS の位置づけ(実測)" class="starlight-aside starlight-aside--note"><p class="starlight-aside__title" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="starlight-aside__icon"><path d="M12 11a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0v-4a1 1 0 0 0-1-1Zm.38-3.92a1 1 0 0 0-.76 0 1 1 0 0 0-.33.21 1.15 1.15 0 0 0-.21.33 1 1 0 0 0 .21 1.09c.097.088.209.16.33.21A1 1 0 0 0 13 8a1.05 1.05 0 0 0-.29-.71 1 1 0 0 0-.33-.21ZM12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16.001A8 8 0 0 1 12 20Z"></path></svg>ESP32 と iOS の位置づけ(実測)</p><div class="starlight-aside__content"><p><strong>ESP32(Xtensa)</strong> は実機で実行し、行動認識 3 モデル(k600・k2400・k6000)と MNIST の全 50 件の出力が <code dir="auto">ir/simulate.py</code> と整数一致したので「実測検証済み」である。
+ただし <strong>畳み込みモデル(顔検出 128px)は PSRAM なしの無印 ESP32 では DRAM に載らず、ビルドできない</strong>。</p><p><strong>iOS</strong> は、<strong>シミュレータ(Apple Silicon ホスト上のネイティブ実行)でも、iPhone 17 実機(iOS 26.6.2)でも実測検証済み</strong> である。
+実機では 5 モデルの出力が <code dir="auto">ir/simulate.py</code> と整数一致した(行動認識 k6000 が 8.07 µs、顔検出が 0.803 ms)。
+シミュレータの時間はホスト CPU の値で、実機の値ではない。</p><p>手順と実測値は <a href="/Griffith/guides/deploy-esp32/">ESP32 に載せる</a> と <a href="/Griffith/guides/deploy-ios/">iPhone に載せる</a> にある。</p></div></aside>
+<div class="sl-heading-wrapper level-h2"><h2 id="対応コンパイラc-ランタイムc99">対応コンパイラ(C ランタイム、C99)</h2><a class="sl-anchor-link" href="#対応コンパイラc-ランタイムc99"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “対応コンパイラ(C ランタイム、C99)”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>コンパイラ</th><th>検証段階</th><th>根拠</th></tr></thead><tbody><tr><td>clang(<code dir="auto">cc</code> が clang に解決する環境。macOS は既定でこれ)</td><td>実測検証済み</td><td>ホスト実行とベンチ実測、およびクロスコンパイル(下の表)</td></tr><tr><td>gcc(<code dir="auto">cc</code> / <code dir="auto">gcc</code> が gcc に解決する環境)</td><td>ビルドのみ確認</td><td><code dir="auto">-Wall -Wextra -Werror</code> つきでホストビルドが通ることを確認(Linux、gcc 9.4.0 でも再確認)。<strong>クロスターゲット(<code dir="auto">-target &#x3C;triple></code>)は clang 専用の構文なので対象外</strong></td></tr><tr><td>clang(Windows 向けクロス: <code dir="auto">x86_64-pc-windows-msvc</code> / <code dir="auto">x86_64-w64-windows-gnu</code>)</td><td>ビルドのみ確認</td><td>Apple clang から <code dir="auto">-ffreestanding -DMDL_NO_LIBC</code> つきでオブジェクト生成まで確認。実機の <code dir="auto">cl.exe</code> / MinGW での実行は未検証</td></tr><tr><td>MSVC(<code dir="auto">cl.exe</code> 実機)/ MinGW gcc 実機</td><td>標準準拠につき理論上可(未検証)</td><td><code dir="auto">mdl_simd.h</code> に MSVC 方言(<code dir="auto">_M_IX86_FP</code>)の SSE2 検出分岐があるのみ。実機のビルド・実行実績は無い</td></tr></tbody></table>
+<p>C ランタイムの依存は C99 標準ヘッダ 2 つ(<code dir="auto">&#x3C;stdint.h></code> / <code dir="auto">&#x3C;stddef.h></code>)だけで、libc 関数は <code dir="auto">memcpy</code> / <code dir="auto">memset</code> のみである
+(<code dir="auto">-DMDL_NO_LIBC</code> で自前実装に切り替わり、libc も不要になる)。</p>
+<p>検証に使えたコンパイラの範囲にも限りがある。手元の clang(Apple clang 21.0.0)が持つクロスバックエンドは
+ARM / AArch64 系と x86 系に限られ、<strong>RISC-V / MIPS / WASM / Xtensa / MSP430 のバックエンドは無い</strong>。
+これらが「未検証」なのはコードの制約ではなく、<strong>検証環境が無かった</strong> ためである。</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="対応-os-と実行環境">対応 OS と実行環境</h2><a class="sl-anchor-link" href="#対応-os-と実行環境"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “対応 OS と実行環境”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>環境</th><th>検証段階</th><th>根拠</th></tr></thead><tbody><tr><td>macOS(Apple Silicon)</td><td>実測検証済み</td><td>Apple M3 でホスト実行とベンチ実測。Metal と Web のランタイムの検証環境でもある</td></tr><tr><td>Linux(x86_64 / i386、ネイティブ実行)</td><td>実測検証済み</td><td>クロスコンパイルして実行し、数値一致まで確認</td></tr><tr><td>ベアメタル(Cortex-M0 / M0+ / M3 / M4 / M4F / M7 / M33、Cortex-A 系、<code dir="auto">-ffreestanding -DMDL_NO_LIBC</code>)</td><td>ビルドのみ確認</td><td>クロスコンパイルの通過のみ(実機での実行は無し)</td></tr><tr><td>Windows(コア推論のみ: <code dir="auto">mdl_kernels.c</code> + 生成モデル)</td><td>ビルドのみ確認</td><td>上のとおり clang クロスでオブジェクト生成まで。<strong>並列ヘルパ <code dir="auto">mdl_threads.c</code> は pthread 専用で Windows 非対応</strong></td></tr><tr><td>ブラウザ(Chromium、WASM)</td><td>実測検証済み</td><td><code dir="auto">griffith deploy verify-web</code>。検証済みブラウザは Chromium のみ。これは TS / AssemblyScript の Web ランタイムで、C ランタイムの freestanding WASM ビルドとは別物</td></tr><tr><td>ESP32(Xtensa、ESP-IDF)</td><td>実測検証済み(行動認識 dense)。畳み込み 128px の顔検出は DRAM 超過で載らない</td><td>ESP32-D0WDQ6(240 MHz、4MB flash、PSRAM なし)、ESP-IDF v5.4-dev で実機実行。行動認識 k600 / k2400 / k6000 と MNIST の全 50 件が整数一致(既定の圧縮つき=<code dir="auto">lut_flat</code> で k600 290.7 µs、k2400 782.2 µs、k6000 12.69 ms、MNIST 324.7 µs。圧縮なしは k600 410.9 µs、k6000 26.60 ms)。出力は圧縮なしと整数一致のまま。顔検出は <code dir="auto">dram0_0_seg</code> を 1,394,696 B 超過</td></tr><tr><td>iOS シミュレータ(iPhone 17、iOS 26.5)</td><td>実測検証済み</td><td>5 モデル(XOR・行動認識 2 本・顔検出・MNIST)で出力が整数一致。時間は <strong>ホスト CPU(Apple Silicon)の値</strong> で実機の値ではない</td></tr><tr><td>iOS 実機(iPhone 17、iOS 26.6.2)</td><td>実機で整数一致を確認</td><td>5 モデル(XOR・行動認識 k600 / k6000・MNIST・顔検出)の出力が <code dir="auto">ir/simulate.py</code> と整数一致(Release)。中央値は行動認識 k6000(<code dir="auto">lut_flat</code>、15,124 ゲート)8.07 µs、顔検出(1,279 ゲート、合成画像 8 枚)0.803 ms。各モデル 1 回の測定。署名なし Release ビルド(<code dir="auto">generic/platform=iOS</code>)も通る</td></tr><tr><td>Android</td><td>標準準拠につき理論上可(未検証)</td><td>NDK 経由で組み込む想定だが、実機ビルド・実行の実績はまだ無い</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="対応-cpu-アーキ-移植性契約">対応 CPU アーキ: 移植性契約</h2><a class="sl-anchor-link" href="#対応-cpu-アーキ-移植性契約"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “対応 CPU アーキ: 移植性契約”</span></a></div>
+<p>結論を先に書く。<strong>C99 の(クロス)コンパイラが存在するターゲットであれば、原則すべて動く。</strong>
+「対応アーキ」は命令セット別に用意された別々の実装の一覧ではなく、<strong>同じ 1 本の C99 ソースがそのまま通るか</strong> の検証実績の一覧にすぎない。
+根拠は次のとおり。</p>
+<ul>
+<li><strong>コアは厳密な C99</strong>。依存ヘッダは <code dir="auto">&#x3C;stdint.h></code> / <code dir="auto">&#x3C;stddef.h></code> の 2 つだけで、どちらもフリースタンディング処理系でも C 標準が提供を義務づける。
+<code dir="auto">-DMDL_NO_LIBC</code> で libc も不要になる(<code dir="auto">-ffreestanding</code> でホストヘッダ無しにビルドできる)</li>
+<li><strong>アーキ固有コード(NEON / SSE2 / AVX2 の組み込み関数・検出マクロ)は <code dir="auto">mdl_simd.h</code> の 1 ファイルだけに隔離</strong> されている。
+対応の無いアーキ、または <code dir="auto">-DMDL_NO_SIMD</code> では、自動的に <strong>ビット同一のスカラー実装</strong> へフォールバックする</li>
+<li><strong>エンディアン・アライメントの仮定を持ち込まない</strong>。ビットプレーンのワード演算はすべてビット位置(<code dir="auto">x>>5</code>、<code dir="auto">x&#x26;31</code>)で定義してあり、
+メモリ上のバイト列を別の整数幅として再解釈するポインタキャストがコアに 1 件も無い</li>
+<li><strong>SIMD は速くするだけで、正しさには影響しない</strong>。SIMD 経路とスカラー強制ビルドが実モデルでビット完全一致することを、テストで固定している</li>
+<li>生成コード(<code dir="auto">model.c</code> / <code dir="auto">model.h</code>)にもアーキ固有コードが無いことを、同様にテストで固定している</li>
+</ul>
+<aside aria-label="言い切れない残余条件が 1 つある" class="starlight-aside starlight-aside--caution"><p class="starlight-aside__title" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="starlight-aside__icon"><path d="M12 16a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10.67 1.47-8.05-14a3 3 0 0 0-5.24 0l-8 14A3 3 0 0 0 3.94 22h16.12a3 3 0 0 0 2.61-4.53Zm-1.73 2a1 1 0 0 1-.88.51H3.94a1 1 0 0 1-.88-.51 1 1 0 0 1 0-1l8-14a1 1 0 0 1 1.78 0l8.05 14a1 1 0 0 1 .05 1.02v-.02ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Z"></path></svg>言い切れない残余条件が 1 つある</p><div class="starlight-aside__content"><p>タップ平面の水平シフト(<code dir="auto">mdl_kernels.c</code>)が、<strong>負の値に対する符号付き右シフトを「算術シフト(2 の補数の床除算)」として扱う</strong>。
+これは厳密な C99 では処理系定義(implementation-defined)で、標準が無条件に保証するものではない。
+ただし 2 の補数を使うあらゆる実務上の C99 コンパイラ(gcc / clang / MSVC / 組込み向けの主要ツールチェーン)で成立し、
+既知の反例は無く、C23 ではこの挙動自体が標準の意味論として明文化された。
+つまり「C99 なら動く」は、実質的に <strong>「2 の補数・算術右シフトの実務上あらゆる C99 コンパイラなら動く」</strong> という意味だと理解するのが正確である。</p></div></aside>
+<p>この契約は、次のチェックで機械的に強制している。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>チェック内容</th><th>対応するテスト</th></tr></thead><tbody><tr><td>アーキ検出マクロ・インライン asm が <code dir="auto">mdl_simd.h</code> の外に無い</td><td><code dir="auto">TestSIMDContract</code></td></tr><tr><td>コアにバイト再解釈キャストが無い</td><td><code dir="auto">TestSIMDContract</code></td></tr><tr><td>SIMD 経路とスカラー経路が実モデルでビット完全一致</td><td><code dir="auto">TestSIMDContract</code></td></tr><tr><td>生成コード側にもアーキ固有コードが無い</td><td><code dir="auto">TestSIMDContract</code></td></tr><tr><td>依存ヘッダが 2 つだけ</td><td><code dir="auto">TestFreestanding</code></td></tr><tr><td>ヒープ確保・浮動小数点・I/O が無い</td><td><code dir="auto">TestFreestanding</code></td></tr><tr><td>libc 無しビルド(<code dir="auto">-DMDL_NO_LIBC -ffreestanding</code>)が通る</td><td><code dir="auto">TestFreestanding</code></td></tr></tbody></table>
+<p>テストは <code dir="auto">tests/deploy/test_c_portability.py</code> にある。</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="検証実績用途別">検証実績(用途別)</h3><a class="sl-anchor-link" href="#検証実績用途別"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “検証実績(用途別)”</span></a></div>
+<p>契約により「原則動くはず」の範囲のうち、<strong>実際にビルドまたは実行まで確認したもの</strong> を用途でまとめる。
+真実源は同テストの <code dir="auto">CROSS_TARGETS</code> で、手元の clang が持たないバックエンドは自動で skip される。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>用途グループ</th><th>検証段階</th><th>含まれるターゲット triple</th><th>代表デバイス</th></tr></thead><tbody><tr><td>組込み ARM(Cortex-M 系 / Cortex-A 系)</td><td>ビルドのみ確認</td><td><code dir="auto">thumbv6m-none-eabi</code>、<code dir="auto">armv7m-none-eabi</code>、<code dir="auto">armv7a-none-eabi</code>、<code dir="auto">thumbv7em-none-eabi</code>、<code dir="auto">armv8m.main-none-eabi</code>、<code dir="auto">aarch64-none-elf</code>、<code dir="auto">aarch64_be-none-elf</code>(ビッグエンディアン)</td><td>Cortex-M0 / M0+ / M3 / M4 / M4F / M7 / M33(STM32 など)、Cortex-A 系</td></tr><tr><td>Linux x86(i386 / x86_64)</td><td><strong>実行して数値一致まで確認</strong></td><td><code dir="auto">i386-unknown-linux-gnu</code>、<code dir="auto">x86_64-unknown-linux-gnu</code></td><td>PC / サーバ</td></tr><tr><td>aarch64 ホストネイティブ</td><td><strong>実行して数値一致まで確認</strong>(NEON とスカラーの一致を含む)</td><td>(ホストの aarch64)</td><td>Apple Silicon(M3 で実測)。iPhone / Android / Raspberry Pi も同アーキ</td></tr><tr><td>Windows(コア推論のみ)</td><td>ビルドのみ確認(クロス、<code dir="auto">-ffreestanding -DMDL_NO_LIBC</code>)</td><td><code dir="auto">x86_64-pc-windows-msvc</code>、<code dir="auto">x86_64-w64-windows-gnu</code></td><td>Windows(MSVC / MinGW ABI)。実機での実行は未検証</td></tr><tr><td>RISC-V / MIPS / WASM(C 版)</td><td>検証環境が無いため未検証(契約上は動く見込み)</td><td><code dir="auto">riscv32-unknown-elf</code>、<code dir="auto">riscv64-unknown-elf</code>、<code dir="auto">riscv64-unknown-linux-gnu</code>、<code dir="auto">mipsel-unknown-linux-gnu</code>、<code dir="auto">wasm32-unknown-unknown</code></td><td>RISC-V 組込み / Linux、MIPS Linux、freestanding WASM</td></tr><tr><td>Xtensa(ESP32)</td><td><strong>実行して数値一致まで確認</strong>(行動認識 dense。畳み込み 128px は DRAM 超過で非搭載)</td><td>(ESP-IDF v5.4-dev 同梱の xtensa-esp-elf 13.2.0)</td><td>ESP32-D0WDQ6(PSRAM なし)。PSRAM 付きボードは未検証</td></tr></tbody></table>
+<p><strong>Windows の並列ヘルパについて</strong>: <code dir="auto">mdl_threads.c</code>(<code dir="auto">mdl_run_pool</code> など)は pthread 専用で Windows 非対応である。
+コア(<code dir="auto">mdl_kernels.c</code> + 生成モデル)は Windows でもクロスビルドが通るが、複数コアで回す場合は、
+呼び出し側のスレッド(<code dir="auto">CreateThread</code> など)から <code dir="auto">mdl_infer_ctx</code>(コンテキストが別なら再入可能)を直接呼ぶ形になる。</p>
+<div class="sl-heading-wrapper level-h3"><h3 id="simd-経路検出マクロ別">SIMD 経路(検出マクロ別)</h3><a class="sl-anchor-link" href="#simd-経路検出マクロ別"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “SIMD 経路(検出マクロ別)”</span></a></div>
+<p>SIMD 経路はコンパイル時にマクロで自動選択され、無効な環境ではスカラーへ落ちる(<code dir="auto">mdl_simd.h</code>)。
+<strong>どの経路でも整数出力は完全に同一</strong> で、これは上の移植性契約の一部としてテストで固定している。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>経路</th><th>検出マクロ</th><th>検証段階</th><th>根拠</th></tr></thead><tbody><tr><td>NEON</td><td><code dir="auto">__ARM_NEON</code> / <code dir="auto">__ARM_NEON__</code></td><td>実測検証済み</td><td>Apple M3 で実行。スカラー経路との整数出力一致をテストで固定(この Mac の既定ビルドが NEON)</td></tr><tr><td>SSE2</td><td><code dir="auto">__SSE2__</code>、または <code dir="auto">_M_IX86_FP >= 2</code>(MSVC 方言)</td><td>ビルドのみ確認</td><td>x86_64 クロスコンパイルは通るが、SSE2 経路そのものを実機で実行して確認した記録は無い</td></tr><tr><td>スカラー(フォールバック)</td><td>上のどちらも無い場合、または <code dir="auto">-DMDL_NO_SIMD</code></td><td>実測検証済み</td><td>全実測の基準経路。SIMD 経路との比較対象でもある</td></tr><tr><td>AVX2</td><td><code dir="auto">__AVX2__</code>(MSVC は未対応)</td><td>実測検証済み</td><td>Xeon W-1270P(Comet Lake、8C16T)実機、gcc 9.4.0。dense / conv 系とも AVX2 ビルドとスカラー / SSE2 ビルドの出力がバイト完全一致。この検証は手動の A/B であり、常設のテストではない。<code dir="auto">-DMDL_NO_AVX2</code> / <code dir="auto">-mno-avx2</code> で SSE2 側へ戻せる</td></tr><tr><td>AVX-512</td><td>—</td><td>未実装</td><td>検証機に AVX-512 が無く、実行検証できないため実装を見送った</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="同種ライブラリとの比較で未対応のもの">同種ライブラリとの比較で未対応のもの</h2><a class="sl-anchor-link" href="#同種ライブラリとの比較で未対応のもの"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “同種ライブラリとの比較で未対応のもの”</span></a></div>
+<p>ONNX Runtime / TFLite / llama.cpp 級のランタイムが通常持っているもののうち、現時点で持たないものの正直な棚卸しである。
+<strong>「未対応」であって「対応不可能」ではない</strong>(標準 C99 の範囲でしか書いていないので、検証環境さえ揃えばビルドが通る可能性が高い)。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>項目</th><th>状態</th><th>理由</th></tr></thead><tbody><tr><td>RISC-V / MIPS 実機(または QEMU)での実行検証</td><td>未対応</td><td>クロスツールチェーンが手元に無い。実行にはさらにエミュレータか実機が要る</td></tr><tr><td>Windows 実機(<code dir="auto">cl.exe</code> / MinGW)でのビルド・実行</td><td>未対応</td><td>clang クロスでオブジェクト生成までは確認済みだが、Windows 機が手元に無い</td></tr><tr><td>Android 実機(NDK 経由)</td><td>未対応</td><td>組み込み手順の想定はあるが、実機・NDK でのビルド実績が無い</td></tr><tr><td>ESP32 で畳み込みモデル(顔検出 128px)</td><td>未対応</td><td>PSRAM なしの無印 ESP32 では <code dir="auto">MDL_CTX_BYTES</code> 1,544,000 B が静的 DRAM(180,736 B)に載らない。PSRAM 付きボードは未検証(<a href="/Griffith/guides/deploy-esp32/">ESP32 に載せる</a>)</td></tr><tr><td>MSP430</td><td>未対応</td><td>TI 製ツールチェーンが要る</td></tr><tr><td>WASM(C 版、<code dir="auto">wasm32-unknown-unknown</code> の freestanding ビルド)</td><td>未対応</td><td><code dir="auto">emcc</code> / <code dir="auto">wasi-sdk</code> が手元に無い。ブラウザ向けの WASM 自体は実測検証済みだが、それは C ランタイムとは別ソース</td></tr><tr><td>npm / pip で配るビルド済みバイナリ</td><td>未対応</td><td>このリポジトリはソース配布のみ(設計上の方針でもあり、配布物は命令セット別に分かれない)</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="gpu-cuda">GPU: CUDA</h2><a class="sl-anchor-link" href="#gpu-cuda"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “GPU: CUDA”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>項目</th><th>内容</th><th>検証段階</th></tr></thead><tbody><tr><td>検証済みの GPU</td><td>RTX 4070 Ti(compute capability 8.9 = <code dir="auto">sm_89</code>)</td><td>実測検証済み</td></tr><tr><td>検証済みの CUDA バージョン</td><td>CUDA 12.8</td><td>実測検証済み</td></tr><tr><td>ビルドコマンドの例</td><td><code dir="auto">nvcc -O2 -arch=sm_89 -I. model_cuda.cu mdl_cuda.cu your_main.cu -o app</code></td><td>—</td></tr><tr><td>他の compute capability / CUDA バージョン</td><td>コード側に最小要件のチェックは無く、<code dir="auto">nvcc</code> が解釈できれば通る</td><td>標準準拠につき理論上可(未検証)</td></tr><tr><td>検証コマンド</td><td><code dir="auto">codegen-cuda</code> はコード生成のみで、<code dir="auto">verify-cuda</code> に相当するサブコマンドは無い</td><td>—</td></tr><tr><td>平坦ネットリスト <code dir="auto">lut_flat</code>(<code dir="auto">--dense-flat auto</code> / <code dir="auto">on</code>)</td><td>生成はできるが、NVIDIA 実機では実行していない(生成コードの構文検査のみ。Metal では実機で整数一致を確認済み)</td><td>未検証</td></tr></tbody></table>
+<p>CUDA のカーネルの計算式は Metal と共有しており(<code dir="auto">__device__</code> / <code dir="auto">device</code> の違いはマクロで吸収)、
+C 版と整数一致することをテストで固定している。</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="gpu-metal">GPU: Metal</h2><a class="sl-anchor-link" href="#gpu-metal"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “GPU: Metal”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>項目</th><th>内容</th><th>検証段階</th></tr></thead><tbody><tr><td>検証済みの環境</td><td>Apple M3、macOS 26 系</td><td>実測検証済み</td></tr><tr><td>ツールチェーンの要件</td><td><code dir="auto">clang++</code> と Metal.framework があればよい(macOS であること、<code dir="auto">clang++</code> とランタイムディレクトリの存在で判定)</td><td>実測検証済み</td></tr><tr><td>Xcode の metal ツールチェーン</td><td><strong>不要</strong>。シェーダは実行時にソースからコンパイルするので、<code dir="auto">.metallib</code> の事前コンパイルは任意の最適化(コールドスタートの短縮)にすぎない</td><td>実測検証済み(実行時コンパイル経路)</td></tr><tr><td>他の Apple シリコン(M1 / M2 / M4 など)</td><td>同じ Metal API なので動く見込み</td><td>標準準拠につき理論上可(未検証)</td></tr></tbody></table>
+<p>検証コマンドは <code dir="auto">griffith deploy verify-metal</code>(macOS + Apple GPU + <code dir="auto">clang++</code> が必要)。</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="webブラウザ">Web(ブラウザ)</h2><a class="sl-anchor-link" href="#webブラウザ"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “Web(ブラウザ)”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>項目</th><th>内容</th><th>検証段階</th></tr></thead><tbody><tr><td>検証済みブラウザ</td><td>Chromium</td><td>実測検証済み(<code dir="auto">griffith deploy verify-web</code>)</td></tr><tr><td>wasm-SIMD(<code dir="auto">release-simd.wasm</code>)</td><td>既定で優先されるエンジン。未対応の環境では、理由を記録して純 TS(<code dir="auto">js</code>)へ自動でフォールバックする</td><td>実測検証済み(フォールバックを含め、両エンジンの出力一致をテストで固定)</td></tr><tr><td>Firefox / Safari 単体</td><td>個別の実測記録なし</td><td>標準準拠につき理論上可(未検証)</td></tr><tr><td>配信要件</td><td><code dir="auto">threads=1</code> が既定で <code dir="auto">SharedArrayBuffer</code> 不要。COOP/COEP ヘッダ無しの素の静的配信で動く</td><td>実測検証済み</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="hdlfpga--asic">HDL(FPGA / ASIC)</h2><a class="sl-anchor-link" href="#hdlfpga--asic"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “HDL(FPGA / ASIC)”</span></a></div>
+<p>Verilog / VHDL への出力は、デプロイキットの C / GPU / Web とは別経路(<code dir="auto">griffith export-hdl</code>)だが、同じ IR を起点にする。
+3 段の等価性(PyTorch hard eval、<code dir="auto">ir/simulate.py</code>、HDL シミュレーション)で検証する。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>項目</th><th>内容</th><th>検証段階</th></tr></thead><tbody><tr><td>Verilog</td><td>iverilog で生成物の出力を照合(ローカルで実行可)</td><td>実測検証済み</td></tr><tr><td>VHDL</td><td>ghdl で生成物の出力を照合(ghdl は CI / クラウドのコンテナでの検証が公式運用)</td><td>実測検証済み</td></tr><tr><td>実機 FPGA</td><td>Tang Nano 20K / DE0-CV など</td><td><a href="/Griffith/guides/fpga/">FPGA に焼く</a> の対応ボード表を参照</td></tr></tbody></table>
+<p>手順と照合の詳細は <a href="/Griffith/guides/hdl-export/">HDLエクスポート</a> にある。</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="対応ノード種と非対応の機能">対応ノード種と非対応の機能</h2><a class="sl-anchor-link" href="#対応ノード種と非対応の機能"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “対応ノード種と非対応の機能”</span></a></div>
+<p>C ランタイムが対応する IR のノード種は、<code dir="auto">conv2d</code> / <code dir="auto">or_pool2d</code> / <code dir="auto">upsample2d</code> / <code dir="auto">permute</code> / <code dir="auto">concat</code> / <code dir="auto">group_sum</code> /
+<code dir="auto">lut_layer</code>(<code dir="auto">n_inputs&#x3C;=5</code>)/ <code dir="auto">flatten</code> である。<strong>範囲外の形は生成時に例外</strong>(<code dir="auto">UnsupportedNode</code>)になり、
+黙って別経路へフォールバックしない(検証していないコードを出荷しないため)。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>ノード</th><th>対応範囲</th></tr></thead><tbody><tr><td><code dir="auto">conv2d</code></td><td>全般(stride / padding は任意。stride=1 かつ同幅は共有シフト平面の高速路)</td></tr><tr><td><code dir="auto">or_pool2d</code></td><td>kernel=2、stride=2、padding=0 のみ</td></tr><tr><td><code dir="auto">upsample2d</code></td><td>scale=2(最近傍)のみ</td></tr><tr><td><code dir="auto">permute</code></td><td>チャネル軸のみ / SpatialGroupSum 型(<code dir="auto">[0,2,3,1]</code> + group_sum 融合)</td></tr><tr><td><code dir="auto">concat</code></td><td>チャネル軸(ビットプレーン)/ スコア列(検出の多ヘッド出力)</td></tr><tr><td><code dir="auto">group_sum</code></td><td>素の総和 / SpatialGroupSum 融合</td></tr><tr><td><code dir="auto">lut_layer</code></td><td><code dir="auto">n_inputs &#x3C;= 5</code></td></tr><tr><td><code dir="auto">lut_flat</code></td><td>dense の平坦ネットリスト。<code dir="auto">griffith deploy codegen-c</code> が既定の <code dir="auto">--dense-flat auto</code> で、実効ゲートの削減率が閾値以上のとき C 生成時に作る(<code dir="auto">bundle --dense-flat</code> でバンドルに焼くこともできる)。現在は Web(<code dir="auto">codegen-web</code> が既定で平坦化)と CUDA / Metal(段ごとに並列実行。<code dir="auto">codegen-cuda</code> / <code dir="auto">codegen-metal</code> の既定は <code dir="auto">off</code> で、<code dir="auto">--dense-flat auto</code> / <code dir="auto">on</code> で opt-in)でも実行できる。<code dir="auto">--dense-flat off</code> なら出ない</td></tr><tr><td><code dir="auto">flatten</code></td><td>素通し</td></tr></tbody></table>
+<p>特に注意が必要な非対応の機能は次のとおり。</p>
+<ul>
+<li><strong>検出モデルのボックス復号(CenterNet のピーク抽出 + NMS)は含まれない</strong>。ランタイムが返すのはスコアマップまでで、
+そこから先はアプリ側の後処理である(手順は <a href="/Griffith/guides/deploy-models/#%E3%83%9C%E3%83%83%E3%82%AF%E3%82%B9%E3%81%AE%E5%BE%A9%E5%8F%B7%E3%81%AF%E3%82%A2%E3%83%97%E3%83%AA%E5%81%B4%E3%81%A7%E8%A1%8C%E3%81%86">デモモデルを用意する</a>)</li>
+<li><code dir="auto">add</code> / <code dir="auto">binarize</code> / <code dir="auto">constant</code> / 汎用 pool / 汎用 upsample は未実装(実モデルに現れないため)</li>
+</ul>
+<div class="sl-heading-wrapper level-h2"><h2 id="関連ページ">関連ページ</h2><a class="sl-anchor-link" href="#関連ページ"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “関連ページ”</span></a></div>
+<ul>
+<li><a href="/Griffith/guides/deploy-quickstart/">デプロイキット クイックスタート</a> — IR からバンドル、C 生成、実行までの通し手順</li>
+<li><a href="/Griffith/reference/deploy-bundle/">配布バンドル仕様</a> — バンドルの形式</li>
+<li><a href="/Griffith/reference/cli/#griffith-deploy">griffith CLI</a> — <code dir="auto">griffith deploy</code> の全サブコマンド</li>
+<li><a href="/Griffith/guides/deploy-esp32/">ESP32 に載せる</a> / <a href="/Griffith/guides/deploy-ios/">iPhone に載せる</a> — 実機手順</li>
+</ul></div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/Griffith/reference/deploy-optimizations/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">前へ<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">圧縮と最適化の一覧</span></span></a><a href="/Griffith/guides/editor/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">次へ<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">ビジュアルエディタ</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>

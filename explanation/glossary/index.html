@@ -1,0 +1,561 @@
+<!DOCTYPE html><html lang="ja" dir="ltr" data-theme="dark" data-has-toc data-has-sidebar class="astro-g5ptsecz"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>用語集 | Griffith</title><link rel="canonical" href="https://tsukushi-gate.github.io/Griffith/explanation/glossary/"/><link rel="alternate" hreflang="ja" href="https://tsukushi-gate.github.io/Griffith/explanation/glossary/"/><link rel="alternate" hreflang="en" href="https://tsukushi-gate.github.io/Griffith/en/explanation/glossary/"/><link rel="alternate" hreflang="x-default" href="https://tsukushi-gate.github.io/Griffith/explanation/glossary/"/><link rel="sitemap" href="/Griffith/sitemap-index.xml"/><link rel="shortcut icon" href="/Griffith/favicon.svg" type="image/svg+xml"/><meta name="generator" content="Astro v7.4.4"/><meta name="generator" content="Starlight v0.42.7"/><meta property="og:title" content="用語集"/><meta property="og:type" content="article"/><meta property="og:url" content="https://tsukushi-gate.github.io/Griffith/explanation/glossary/"/><meta property="og:locale" content="ja"/><meta property="og:description" content="DLGN / LUT / soft・hard / パラメータ化 / 離散化ギャップ など、本サイトとコードで同じ意味で使う言葉の定義。"/><meta property="og:site_name" content="Griffith"/><meta name="twitter:card" content="summary_large_image"/><meta name="description" content="DLGN / LUT / soft・hard / パラメータ化 / 離散化ギャップ など、本サイトとコードで同じ意味で使う言葉の定義。"/><script type="module" src="/Griffith/_astro/Head.astro_astro_type_script_index_0_lang.CBfaj9GZ.js"></script><script type="module" src="/Griffith/_astro/Head.astro_astro_type_script_index_1_lang.BxFcvEww.js"></script><script>
+	window.StarlightThemeProvider = (() => {
+		const storedTheme =
+			typeof localStorage !== 'undefined' && localStorage.getItem('starlight-theme');
+		const theme = storedTheme || 'dark';
+		document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
+		return {
+			updatePickers(theme = storedTheme || 'dark') {
+				document.querySelectorAll('starlight-theme-select').forEach((picker) => {
+					const select = picker.querySelector('select');
+					if (select) select.value = theme;
+					/** @type {HTMLTemplateElement | null} */
+					const tmpl = document.querySelector(`#theme-icons`);
+					const newIcon = tmpl && tmpl.content.querySelector('.' + theme);
+					if (newIcon) {
+						const oldIcon = picker.querySelector('svg.label-icon');
+						if (oldIcon) {
+							oldIcon.replaceChildren(...newIcon.cloneNode(true).childNodes);
+						}
+					}
+				});
+			},
+		};
+	})();
+</script><template id="theme-icons"><svg aria-hidden="true" class="light astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M5 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h1a1 1 0 0 0 1-1Zm.64 5-.71.71a1 1 0 0 0 0 1.41 1 1 0 0 0 1.41 0l.71-.71A1 1 0 0 0 5.64 17ZM12 5a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v1a1 1 0 0 0 1 1Zm5.66 2.34a1 1 0 0 0 .7-.29l.71-.71a1 1 0 1 0-1.41-1.41l-.66.71a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.29Zm-12-.29a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.71-.71a1.004 1.004 0 1 0-1.43 1.41l.73.71ZM21 11h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2Zm-2.64 6A1 1 0 0 0 17 18.36l.71.71a1 1 0 0 0 1.41 0 1 1 0 0 0 0-1.41l-.76-.66ZM12 6.5a5.5 5.5 0 1 0 5.5 5.5A5.51 5.51 0 0 0 12 6.5Zm0 9a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm0 3.5a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1Z"/></svg><svg aria-hidden="true" class="dark astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><svg aria-hidden="true" class="auto astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21 14h-1V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v7H3a1 1 0 0 0-1 1v2a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-2a1 1 0 0 0-1-1ZM6 7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7H6V7Zm14 10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1h16v1Z"/></svg></template><link rel="stylesheet" href="/Griffith/_astro/print.ehPL0gv-.css" media="print"><link rel="stylesheet" href="/Griffith/_astro/common.B49jf9hK.css"><style>@layer starlight.components{.card-grid:where(.astro-7qmvx3iy){grid-template-columns:100%;gap:1rem;display:grid}.card-grid:where(.astro-7qmvx3iy)>*{margin-top:0!important}@media (width>=50rem){.card-grid:where(.astro-7qmvx3iy){grid-template-columns:1fr 1fr;gap:1.5rem}.stagger:where(.astro-7qmvx3iy){--stagger-height:5rem;padding-bottom:var(--stagger-height)}.stagger:where(.astro-7qmvx3iy)>:nth-child(2n){transform:translateY(var(--stagger-height))}}.sl-link-card:where(.astro-zaaezwya){border:1px solid var(--sl-color-gray-5);box-shadow:var(--sl-shadow-sm);border-radius:.5rem;grid-template-columns:1fr auto;gap:.5rem;padding:1rem;display:grid;position:relative}a:where(.astro-zaaezwya){line-height:var(--sl-line-height-headings);text-decoration:none}a:where(.astro-zaaezwya):before{content:"";position:absolute;inset:0}.stack:where(.astro-zaaezwya){flex-direction:column;gap:.5rem}.title:where(.astro-zaaezwya){color:var(--sl-color-white);font-weight:600;font-size:var(--sl-text-lg)}.description:where(.astro-zaaezwya){color:var(--sl-color-gray-3);line-height:1.5}.icon:where(.astro-zaaezwya){color:var(--sl-color-gray-3)}.sl-link-card:where(.astro-zaaezwya):hover{background:var(--sl-color-gray-7,var(--sl-color-gray-6));border-color:var(--sl-color-gray-2)}.sl-link-card:where(.astro-zaaezwya):hover .icon:where(.astro-zaaezwya){color:var(--sl-color-white)}}
+@layer starlight.components{svg:where(.astro-hkc32dio){color:var(--sl-icon-color);font-size:var(--sl-icon-size,1em);width:1em;height:1em;overflow:visible}}
+@layer starlight.components{starlight-tabs:where(.astro-scn3uvmv){display:block}.tablist-wrapper:where(.astro-scn3uvmv){overflow-x:auto}:where(.astro-scn3uvmv)[role=tablist]{border-bottom:2px solid var(--sl-color-gray-5);padding:0;list-style:none;display:flex}.tab:where(.astro-scn3uvmv){display:flex}.tab:where(.astro-scn3uvmv)>:where(.astro-scn3uvmv)[role=tab]{--sl-tab-color-border:var(--sl-color-gray-5);line-height:var(--sl-line-height-headings);box-shadow:0 2px 0 var(--sl-tab-color-border);color:var(--sl-color-gray-3);outline-offset:var(--sl-outline-offset-inside);overflow-wrap:initial;align-items:center;gap:.5rem;padding:.275rem 1.25rem;text-decoration:none;display:flex}.tab:where(.astro-scn3uvmv) :where(.astro-scn3uvmv)[role=tab][aria-selected=true]{--sl-tab-color-border:var(--sl-color-text-accent);color:var(--sl-color-white);font-weight:600}.tablist-wrapper:where(.astro-scn3uvmv)~[role=tabpanel]{margin-top:1rem}}
+@layer starlight.components{.sl-steps{--bullet-size:calc(var(--sl-line-height) * 1rem);--bullet-margin:.375rem;counter-reset:steps-counter var(--sl-steps-start,0);padding-inline-start:0;list-style:none}.sl-steps>li{counter-increment:steps-counter;padding-inline-start:calc(var(--bullet-size) + 1rem);min-height:calc(var(--bullet-size) + var(--bullet-margin));padding-bottom:1px;position:relative}.sl-steps>li+li{margin-top:0}.sl-steps>li:before{content:counter(steps-counter);top:0;width:var(--bullet-size);height:var(--bullet-size);line-height:var(--bullet-size);font-size:var(--sl-text-xs);text-align:center;color:var(--sl-color-white);background-color:var(--sl-color-gray-6);box-shadow:inset 0 0 0 1px var(--sl-color-gray-5);border-radius:99rem;font-weight:600;position:absolute;inset-inline-start:0}.sl-steps>li:after{--guide-width:1px;content:"";top:calc(var(--bullet-size) + var(--bullet-margin));bottom:var(--bullet-margin);width:var(--guide-width);background-color:var(--sl-color-hairline-light);position:absolute;inset-inline-start:calc((var(--bullet-size) - var(--guide-width)) / 2)}}@layer starlight.content{.sl-steps>li>:first-child{--lh:calc(1em * var(--sl-line-height));--shift-y:calc(.5 * (var(--bullet-size) - var(--lh)));transform:translateY(var(--shift-y));margin-bottom:var(--shift-y)}.sl-steps>li>:first-child:where(h1,h2,h3,h4,h5,h6){--lh:calc(1em * var(--sl-line-height-headings))}@supports (--prop:1lh){.sl-steps>li>:first-child{--lh:1lh}}}
+</style><script type="module" src="/Griffith/_astro/page.cNngjUgL.js"></script></head><body class="astro-g5ptsecz"><a class="sl-skip-link astro-qb7clj6f" href="#_top">コンテンツにスキップ</a><div class="page sl-flex astro-yntsjkba"><header class="header astro-yntsjkba"><div class="header astro-nen7h5rs"><div class="title-wrapper sl-flex astro-nen7h5rs"><a href="/Griffith/" class="site-title sl-flex astro-6rvad3va"><span class="astro-6rvad3va" translate="no">Griffith</span></a></div><div class="sl-flex print:hidden astro-nen7h5rs"><site-search class="astro-nen7h5rs astro-b5kgnn7o" data-translations="{&quot;placeholder&quot;:&quot;検索&quot;}"><button data-open-modal disabled aria-label="検索" aria-keyshortcuts="Control+K" class="astro-b5kgnn7o"><svg aria-hidden="true" class="astro-b5kgnn7o astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.71 20.29 18 16.61A9 9 0 1 0 16.61 18l3.68 3.68a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.39ZM11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Z"/></svg><span class="sl-hidden md:sl-block astro-b5kgnn7o" aria-hidden="true">検索</span><kbd class="sl-hidden md:sl-flex astro-b5kgnn7o" style="display: none;"><kbd class="astro-b5kgnn7o">Ctrl</kbd><kbd class="astro-b5kgnn7o">K</kbd></kbd></button><dialog style="padding:0" aria-label="検索" class="astro-b5kgnn7o"><div class="dialog-frame sl-flex astro-b5kgnn7o"><button data-close-modal class="sl-flex md:sl-hidden astro-b5kgnn7o">キャンセル</button><div class="search-container astro-b5kgnn7o"><div id="starlight__search" class="astro-b5kgnn7o"></div></div></div></dialog></site-search><script>
+	(() => {
+		const openBtn = document.querySelector('button[data-open-modal]');
+		const shortcut = openBtn?.querySelector('kbd');
+		if (!openBtn || !(shortcut instanceof HTMLElement)) return;
+		const platformKey = shortcut.querySelector('kbd');
+		if (platformKey && /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform)) {
+			platformKey.textContent = '⌘';
+			openBtn.setAttribute('aria-keyshortcuts', 'Meta+K');
+		}
+		shortcut.style.display = '';
+	})();
+</script><script type="module" src="/Griffith/_astro/Search.astro_astro_type_script_index_0_lang.BB8DaZqm.js"></script></div><div class="sl-hidden md:sl-flex print:hidden right-group astro-nen7h5rs"><nav class="md-topnav astro-nen7h5rs" aria-label="メインナビゲーション"><a href="/Griffith/getting-started/installation/" class="astro-nen7h5rs">ドキュメント</a><a href="/Griffith/tutorials/xor/" class="astro-nen7h5rs">チュートリアル</a><a href="/Griffith/reference/api/" class="astro-nen7h5rs">API</a><a href="/Griffith/explanation/dlgn/" class="astro-nen7h5rs">DLGNとは</a></nav><div class="sl-flex social-icons astro-nen7h5rs"><a href="https://github.com/tsukushi-gate/Griffith" rel="me" class="sl-flex astro-n2mnl6yq"><span class="sr-only astro-n2mnl6yq">GitHub</span><svg aria-hidden="true" class="astro-n2mnl6yq astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">テーマの選択</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" selected class="astro-2z5xp7gb">ダーク</option><option value="light" class="astro-2z5xp7gb">ライト</option><option value="auto" class="astro-2z5xp7gb">自動</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><script type="module">var e=`starlight-theme`,t=e=>e===`auto`||e===`dark`||e===`light`?e:`dark`,n=()=>t(typeof localStorage<`u`&&localStorage.getItem(e));function r(t){typeof localStorage<`u`&&localStorage.setItem(e,t===`light`||t===`dark`?t:``)}var i=()=>matchMedia(`(prefers-color-scheme: light)`).matches?`light`:`dark`;function a(e){StarlightThemeProvider.updatePickers(e),document.documentElement.dataset.theme=e===`auto`?i():e,r(e)}matchMedia(`(prefers-color-scheme: light)`).addEventListener(`change`,()=>{n()===`auto`&&a(`auto`)});var o=class extends HTMLElement{constructor(){super(),a(n()),this.querySelector(`select`)?.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&a(t(e.currentTarget.value))})}};customElements.define(`starlight-theme-select`,o);</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">言語の選択</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/Griffith/explanation/glossary/" class="astro-2z5xp7gb">日本語</option><option value="/Griffith/en/explanation/glossary/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select><script type="module">var e=class extends HTMLElement{constructor(){super();let e=this.querySelector(`select`);e&&(e.addEventListener(`change`,e=>{e.currentTarget instanceof HTMLSelectElement&&(window.location.pathname=e.currentTarget.value)}),window.addEventListener(`pageshow`,t=>{if(!t.persisted)return;let n=e.querySelector(`option[selected]`)?.index;n!==e.selectedIndex&&(e.selectedIndex=n??0)}))}};customElements.define(`starlight-lang-select`,e);</script></div></div></header><nav class="sidebar print:hidden astro-yntsjkba" aria-label="メイン"><button popovertarget="starlight__sidebar" class="sl-menu-button sl-flex md:sl-hidden print:hidden astro-r2osgdlg"><svg aria-hidden="true" class="open-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M3 8h18a1 1 0 1 0 0-2H3a1 1 0 0 0 0 2Zm18 8H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Zm0-5H3a1 1 0 0 0 0 2h18a1 1 0 0 0 0-2Z"/></svg><svg aria-hidden="true" class="close-menu astro-r2osgdlg astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="m13.41 12 6.3-6.29a1.004 1.004 0 1 0-1.42-1.42L12 10.59l-6.29-6.3a1.004 1.004 0 0 0-1.42 1.42l6.3 6.29-6.3 6.29a1 1 0 0 0 0 1.42.998.998 0 0 0 1.42 0l6.29-6.3 6.29 6.3a.999.999 0 0 0 1.42 0 1 1 0 0 0 0-1.42L13.41 12Z"/></svg><span class="sr-only astro-r2osgdlg">メニュー</span></button><script type="module">var e=class extends HTMLElement{constructor(){super();let e=matchMedia(`(min-width: 50em)`),t=()=>{this.popover=e.matches?null:`auto`};t(),e.addEventListener(`change`,()=>t()),this.addEventListener(`toggle`,({newState:e})=>this.trapFocus(e===`open`))}trapFocus(e){document.querySelectorAll(`.main-frame, .sl-skip-link`).forEach(t=>{t.toggleAttribute(`inert`,e)})}};customElements.define(`sl-sidebar-pane`,e);</script><sl-sidebar-pane popover id="starlight__sidebar" class="sidebar-pane astro-yntsjkba"><div class="sidebar-content sl-flex astro-yntsjkba"><sl-sidebar-state-persist data-hash="0tdu995" class="astro-ipdry5cl"><script aria-hidden="true">
+		(() => {
+			try {
+				if (!matchMedia('(min-width: 50em)').matches) return;
+				/** @type {HTMLElement | null} */
+				const target = document.querySelector('sl-sidebar-state-persist');
+				const state = JSON.parse(sessionStorage.getItem('sl-sidebar-state') || '0');
+				if (!target || !state || target.dataset.hash !== state.hash) return;
+				window._starlightScrollRestore = state.scroll;
+				customElements.define(
+					'sl-sidebar-restore',
+					class SidebarRestore extends HTMLElement {
+						connectedCallback() {
+							try {
+								const idx = parseInt(this.dataset.index || '');
+								const details = this.closest('details');
+								if (details && typeof state.open[idx] === 'boolean') details.open = state.open[idx];
+							} catch {}
+						}
+					}
+				);
+			} catch {}
+		})();
+	</script><ul class="top-level astro-rmhv4bp6"><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">はじめに</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="0"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/getting-started/installation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">インストール</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/getting-started/quickstart/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">クイックスタート</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/getting-started/concepts/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">基本コンセプト</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">チュートリアル</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="1"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ギャラリー</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">入門コース</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="2"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/nn-basics/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">入門1. NNとPyTorchの基礎</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/pytorch-mlp/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">入門2. PyTorchでMLPを組む</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/mlp-to-dlgn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">入門3. MLPをDLGNへ置き換える</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">基本</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="3"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/mnist/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">1. MNISTを学習する(MLP)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/hybrid/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">2. ハイブリッドNN(実数+論理)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/hdl-export/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">3. HDLへエクスポート</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/deploy-mnist/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">4. デプロイする</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/cnn-hdl-export/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">5. CNNのHDLエクスポート</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/learning-rules/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">6. 学習則(BP以外: DFA/AP)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/full-pipeline/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">7. 通しチュートリアル</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/xor/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">付録: XORで仕組みを覗く(最小の回路)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">系列・言語</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="4"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-gpt/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Transformer(論理ゲートGPT)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/rddlgn-seq2seq/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">RNNでseq2seq(RDDLGN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-lstm/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">RNN: LSTM / GRU</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-wavenet/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">WaveNet(因果CNN・TCN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-reservoir/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">リザバー計算(学習しないRNN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-ladder/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Transformerを段階的に論理化</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">視覚</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="5"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-unet/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">U-Net(セグメンテーション)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-resnet/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ResNet(残差接続)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-mixer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">MLP-Mixer(token mixing)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/dwn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DWN(二値NN・温度計符号化)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">生成モデル</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="6"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-diffusion/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">拡散モデル(Diffusion)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-vae/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">VAE(二値潜在オートエンコーダ)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/logic-gan/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">GAN(敵対的生成)</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">応用</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="7"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/attention-tour/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Attentionの4変種(Transformer部品)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/detection/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">物体検出(CenterNet)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/binarybrain/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">BinaryBrain互換API(二値NN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/textcnn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">TextCNN(テキスト分類)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/tutorials/har/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">行動認識(UCI-HAR、スマホ加速度)</span></a></li></ul></details></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">ガイド</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="8"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/guides/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ガイド一覧</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/roadmap/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習ロードマップ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/choosing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">何を使えばいいのか</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/from-pytorch/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">PyTorchからの移行</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/training/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習を回す</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/training-curves/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習曲線の読み方</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/parameterization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">パラメータ化を選ぶ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/ir/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">IRを扱う</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/hdl-export/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">HDLエクスポート</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">デプロイ</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="9"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-quickstart/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">デプロイキット クイックスタート</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-your-model/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">自分のモデルをデプロイする</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-models/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">デモモデルを用意する</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-esp32/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ESP32に載せる</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-ios/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">iPhoneに載せる</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-web/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ブラウザで動かす</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/deploy-gpu/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">GPU(CUDA / Metal)で動かす</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/fpga/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">FPGAに焼く</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/deploy-optimizations/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">圧縮と最適化の一覧</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/platform-support/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">対応プラットフォーム一覧</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/editor/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ビジュアルエディタ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/wiring-visualization/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">回路と配線の可視化</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/cloud-gpu/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">クラウドGPU</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/guides/troubleshooting/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">トラブルシューティング</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">解説</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="10"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">解説の歩き方</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/dlgn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DLGNとは</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/nn-to-dlgn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">NNからDLGNへ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/ai-basics/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">AIの基礎</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/taxonomy/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DLGNの分類</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/architecture/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">アーキテクチャ全体像</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/lut-layer/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">LutLayerの数理</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/learning-rules/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習則(BP/AP/DFA/ES)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/design-decisions/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">設計判断の記録</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">実績・実験結果</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="11"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/dlgn-repro/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">論文再現と改善</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/parameterization-study/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">パラメータ化を決めた実験</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/discretization-gap/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">離散化ギャップ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/architecture-survey/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">アーキテクチャ横断の到達点</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/world-firsts/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">世界初主張の監査</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/results/experimental-models/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">実験ブランチのモデル群</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/faq/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">よくある質問</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/explanation/glossary/" aria-current="page" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">用語集</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">リファレンス</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="12"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/reference/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">リファレンス索引</span></a></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">Python API</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="13"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Python API</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/core/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">コア層</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/wiring-stats/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">配線の受容野・被覆率</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/conv/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">畳み込み・空間処理</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/seq2seq/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">seq2seq(RDDLGN)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/logic-gpt/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">decoder-only 因果Transformer</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/datasets-logic/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">論理関数データセット</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/datasets-vision/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">視覚データセット</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/datasets-har/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">UCI-HAR(行動認識)データセット</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/training-config/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">設定管理・共通ランナー</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/training-learning/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">学習アルゴリズム</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/hybrid/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ハイブリッドAPI</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/editor/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">エディタ連携</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/dwn/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">DWN / LLViT</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/binarybrain/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">BinaryBrain互換</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/blocks/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">一般NN部品</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/api/attention/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">Attention系</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/benchmarks/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ベンチマーク</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/model-zoo/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">モデル一覧(動物園)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/cli/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">griffith CLI</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/ir-schema/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">IRスキーマ</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/platform-support/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">対応プラットフォーム</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/deploy-bundle/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">配布バンドル仕様</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/reference/deploy-optimizations/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">圧縮と最適化の一覧</span></a></li></ul></details></li><li class="astro-rmhv4bp6"><details open class="astro-rmhv4bp6"><summary class="astro-rmhv4bp6"><span class="group-label astro-rmhv4bp6"><span class="large astro-rmhv4bp6">コントリビュート</span></span><svg aria-hidden="true" class="caret astro-rmhv4bp6 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.25rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></summary><sl-sidebar-restore data-index="14"></sl-sidebar-restore><ul class="astro-rmhv4bp6"><li class="astro-rmhv4bp6"><a href="/Griffith/contributing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">開発をはじめる</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/contributing/testing/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">テスト体系(L1〜L5)</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/contributing/docs/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ドキュメントを書く</span></a></li><li class="astro-rmhv4bp6"><a href="/Griffith/contributing/docs-management/" class="astro-rmhv4bp6"><span class="astro-rmhv4bp6">ドキュメント管理</span></a></li></ul></details></li></ul><script aria-hidden="true">
+		(() => {
+			const scroller = document.getElementById('starlight__sidebar');
+			if (!window._starlightScrollRestore || !scroller) return;
+			scroller.scrollTop = window._starlightScrollRestore;
+			delete window._starlightScrollRestore;
+		})();
+	</script></sl-sidebar-state-persist><div class="md:sl-hidden"><div class="mobile-preferences sl-flex astro-p4azlveh"><div class="social-icons astro-p4azlveh"><a href="https://github.com/tsukushi-gate/Griffith" rel="me" class="sl-flex astro-n2mnl6yq"><span class="sr-only astro-n2mnl6yq">GitHub</span><svg aria-hidden="true" class="astro-n2mnl6yq astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.08 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.42.36.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3Z"/></svg></a></div><starlight-theme-select><label style="--sl-select-width: 6.25em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">テーマの選択</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M21.64 13a1 1 0 0 0-1.05-.14 8.049 8.049 0 0 1-3.37.73 8.15 8.15 0 0 1-8.14-8.1 8.59 8.59 0 0 1 .25-2A1 1 0 0 0 8 2.36a10.14 10.14 0 1 0 14 11.69 1 1 0 0 0-.36-1.05Zm-9.5 6.69A8.14 8.14 0 0 1 7.08 5.22v.27a10.15 10.15 0 0 0 10.14 10.14 9.784 9.784 0 0 0 2.1-.22 8.11 8.11 0 0 1-7.18 4.32v-.04Z"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="dark" selected class="astro-2z5xp7gb">ダーク</option><option value="light" class="astro-2z5xp7gb">ライト</option><option value="auto" class="astro-2z5xp7gb">自動</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-theme-select><script>
+	StarlightThemeProvider.updatePickers();
+</script><starlight-lang-select><label style="--sl-select-width: 7em" class="astro-2z5xp7gb"><span class="sr-only astro-2z5xp7gb">言語の選択</span><svg aria-hidden="true" class="icon label-icon astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path fill-rule="evenodd" d="M8.516 3a.94.94 0 0 0-.941.94v1.15H2.94a.94.94 0 1 0 0 1.882h7.362a7.422 7.422 0 0 1-1.787 3.958 7.42 7.42 0 0 1-1.422-2.425.94.94 0 1 0-1.774.627 9.303 9.303 0 0 0 1.785 3.043 7.422 7.422 0 0 1-4.164 1.278.94.94 0 1 0 0 1.881 9.303 9.303 0 0 0 5.575-1.855 9.303 9.303 0 0 0 4.11 1.74l-.763 1.525a.968.968 0 0 0-.016.034l-1.385 2.77a.94.94 0 1 0 1.683.841l1.133-2.267h5.806l1.134 2.267a.94.94 0 0 0 1.683-.841l-1.385-2.769a.95.95 0 0 0-.018-.036l-3.476-6.951a.94.94 0 0 0-1.682 0l-1.82 3.639a7.423 7.423 0 0 1-3.593-1.256 9.303 9.303 0 0 0 2.27-5.203h1.894a.94.94 0 0 0 0-1.881H9.456V3.94A.94.94 0 0 0 8.516 3Zm6.426 11.794a1.068 1.068 0 0 1-.02.039l-.703 1.407h3.924l-1.962-3.924-1.24 2.478Z" clip-rule="evenodd"/></svg><select autocomplete="off" class="astro-2z5xp7gb"><option value="/Griffith/explanation/glossary/" class="astro-2z5xp7gb">日本語</option><option value="/Griffith/en/explanation/glossary/" class="astro-2z5xp7gb">English</option></select><svg aria-hidden="true" class="icon caret astro-2z5xp7gb astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1em;"><path d="M17 9.17a1 1 0 0 0-1.41 0L12 12.71 8.46 9.17a1 1 0 1 0-1.41 1.42l4.24 4.24a1.002 1.002 0 0 0 1.42 0L17 10.59a1.002 1.002 0 0 0 0-1.42Z"/></svg></label></starlight-lang-select></div></div></div></sl-sidebar-pane></nav><div class="main-frame astro-yntsjkba"><script type="module">var e=document.getElementById(`starlight__sidebar`),t=e?.querySelector(`sl-sidebar-state-persist`),n=`sl-sidebar-state`,r=()=>{let r=[],i=t?.dataset.hash||``;try{let e=sessionStorage.getItem(n),t=JSON.parse(e||`{}`);Array.isArray(t.open)&&t.hash===i&&(r=t.open)}catch{}return{hash:i,open:r,scroll:e?.scrollTop||0}},i=e=>{try{sessionStorage.setItem(n,JSON.stringify(e))}catch{}},a=()=>i(r()),o=(e,t)=>{let n=r();n.open[t]=e,i(n)};t?.addEventListener(`click`,e=>{if(!(e.target instanceof Element))return;let t=e.target.closest(`summary`)?.closest(`details`);if(!t)return;let n=t.querySelector(`sl-sidebar-restore`),r=parseInt(n?.dataset.index||``);isNaN(r)||o(!t.open,r)}),addEventListener(`visibilitychange`,()=>{document.visibilityState===`hidden`&&a()});</script><div class="lg:sl-flex astro-lrzkfocr"><aside class="right-sidebar-container print:hidden astro-lrzkfocr"><div class="right-sidebar astro-lrzkfocr"><div class="lg:sl-hidden astro-qok35upx"><mobile-starlight-toc data-min-h="2" data-max-h="3" class="astro-66cqc7ze"><nav aria-labelledby="starlight__on-this-page--mobile" class="astro-66cqc7ze"><details id="starlight__mobile-toc" class="astro-66cqc7ze"><summary id="starlight__on-this-page--mobile" class="sl-flex astro-66cqc7ze"><span class="toggle sl-flex astro-66cqc7ze">目次<svg aria-hidden="true" class="caret astro-66cqc7ze astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1rem;"><path d="m14.83 11.29-4.24-4.24a1 1 0 1 0-1.42 1.41L12.71 12l-3.54 3.54a1 1 0 0 0 0 1.41 1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.24-4.24a1.002 1.002 0 0 0 0-1.42Z"/></svg></span><span class="display-current astro-66cqc7ze"></span></summary><div class="dropdown astro-66cqc7ze"><ul class="isMobile astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">概要</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#系譜の見取り図" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">系譜の見取り図</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#1-アーキテクチャ名論文由来" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">1. アーキテクチャ名(論文由来)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#2-コンポーネント" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">2. コンポーネント</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#コアレイヤ" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">コアレイヤ</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#集約出力レイヤ" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">集約・出力レイヤ</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#実数とビットの境界" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">実数とビットの境界</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#3-パラメータ化方式" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">3. パラメータ化方式</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#4-訓練" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">4. 訓練</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#ゲート選択方式selection" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">ゲート選択方式(selection)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#学習則" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">学習則</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#5-技術概念" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">5. 技術概念</span></a><ul class="isMobile astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#lut-関連" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">LUT 関連</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#計算手法" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">計算手法</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#モード" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">モード</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#接続方式" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">接続方式</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#6-下流irhdl" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">6. 下流(IR・HDL)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#7-ハードウェア事業用語" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">7. ハードウェア・事業用語</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#8-紛らわしい用語の区別" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">8. 紛らわしい用語の区別</span></a></li></ul></div></details></nav></mobile-starlight-toc><script type="module" src="/Griffith/_astro/MobileTableOfContents.astro_astro_type_script_index_0_lang.C3fM4Kra.js"></script></div><div class="right-sidebar-panel sl-hidden lg:sl-block astro-qok35upx"><div class="sl-container astro-qok35upx"><starlight-toc data-min-h="2" data-max-h="3"><nav aria-labelledby="starlight__on-this-page"><h2 id="starlight__on-this-page">目次</h2><ul class="astro-jugkfwgx" style="--depth: 0;"><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#_top" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">概要</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#系譜の見取り図" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">系譜の見取り図</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#1-アーキテクチャ名論文由来" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">1. アーキテクチャ名(論文由来)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#2-コンポーネント" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">2. コンポーネント</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#コアレイヤ" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">コアレイヤ</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#集約出力レイヤ" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">集約・出力レイヤ</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#実数とビットの境界" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">実数とビットの境界</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#3-パラメータ化方式" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">3. パラメータ化方式</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#4-訓練" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">4. 訓練</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#ゲート選択方式selection" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">ゲート選択方式(selection)</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#学習則" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">学習則</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#5-技術概念" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">5. 技術概念</span></a><ul class="astro-jugkfwgx" style="--depth: 1;"><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#lut-関連" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">LUT 関連</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#計算手法" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">計算手法</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#モード" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">モード</span></a></li><li style="--depth: 1;" class="astro-jugkfwgx"><a href="#接続方式" style="--depth: 1;" class="astro-jugkfwgx"><span style="--depth: 1;" class="astro-jugkfwgx">接続方式</span></a></li></ul></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#6-下流irhdl" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">6. 下流(IR・HDL)</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#7-ハードウェア事業用語" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">7. ハードウェア・事業用語</span></a></li><li style="--depth: 0;" class="astro-jugkfwgx"><a href="#8-紛らわしい用語の区別" style="--depth: 0;" class="astro-jugkfwgx"><span style="--depth: 0;" class="astro-jugkfwgx">8. 紛らわしい用語の区別</span></a></li></ul></nav></starlight-toc><script type="module" src="/Griffith/_astro/TableOfContents.astro_astro_type_script_index_0_lang.BpJaGz7G.js"></script></div></div></div></aside><div class="main-pane astro-lrzkfocr"><main data-pagefind-body class="astro-g5ptsecz" lang="ja" dir="ltr"><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><h1 id="_top" class="astro-bebwqqxs">用語集</h1></div></div><div class="content-panel astro-a7po4psb"><div class="sl-container astro-a7po4psb"><div class="sl-markdown-content"><p>本プロジェクトで使う言葉の定義。<strong>コード・ドキュメント・会話で同じ言葉を同じ意味で使う</strong>ことを目的とする
+(ユビキタス言語)。用語の背景は <a href="/Griffith/explanation/dlgn/">DLGNとは何か</a> と
+<a href="/Griffith/explanation/taxonomy/">分類と系譜</a> を参照。</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="系譜の見取り図">系譜の見取り図</h2><a class="sl-anchor-link" href="#系譜の見取り図"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “系譜の見取り図”</span></a></div>
+<div class="expressive-code"><link rel="stylesheet" href="/Griffith/_astro/ec.q45ns.css"><script type="module" src="/Griffith/_astro/ec.0vx5m.js"></script><figure class="frame not-content"><figcaption class="header"></figcaption><pre data-language="plaintext"><code><div class="ec-line"><div class="code"><span style="--0:#abb2bf;--1:#383a42">学術論文の系譜                       本ライブラリでの実装</span></div></div><div class="ec-line"><div class="code"><span style="--0:#abb2bf;--1:#383a42">─────────────────                 ─────────────────</span></div></div><div class="ec-line"><div class="code"><span style="--0:#abb2bf;--1:#383a42">difflogic (2022)                  griffith_logic</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">  </span></span><span style="--0:#abb2bf;--1:#383a42">│  2入力固定、softmax                │  N入力へ一般化(N=2,4,6)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">  </span></span><span style="--0:#abb2bf;--1:#383a42">├─ DLGN     ← 全結合                ├─ LutLayer(全結合)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">  </span></span><span style="--0:#abb2bf;--1:#383a42">├─ CDDLGN   ← 畳み込み              ├─ LutConv2d(畳み込み)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">  </span></span><span style="--0:#abb2bf;--1:#383a42">├─ RDDLGN   ← RNN                   ├─ RDDLGN(seq2seq)</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">  </span></span><span style="--0:#abb2bf;--1:#383a42">├─ LDDLGN   ← 軽量化                ├─ iwp パラメータ化</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">  </span></span><span style="--0:#abb2bf;--1:#383a42">├─ WARP     ← WH変換                ├─ warp パラメータ化</span></div></div><div class="ec-line"><div class="code"><span class="indent"><span style="--0:#abb2bf;--1:#383a42">  </span></span><span style="--0:#abb2bf;--1:#383a42">└─ CAGE     ← 訓練改善              └─ Hard-ST + 温度スケジューラ</span></div></div><div class="ec-line"><div class="code">
+</div></div><div class="ec-line"><div class="code"><span style="--0:#abb2bf;--1:#383a42">BinaryBrain ─ independent パラメータ化 ─→ independent / raw パラメータ化</span></div></div></code></pre><div class="copy"><div aria-live="polite"></div><button title="クリップボードにコピー" data-copied="コピーしました！" data-code="学術論文の系譜                       本ライブラリでの実装─────────────────                 ─────────────────difflogic (2022)                  griffith_logic  │  2入力固定、softmax                │  N入力へ一般化(N=2,4,6)  ├─ DLGN     ← 全結合                ├─ LutLayer(全結合)  ├─ CDDLGN   ← 畳み込み              ├─ LutConv2d(畳み込み)  ├─ RDDLGN   ← RNN                   ├─ RDDLGN(seq2seq)  ├─ LDDLGN   ← 軽量化                ├─ iwp パラメータ化  ├─ WARP     ← WH変換                ├─ warp パラメータ化  └─ CAGE     ← 訓練改善              └─ Hard-ST + 温度スケジューラBinaryBrain ─ independent パラメータ化 ─→ independent / raw パラメータ化"><div></div></button></div></figure></div>
+<div class="sl-heading-wrapper level-h2"><h2 id="1-アーキテクチャ名論文由来">1. アーキテクチャ名(論文由来)</h2><a class="sl-anchor-link" href="#1-アーキテクチャ名論文由来"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “1. アーキテクチャ名(論文由来)”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>用語</th><th>正式名</th><th>出典</th><th>意味</th></tr></thead><tbody><tr><td><strong>DLGN</strong></td><td>Deep Differentiable Logic Gate Networks</td><td>Petersen et al., NeurIPS 2022</td><td>2入力論理ゲートを softmax で微分可能にした<strong>全結合</strong>ネットワーク。本ライブラリはこれを N 入力へ一般化したもので、DLGN そのものではない</td></tr><tr><td><strong>difflogic</strong></td><td>—</td><td>同上(参照実装名)</td><td>DLGN の公式実装リポジトリ名。「difflogic 互換」= N=2 + softmax モード</td></tr><tr><td><strong>CDDLGN</strong></td><td>Convolutional DDLGN</td><td>Petersen et al., NeurIPS 2024</td><td>論理ゲートツリーによる<strong>畳み込み</strong>。<code dir="auto">LutConv2d</code> の設計元</td></tr><tr><td><strong>RDDLGN</strong></td><td>Recurrent DDLGN</td><td>Buhrer et al., 2025</td><td>DLGN の <strong>RNN / seq2seq</strong> 拡張</td></tr><tr><td><strong>LDDLGN</strong></td><td>Light DDLGN</td><td>Ruttgers et al., 2025</td><td>入力ごとのパラメータ化(IWP)で<strong>軽量化</strong></td></tr><tr><td><strong>WARP</strong></td><td>WAlsh Relaxation for Probabilistic LNNs</td><td>Gerlach et al., 2025</td><td>Walsh-Hadamard 変換による<strong>制約なし最適化</strong>。N=4,6 で安定</td></tr><tr><td><strong>CAGE</strong></td><td>Align Forward, Adapt Backward</td><td>Kim, 2026</td><td>Hard-ST 訓練 + 適応温度スケジューリング</td></tr><tr><td><strong>DWN</strong></td><td>Differentiable Weightless Neural Networks</td><td>Bacellar et al., ICML 2024</td><td>6入力LUT + 学習配線。EFD 勾配</td></tr><tr><td><strong>LogicNets</strong></td><td>—</td><td>Umuroglu et al., FPL 2020</td><td>量子化+疎化から真理値表を列挙する「算術演算DLGN」</td></tr><tr><td><strong>LL-ViT</strong></td><td>—</td><td>Nag et al., ICFPT 2025</td><td>ViT の MLP だけを LUT 化するハイブリッド</td></tr><tr><td><strong>BinaryBrain</strong></td><td>—</td><td>今村</td><td>LUT 直接学習フレームワーク(C++)。<code dir="auto">independent</code> / <code dir="auto">raw</code> パラメータ化の起源</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="2-コンポーネント">2. コンポーネント</h2><a class="sl-anchor-link" href="#2-コンポーネント"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “2. コンポーネント”</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="コアレイヤ">コアレイヤ</h3><a class="sl-anchor-link" href="#コアレイヤ"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “コアレイヤ”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>名前</th><th>何をするか</th><th>入出力</th></tr></thead><tbody><tr><td><strong>LutLayer</strong></td><td>N 入力 LUT ゲートの全結合層。最小構成要素</td><td><code dir="auto">(B, in_dim)</code> → <code dir="auto">(B, out_dim)</code>、値域 [0,1]</td></tr><tr><td><strong>LutConv2d</strong></td><td>論理ゲートツリーによる畳み込み層</td><td><code dir="auto">(B, C, H, W)</code> → <code dir="auto">(B, C', H', W')</code></td></tr><tr><td><strong>DWNLayer</strong></td><td>二値入力 → N入力LUT × n_luts → 二値出力(EFD 勾配)。LutLayer のパラメータ化ではなく独立レイヤ</td><td><code dir="auto">(B, in_bits)</code> → <code dir="auto">(B, n_luts)</code>、値域 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">{</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">\{0,1\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">{</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">1</span><span class="mclose">}</span></span></span></span></td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="集約出力レイヤ">集約・出力レイヤ</h3><a class="sl-anchor-link" href="#集約出力レイヤ"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “集約・出力レイヤ”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>名前</th><th>何をするか</th><th>用途</th></tr></thead><tbody><tr><td><strong>GroupSum</strong></td><td>ニューロンを k グループに分けて合計し、温度 τ で割る</td><td><strong>分類</strong>タスクの出力層</td></tr><tr><td><strong>SpatialGroupSum</strong></td><td>GroupSum の空間次元保持版</td><td><strong>検出</strong>タスクのヘッド</td></tr><tr><td><strong>OrPooling2d</strong></td><td>max pooling(= 論理 OR プーリング)</td><td>CNN 内のダウンサンプリング</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="実数とビットの境界">実数とビットの境界</h3><a class="sl-anchor-link" href="#実数とビットの境界"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “実数とビットの境界”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>名前</th><th>何をするか</th></tr></thead><tbody><tr><td><strong>Binarize</strong></td><td>forward は閾値で二値化、backward は HardTanh STE</td></tr><tr><td><strong>RealToBinary</strong></td><td>実数入力を複数閾値で二値化し、バッチ方向に水増しする(バイナリ変調)</td></tr><tr><td><strong>BinaryToReal</strong></td><td>変調フレームを平均して実数に戻す</td></tr><tr><td><strong>DifferentiableLutBlock</strong></td><td>LutLayer(raw) + BatchNorm1d + Binarize の複合層(BinaryBrain 互換)</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="3-パラメータ化方式">3. パラメータ化方式</h2><a class="sl-anchor-link" href="#3-パラメータ化方式"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “3. パラメータ化方式”</span></a></div>
+<p>LutLayer の重み <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>W</mi></mrow><annotation encoding="application/x-tex">W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.1389em;">W</span></span></span></span> をどうゲート出力に変換するかの方式。</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>方式名</th><th>起源</th><th>数式</th><th>パラメータ数/ゲート</th><th>特徴</th></tr></thead><tbody><tr><td><strong>softmax</strong>(既定)</td><td>DLGN</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi><mo>=</mo><mrow><mi mathvariant="normal">s</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">f</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">m</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">x</mi></mrow><mo stretchy="false">(</mo><mi>W</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">w=\mathrm{softmax}(W)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0269em;">w</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathrm">softmax</span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.1389em;">W</span><span class="mclose">)</span></span></span></span></td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>N</mi></msup></mrow><annotation encoding="application/x-tex">2^N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8413em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.109em;">N</span></span></span></span></span></span></span></span></span></span></span></td><td>エントリ間が<strong>競合</strong>(合計 1)。N=2 では 16 ゲートモード</td></tr><tr><td><strong>independent</strong></td><td>BinaryBrain</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi><mo>=</mo><mi>σ</mi><mo stretchy="false">(</mo><mi>W</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">w=\sigma(W)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0269em;">w</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">σ</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.1389em;">W</span><span class="mclose">)</span></span></span></span></td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>N</mi></msup></mrow><annotation encoding="application/x-tex">2^N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8413em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.109em;">N</span></span></span></span></span></span></span></span></span></span></span></td><td>各エントリが<strong>独立</strong>(合計 ≠ 1)</td></tr><tr><td><strong>iwp</strong></td><td>LDDLGN</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∏</mo><mi>j</mi></msub><mo stretchy="false">[</mo><msub><mi>p</mi><mi>j</mi></msub><msub><mi>x</mi><mi>j</mi></msub><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>p</mi><mi>j</mi></msub><mo stretchy="false">)</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><msub><mi>x</mi><mi>j</mi></msub><mo stretchy="false">)</mo><mo stretchy="false">]</mo></mrow><annotation encoding="application/x-tex">\prod_j [p_j x_j + (1-p_j)(1-x_j)]</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.1858em;vertical-align:-0.4358em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em;">∏</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.162em;"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0572em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.4358em;"><span></span></span></span></span></span></span><span class="mopen">[</span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0572em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0572em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0572em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0572em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mclose">)]</span></span></span></span></td><td><strong><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.109em;">N</span></span></span></span></strong></td><td>入力ごとに 1 パラメータ。パラメータ数が約 10 分の 1</td></tr><tr><td><strong>raw</strong></td><td>BinaryBrain</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>w</mi><mo>=</mo><mrow><mi mathvariant="normal">c</mi><mi mathvariant="normal">l</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">m</mi><mi mathvariant="normal">p</mi></mrow><mo stretchy="false">(</mo><mi>W</mi><mo separator="true">,</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">w=\mathrm{clamp}(W,0,1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal" style="margin-right:0.0269em;">w</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathrm">clamp</span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.1389em;">W</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span></td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>N</mi></msup></mrow><annotation encoding="application/x-tex">2^N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8413em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.109em;">N</span></span></span></span></span></span></span></span></span></span></span></td><td>重みを直接 [0,1] に保持。optimizer step 後にクランプ</td></tr><tr><td><strong>warp</strong></td><td>WARP</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi><mo>=</mo><mi>σ</mi><mo stretchy="false">(</mo><msub><mo>∑</mo><mi>k</mi></msub><msub><mi>θ</mi><mi>k</mi></msub><msubsup><mi>φ</mi><mi>k</mi><mrow><mi>W</mi><mi>H</mi></mrow></msubsup><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mn>2</mn><mi>x</mi><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mi>τ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">y=\sigma(\sum_k \theta_k \varphi_k^{WH}(1-2x)/\tau)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">y</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.141em;vertical-align:-0.2997em;"></span><span class="mord mathnormal" style="margin-right:0.0359em;">σ</span><span class="mopen">(</span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1864em;"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2997em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0278em;">θ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0278em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal">φ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-2.4169em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.0315em;">k</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.1389em;">W</span><span class="mord mathnormal mtight" style="margin-right:0.0813em;">H</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2831em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">2</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="mclose">)</span></span></span></span></td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>N</mi></msup></mrow><annotation encoding="application/x-tex">2^N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8413em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.109em;">N</span></span></span></span></span></span></span></span></span></span></span></td><td>Walsh-Hadamard 基底上の<strong>制約なし実数</strong>パラメータ。N=4,6 の安定学習に推奨</td></tr></tbody></table>
+<aside aria-label="注意" class="starlight-aside starlight-aside--caution"><p class="starlight-aside__title" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" class="starlight-aside__icon"><path d="M12 16a1 1 0 1 0 0 2 1 1 0 0 0 0-2Zm10.67 1.47-8.05-14a3 3 0 0 0-5.24 0l-8 14A3 3 0 0 0 3.94 22h16.12a3 3 0 0 0 2.61-4.53Zm-1.73 2a1 1 0 0 1-.88.51H3.94a1 1 0 0 1-.88-.51 1 1 0 0 1 0-1l8-14a1 1 0 0 1 1.78 0l8.05 14a1 1 0 0 1 .05 1.02v-.02ZM12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1Z"></path></svg>注意</p><div class="starlight-aside__content"><p><code dir="auto">softmax</code> / <code dir="auto">independent</code> / <code dir="auto">iwp</code> / <code dir="auto">raw</code> / <code dir="auto">warp</code> は <strong>コード上のフラグ名</strong> であり、
+論文名(DLGN / BinaryBrain / LDDLGN / WARP)とは区別する。</p></div></aside>
+<div class="sl-heading-wrapper level-h2"><h2 id="4-訓練">4. 訓練</h2><a class="sl-anchor-link" href="#4-訓練"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “4. 訓練”</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="ゲート選択方式selection">ゲート選択方式(<code dir="auto">selection</code>)</h3><a class="sl-anchor-link" href="#ゲート選択方式selection"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “ゲート選択方式(selection)”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>方式</th><th>forward</th><th>backward</th><th>選択ギャップ</th><th>起源</th></tr></thead><tbody><tr><td><strong>soft</strong>(既定)</td><td>softmax 混合(全ゲートの加重和)</td><td>解析的な softmax Jacobian</td><td><strong>> 0</strong>(訓練 ≠ 推論)</td><td>DLGN</td></tr><tr><td><strong>hard_st</strong></td><td>argmax(1 つのゲートを選択)</td><td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">s</mi><mi mathvariant="normal">o</mi><mi mathvariant="normal">f</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">m</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">x</mi></mrow><mo stretchy="false">(</mo><mi>W</mi><mi mathvariant="normal">/</mi><msub><mi>τ</mi><mi>b</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathrm{softmax}(W/\tau_b)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathrm">softmax</span></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.1389em;">W</span><span class="mord">/</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.1132em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">b</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> による STE 近似</td><td><strong>= 0</strong>(訓練 = 推論)</td><td>CAGE</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="学習則">学習則</h3><a class="sl-anchor-link" href="#学習則"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “学習則”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>名称</th><th>方式</th><th>勾配の作り方</th></tr></thead><tbody><tr><td><strong>BP</strong></td><td>PyTorch autograd</td><td>自動微分(標準の SGD / Adam)</td></tr><tr><td><strong>AP</strong>(Akiho Propagation)</td><td>手動更新</td><td><code dir="auto">w += error × basis × lr</code>(逆伝播を使わない)</td></tr><tr><td><strong>DFA</strong>(Direct Feedback Alignment)</td><td>固定ランダム行列で誤差を直送</td><td>層間の逐次依存が無い</td></tr><tr><td><strong>EGGROLL</strong></td><td>進化戦略</td><td>勾配を使わない探索</td></tr></tbody></table>
+<p>学習則は層単位で混在できる(<code dir="auto">with_learning</code> + <code dir="auto">HybridTrainer</code>)。</p>
+<div class="sl-heading-wrapper level-h2"><h2 id="5-技術概念">5. 技術概念</h2><a class="sl-anchor-link" href="#5-技術概念"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “5. 技術概念”</span></a></div>
+<div class="sl-heading-wrapper level-h3"><h3 id="lut-関連">LUT 関連</h3><a class="sl-anchor-link" href="#lut-関連"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “LUT 関連”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>用語</th><th>定義</th></tr></thead><tbody><tr><td><strong>LUT</strong>(Look-Up Table)</td><td>入力ビットパターンに対する出力を格納した真理値表。FPGA / ASIC の基本構成要素</td></tr><tr><td><strong>N入力LUT / LUT-N</strong></td><td>N 個の入力を持つ LUT。<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mn>2</mn><mi>N</mi></msup></mrow><annotation encoding="application/x-tex">2^N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8413em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.109em;">N</span></span></span></span></span></span></span></span></span></span></span> 個のエントリを持つ(N=2,4,6 をサポート)</td></tr><tr><td><strong>LUT6</strong></td><td>6入力LUT。現行 FPGA の標準プリミティブ。N=6 モードが 1 セルに直マップされる</td></tr><tr><td><strong>n_inputs / N</strong></td><td>LUT の入力数(fan-in)。コード上の引数名</td></tr><tr><td><strong>n_entries</strong></td><td>LUT のエントリ数 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>=</mo><msup><mn>2</mn><mi>N</mi></msup></mrow><annotation encoding="application/x-tex">=2^N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.3669em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8413em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.109em;">N</span></span></span></span></span></span></span></span></span></span></span>。N=2→4, N=4→16, N=6→64</td></tr><tr><td><strong>16ゲートモード</strong></td><td>N=2 + softmax のときのみ有効。16 種の 2 入力ブール関数(AND, OR, XOR…)に対する softmax で、difflogic と完全互換</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="計算手法">計算手法</h3><a class="sl-anchor-link" href="#計算手法"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “計算手法”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>用語</th><th>定義</th></tr></thead><tbody><tr><td><strong>Butterfly基底</strong></td><td>LUT の基底関数を再帰的に計算する効率的アルゴリズム。<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><mi>N</mi><mo>⋅</mo><msup><mn>2</mn><mi>N</mi></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(N\cdot 2^N)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.109em;">N</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0913em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.109em;">N</span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span>(素朴実装は <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false">(</mo><msup><mn>2</mn><mrow><mn>2</mn><mi>N</mi></mrow></msup><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">O(2^{2N})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0913em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.0278em;">O</span><span class="mopen">(</span><span class="mord"><span class="mord">2</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mord mathnormal mtight" style="margin-right:0.109em;">N</span></span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span>)</td></tr><tr><td><strong>二値正則化</strong></td><td><code dir="auto">loss = mean(w × (1-w))</code> で重みを 0/1 へ誘導する</td></tr><tr><td><strong>Residual初期化</strong></td><td>ゲートツリーで「パススルー」ゲートを初期選択し、勾配消失を防ぐ</td></tr><tr><td><strong>STE</strong>(Straight-Through Estimator)</td><td>forward は離散化、backward は連続近似で勾配を通す手法</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="モード">モード</h3><a class="sl-anchor-link" href="#モード"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “モード”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>用語</th><th>定義</th><th>コード上の操作</th></tr></thead><tbody><tr><td><strong>soft モード</strong></td><td>訓練モード。出力は [0,1] の連続値で勾配が流れる</td><td><code dir="auto">model.train()</code></td></tr><tr><td><strong>hard モード</strong></td><td>推論モード。出力は <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">{</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">\{0,1\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">{</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">1</span><span class="mclose">}</span></span></span></span> の離散値で、純粋な論理回路</td><td><code dir="auto">model.eval()</code></td></tr><tr><td><strong>離散化ギャップ / 選択ギャップ</strong></td><td>soft 出力と hard 出力の性能差 <code dir="auto">acc(soft) - acc(hard)</code></td><td>Hard-ST で 0 にできる</td></tr><tr><td><strong>Forward Alignment</strong></td><td>訓練時 forward と推論時 forward を一致させる原則(CAGE)</td><td>Hard-ST で実現</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h3"><h3 id="接続方式">接続方式</h3><a class="sl-anchor-link" href="#接続方式"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “接続方式”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>方式</th><th>定義</th></tr></thead><tbody><tr><td><strong>random</strong></td><td>各ニューロンがランダムに N 個の入力を選ぶ(重複あり)。既定。一部の入力が未使用になりうる</td></tr><tr><td><strong>unique</strong></td><td>すべての入力が少なくとも 1 回は選ばれることを保証する</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="6-下流irhdl">6. 下流(IR・HDL)</h2><a class="sl-anchor-link" href="#6-下流irhdl"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “6. 下流(IR・HDL)”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>用語</th><th>定義</th></tr></thead><tbody><tr><td><strong>IR</strong>(中間表現)</td><td>学習後の回路を固定した JSON。真理値表 + 配線 + 形状を持つ<strong>真実源</strong>。下流(HDL 生成・エディタ・見積り)はすべて IR だけを見る</td></tr><tr><td><strong>lowering</strong></td><td><code dir="auto">conv2d</code> / <code dir="auto">or_pool2d</code> のようなネイティブノードを <code dir="auto">lut_layer</code> の列へ展開すること。HDL 生成の前段</td></tr><tr><td><strong>simulate</strong></td><td>IR を numpy でビット厳密に実行する golden model。等価性検証の基準</td></tr><tr><td><strong>3段等価性</strong></td><td>「PyTorch hard eval ⇔ simulate ⇔ HDL シミュレーション」の 3 経路が全ベクトルで一致すること</td></tr><tr><td><strong>リソース見積り</strong></td><td>IR から LUT 数・論理深さ・配線数を数える、シンセサイザ非依存の一次見積り</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="7-ハードウェア事業用語">7. ハードウェア・事業用語</h2><a class="sl-anchor-link" href="#7-ハードウェア事業用語"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “7. ハードウェア・事業用語”</span></a></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>用語</th><th>定義</th><th>本プロジェクトとの関係</th></tr></thead><tbody><tr><td><strong>微分可能回路</strong></td><td>回路を連続緩和して微分可能にし、逆伝播で最適化する技術</td><td>中核技術。LutLayer がその実装</td></tr><tr><td><strong>FPGA</strong></td><td>書き換え可能な論理デバイス。LUT が基本構成要素</td><td>hard モードの学習済みモデルを直接マッピングできる</td></tr><tr><td><strong>ソブリンAI</strong></td><td>クラウドに依存せず、自国 / 自組織内で完結する AI</td><td>FPGA 推論による低コスト・低消費電力・データ主権</td></tr></tbody></table>
+<div class="sl-heading-wrapper level-h2"><h2 id="8-紛らわしい用語の区別">8. 紛らわしい用語の区別</h2><a class="sl-anchor-link" href="#8-紛らわしい用語の区別"><span aria-hidden="true" class="sl-anchor-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="m12.11 15.39-3.88 3.88a2.52 2.52 0 0 1-3.5 0 2.47 2.47 0 0 1 0-3.5l3.88-3.88a1 1 0 1 0-1.42-1.42l-3.88 3.89a4.48 4.48 0 0 0 6.33 6.33l3.89-3.88a1 1 0 0 0-1.42-1.42m8.58-12.08a4.49 4.49 0 0 0-6.33 0l-3.89 3.88a1 1 0 1 0 1.42 1.42l3.88-3.88a2.52 2.52 0 0 1 3.5 0 2.47 2.47 0 0 1 0 3.5l-3.88 3.88a1 1 0 0 0 0 1.42 1 1 0 0 0 1.42 0l3.88-3.89a4.49 4.49 0 0 0 0-6.33M8.83 15.17a1 1 0 0 0 .71.29 1 1 0 0 0 .71-.29l4.92-4.92a1 1 0 1 0-1.42-1.42l-4.92 4.92a1 1 0 0 0 0 1.42"></path></svg></span><span class="sr-only" data-pagefind-ignore>Section titled “8. 紛らわしい用語の区別”</span></a></div>
+<p><strong>「LUT-Network」と「DLGN」</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th></th><th>LUT-Network</th><th>DLGN</th></tr></thead><tbody><tr><td>指すもの</td><td>LUT を使った NN の<strong>総称</strong></td><td>Petersen et al. (2022) の<strong>特定の手法</strong></td></tr><tr><td>範囲</td><td>BinaryBrain・difflogic・本ライブラリを含む</td><td>2入力 + softmax + 全結合のみ</td></tr><tr><td>使い分け</td><td>技術カテゴリとして</td><td>論文引用として</td></tr></tbody></table>
+<p><strong>「difflogic」と「DLGN」</strong> — 前者は実装(リポジトリ名)、後者は手法(論文名)。
+コード比較の文脈では difflogic、学術的引用の文脈では DLGN。</p>
+<p><strong>「softmax パラメータ化」と「DLGN」</strong> — 前者はコード上のフラグ、後者は
+「全結合アーキテクチャ + softmax」という手法全体。</p>
+<p><strong>「Hard-ST」と「CAGE」</strong> — 前者は STE によるゲート選択方式(<code dir="auto">selection='hard_st'</code>)、
+後者は「Hard-ST + 適応温度スケジューリング」という訓練手法全体。</p></div><footer class="sl-flex astro-ddtxxk7k"><div class="meta sl-flex astro-ddtxxk7k"></div><div class="pagination-links print:hidden astro-b5raizh3" dir="ltr"><a href="/Griffith/explanation/faq/" rel="prev" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17 11H9.41l3.3-3.29a1.004 1.004 0 1 0-1.42-1.42l-5 5a1 1 0 0 0-.21.33 1 1 0 0 0 0 .76 1 1 0 0 0 .21.33l5 5a1.002 1.002 0 0 0 1.639-.325 1 1 0 0 0-.219-1.095L9.41 13H17a1 1 0 0 0 0-2Z"/></svg><span class="astro-b5raizh3">前へ<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">よくある質問</span></span></a><a href="/Griffith/reference/" rel="next" class="astro-b5raizh3"><svg aria-hidden="true" class="astro-b5raizh3 astro-hkc32dio" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="--sl-icon-size: 1.5rem;"><path d="M17.92 11.62a1.001 1.001 0 0 0-.21-.33l-5-5a1.003 1.003 0 1 0-1.42 1.42l3.3 3.29H7a1 1 0 0 0 0 2h7.59l-3.3 3.29a1.002 1.002 0 0 0 .325 1.639 1 1 0 0 0 1.095-.219l5-5a1 1 0 0 0 .21-.33 1 1 0 0 0 0-.76Z"/></svg><span class="astro-b5raizh3">次へ<br class="astro-b5raizh3"><span class="link-title astro-b5raizh3">リファレンス索引</span></span></a></div></footer></div></div></main></div></div></div></div></body></html>
