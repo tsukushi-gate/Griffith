@@ -3,7 +3,7 @@
 import numpy as np
 import torch
 
-from experiments.evaluate_othello_exact import solve_positions
+from experiments import evaluate_othello_exact as exact
 from experiments.train_othello import (
     INITIAL,
     PASS,
@@ -41,17 +41,23 @@ def test_forced_pass_and_early_terminal():
     assert outcome((1, -1) * 8) == 0
 
 
-def test_search_prefers_forced_win_to_forced_loss():
+def test_search_corrects_policy_preference_for_forced_loss(monkeypatch):
     model = PolicyValueNet()
     with torch.no_grad():
         for parameter in model.parameters():
             parameter.zero_()
+        model.policy.bias[14] = 0.1
     board = (-1, -1, -1, 1, -1, -1, 1, 1, -1, -1, -1, -1, 1, -1, 0, 0)
     policy = search(model, board, 64)
     assert policy.argmax() == 15
     assert policy[14] > 0
     assert policy[:14].sum() + policy[PASS] == 0
     assert policy.sum() == 1
+
+    monkeypatch.setattr(exact, 'INITIAL', board)
+    scored = exact.evaluate(model, exact.solve_positions(), 32)
+    assert scored['policy_outcome_preserved_fraction'] == 0.0
+    assert scored['outcome_preserved_fraction'] == 1.0
 
 
 def test_self_play_targets_and_lut_update():
@@ -79,7 +85,7 @@ def test_self_play_targets_and_lut_update():
 
 
 def test_exact_opening_and_forced_pass_values():
-    margins = solve_positions()
+    margins = exact.solve_positions()
     assert len(margins) == 58533
     assert margins[INITIAL] == -8
     assert {margins[child] for child in legal_moves(INITIAL).values()} == {8}
