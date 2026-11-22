@@ -62,6 +62,14 @@ for weights in "${model}_iter_50.pt" "$model.pt"; do
 done
 ```
 
+#### 学習曲線
+
+![自己対戦の学習局数に対する、未学習版との対戦得点率・全探索との一致率・学習損失の推移](othello/learning_curve.png)
+
+各点はシード0〜5の平均、帯は最小値から最大値までです。上段は各シード240局の対戦得点率（引き分けは半点）、中段は7,912局面で最善の勝敗を維持できた割合、下段は各測定時点の直近32回の更新で平均した学習損失です。未学習時には中段のみを測定しています。
+
+[シード別の実測値](othello/learning_curve.json)から図を再生成するには `uv run --locked --extra cpu --extra figures python experiments/othello/plot_learning_curve.py` を実行します。途中のモデルを再測定する場合は、上記の学習コマンドの `--iterations` に学習局数を8で割った値を指定し、シードごとに同じ初期状態から学習します。途中保存用の `--snapshot-iteration` は省略できます。
+
 ## ディレクトリ地図 / Map
 
 | 接頭辞・場所 | 中身 |
