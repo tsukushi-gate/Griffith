@@ -32,8 +32,7 @@ to release a fix before public disclosure.
 | 0.1.x | ✅ |
 | < 0.1 | ❌ |
 
-<!-- TODO(human): 安定版リリース後にサポート対象の行を更新してください。 -->
-
+0.1.x is the first public release line (0.1.0 was released on).
 Griffith is pre-1.0 software. Security fixes are applied to the latest release
 only; there are currently no long-term support branches.
 

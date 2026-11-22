@@ -10,7 +10,6 @@ Read this page first, then [Test layers (L1–L5)](/en/contributing/testing/), a
 touching the docs — [Writing docs](/en/contributing/docs/).
 
 :::note[License and DCO sign-off]
-<!-- TODO(human): ライセンス確定後に確認 -->
 This project is licensed under the **Apache License 2.0** (see `LICENSE` and `NOTICE`), and
 contributions are accepted under the same terms. Instead of a CLA we use the
 [Developer Certificate of Origin](https://developercertificate.org/) (DCO), so **every commit must
@@ -224,4 +223,4 @@ For how to choose between cloud GPUs and how to submit jobs, see
 - [Writing docs](/en/contributing/docs/) — adding pages, formatting, build checks
 - [Docs management policy](/en/contributing/docs-management/) — why the structure is what it is
 
-<!-- i18n:source=contributing/index.md hash=b5d1e1877bf0 -->
+<!-- i18n:source=contributing/index.md hash=ad2fb4a059b2 -->

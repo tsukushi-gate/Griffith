@@ -10,7 +10,6 @@ description: '開発環境の準備、変更からPRまでの流れ、コミッ�
 (ドキュメントも直すなら)[ドキュメントを書く](/contributing/docs/)。
 
 :::note[ライセンスと DCO サインオフ]
-<!-- TODO(human): ライセンス確定後に確認 -->
 本プロジェクトは **Apache License 2.0** である(`LICENSE` / `NOTICE`)。コントリビューションも
 同じ条件で提供されたものとして扱う。CLA の代わりに
 [Developer Certificate of Origin](https://developercertificate.org/)(DCO)を採用しており、
