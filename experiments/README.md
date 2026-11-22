@@ -29,6 +29,39 @@ uv run python experiments/recipe_dlgn_repro.py --help
 uv run python experiments/train.py --dataset mnist -e 20
 ```
 
+### 4×4オセロで自己対戦学習と全探索評価を試す
+
+手番側と相手側の石をそれぞれ16ビットで表し、Griffith の `LutLayer`（256ゲート）から方策と価値を予測します。
+AlphaZero 形式の自己対戦では MCTS の訪問割合と終局の勝敗を教師にします。学習・対戦・評価はすべて CPU 上のソフトゲートで実行します。
+
+リポジトリのルートで以下を実行すると、40局学習し、全探索で求めた勝敗とモデルの着手を照合できます。
+
+```sh
+uv sync --locked --extra cpu --extra dev
+uv run --no-sync python -m experiments.train_othello --output checkpoints/othello/demo.pt
+uv run --no-sync python -m experiments.evaluate_othello_exact --checkpoint checkpoints/othello/demo.pt
+```
+
+全探索は初期盤面から到達できる58,533局面を手番側の視点で数え、終局の石差を逆算します。JSON の `initial_black_margin` は −8（完全プレイで白の8石勝ち）です。
+`outcome_depends_on_move` は、どの手を選ぶかで勝ち・引き分け・負けが変わる7,912局面での着手を集計します。例えば `win_to_loss` は勝てる局面から負けになる手を選んだ回数です。`outcome_preserved_fraction` はこの7,912局面のうち最善の勝敗を保った割合です。
+
+400局版と4,000局版を比較するには、同じ学習の途中と最後でモデルを保存します。以下はシード0の例です。6シードの比較では `seed` を0〜5に変えて繰り返します。
+
+```sh
+seed=0
+model="checkpoints/othello/seed_${seed}"
+uv run --no-sync python -m experiments.train_othello --seed "$seed" --iterations 500 \
+  --games 8 --updates 32 --simulations 32 --snapshot-iteration 50 --output "$model.pt"
+uv run --no-sync python -m experiments.evaluate_othello --seed "$seed" --simulations 32 \
+  --checkpoint "$model.pt" --opponent "${model}_iter_50.pt"
+for weights in "${model}_iter_50.pt" "$model.pt"; do
+  uv run --no-sync python -m experiments.evaluate_othello_exact --simulations 32 --checkpoint "$weights"
+done
+```
+
+対戦結果の `W/D/L` は `--checkpoint` 側から見た勝ち・引き分け・負けの順です。
+`standard` は初期盤面から先後交代で2局、`four_plies` は4手後の異なる120局面から先後交代で240局です。対戦・全探索評価では探索ノイズを切り、訪問回数が最多の手を選びます。
+
 ## ディレクトリ地図 / Map
 
 | 接頭辞・場所 | 中身 |
