@@ -1,0 +1,116 @@
+---
+title: 'Showcase: Evolved Logic Circuits'
+description: 'Videos of logic-gate circuits evolved with neuroevolution (NEAT) that play Mario, make a bug walk, swim a snake robot, walk on two legs, and fly through Flappy Bird.'
+---
+
+import ShowcaseVideo from '../../../../components/ShowcaseVideo.astro';
+import ShowcaseGrid from '../../../../components/ShowcaseGrid.astro';
+
+**A few dozen logic gates clear Mario 1-1, make a bug walk, and make a snake swim.**
+
+Nothing on this page learned neural-network weights.
+Each controller is **a circuit of two-input logic gates (AND, OR, XOR, ...)**, grown generation by generation with neuroevolution (NEAT).
+The circuits stay small, yet they find their own way to beat a game or move a body.
+
+## What is going on
+
+- Screen and sensor values are converted into **bit vectors** and fed into a logic-gate circuit
+- The circuit's output bits pick an action such as "run right", "jump", or "bend this joint"
+- NEAT changes **the shape of the circuit itself** (which gates exist and how they are wired) every generation and keeps the individuals that do well
+
+What remains after evolution is not a weight table but **a logic circuit small enough to read**.
+For several environments you can follow it all the way down to a circuit diagram and Boolean formulas. The mechanics are in [How It Works](/en/showcase/how-it-works/).
+
+## Results by environment
+
+Press play to watch (muted, looping). The gate count is the size of the circuit evolution found.
+
+<ShowcaseGrid>
+	<ShowcaseVideo
+		name="mario_dlgn_clear.mp4"
+		title="Super Mario 1-1"
+		caption="Clears the stage while looking only at terrain and enemy positions."
+		meta="32 gates (12 after shrinking)"
+		href="/en/showcase/mario/"
+	/>
+	<ShowcaseVideo
+		name="bugwalker_dlgn.mp4"
+		title="Bug walker"
+		caption="A two-legged bug starts walking after 4 generations and 22 seconds of evolution."
+		meta="32 gates"
+		href="/en/showcase/creatures/"
+	/>
+	<ShowcaseVideo
+		name="swimmer_dlgn.mp4"
+		title="Snake-like swimmer"
+		caption="Moves through water by sending a wave down its body."
+		meta="37 gates"
+		href="/en/showcase/creatures/"
+	/>
+	<ShowcaseVideo
+		name="halfcheetah_dlgn_gallop.mp4"
+		title="HalfCheetah gallop"
+		caption="Runs by switching between only 2 of 64 possible moves."
+		meta="3 logic terms decide the switch"
+		href="/en/showcase/creatures/"
+	/>
+	<ShowcaseVideo
+		name="bipedal_dlgn.mp4"
+		title="Bipedal walking (BipedalWalker)"
+		caption="Walks forward even after continuous torques are reduced to on/off."
+		meta="48 two-input LUTs"
+		href="/en/showcase/creatures/"
+	/>
+	<ShowcaseVideo
+		name="flappy_dlgn.mp4"
+		title="Flappy Bird"
+		caption="Keeps deciding whether it fits through the gap in the pipes."
+		meta="11 gates"
+		href="/en/showcase/games/"
+	/>
+	<ShowcaseVideo
+		name="car2d_dlgn.mp4"
+		title="2D race car"
+		caption="Completes a lap using 7 distance sensors."
+		meta="22-23 gates"
+		href="/en/showcase/games/"
+	/>
+	<ShowcaseVideo
+		name="snake_dlgn.mp4"
+		title="Snake game"
+		caption="Collects food from just 11 bits of surroundings."
+		meta="12-14 gates"
+		href="/en/showcase/games/"
+	/>
+	<ShowcaseVideo
+		name="cartpole_dlgn.mp4"
+		title="CartPole"
+		caption="Moves the cart to keep the pole upright."
+		meta="8 gates"
+		href="/en/showcase/games/"
+	/>
+</ShowcaseGrid>
+
+## An honest scorecard
+
+Logic circuits do not always win. With the same observations and the same evaluation, we compared them against classic NEAT with real-valued weights (NN). The winner depends on the environment.
+
+| Environment | Logic circuit (DLGN) | NN | Outcome |
+|---|---|---|---|
+| Flappy Bird | Solved in 2 of 2 runs with 11 gates | Not solved even after 900 generations | **Logic circuit wins** |
+| 2D race car | Solved in 2 of 2 runs with 22-23 gates | Not solved in either run | **Logic circuit wins** |
+| Super Mario 1-1 | 1 of 2 runs cleared (32 gates) | 1 of 2 runs cleared (51 parameters) | Tie |
+| Bug walker | Walks with 32 gates (distance 20.6) | Walks with 16 parameters (21.1) | About even |
+| CartPole | Solved immediately with 8 gates | Solved immediately with 4 parameters | Tie |
+| LunarLander | Failed independent verification | Lands with 12-33 parameters | **NN wins** |
+
+Gate counts and parameter counts are different units, so they cannot be divided into a ratio. Detailed comparisons, including where the circuits lost, are in [Creatures & Robots](/en/showcase/creatures/) and [Games & Control](/en/showcase/games/).
+
+## Read next
+
+- [Super Mario](/en/showcase/mario/): the 32-gate clearing circuit, and why it is closer to memorization
+- [Creatures & Robots](/en/showcase/creatures/): bug, snake, cheetah, biped, quadruped, humanoid
+- [Games & Control](/en/showcase/games/): race car, Flappy Bird, Snake, CartPole, LunarLander, robot arms
+- [How It Works](/en/showcase/how-it-works/): how NEAT and logic-gate circuits fit together
+
+{/* i18n:source=showcase/index.mdx hash=fae03d455a25 */}

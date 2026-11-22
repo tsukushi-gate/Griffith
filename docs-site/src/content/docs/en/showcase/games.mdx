@@ -1,0 +1,103 @@
+---
+title: 'Games & Control'
+description: 'Logic-gate circuits evolved for a 2D race car, Flappy Bird, Snake, CartPole, LunarLander, and robot arms, including the environments where they lost.'
+---
+
+import ShowcaseVideo from '../../../../components/ShowcaseVideo.astro';
+
+In games and classic control tasks, the strengths of logic circuits and NNs (classic NEAT with real-valued weights) split clearly.
+**Logic circuits are strong when the task is a "go or no-go" decision; NNs are strong when thrust must be tuned finely.**
+
+## Flappy Bird: an 11-gate landslide
+
+<ShowcaseVideo
+	name="flappy_dlgn.mp4"
+	caption="Logic circuit (11 gates) playing Flappy Bird."
+	meta="Solved in both runs (fitness 48.64 / 54.63)"
+/>
+
+The observation is just 4 values: the next pipe's position, the height difference to the gap's center, the bird's height, and its vertical speed. The circuit receives them as 32 bits.
+**The logic circuit solved it in both runs with 11 gates.** The NN stayed at a fitness of about 11 even after 900 generations, 3.5 times the logic circuit's budget.
+Deciding whether you fit through the gap is a discrete judgment, exactly where logic gates shine.
+
+Removing gates without changing a single step of the solving behavior shrank the 11 gates down to 4 and 2.
+
+## 2D race car: only the logic circuit completes a lap
+
+<ShowcaseVideo
+	name="car2d_dlgn.mp4"
+	caption="Logic circuit (23 gates) lapping the track."
+/>
+
+Seven distance sensors and the speed are converted into 64 bits, and the circuit picks one of "forward, left, right, brake".
+**The logic circuit completed a lap in both runs with 22-23 gates.** The NN (66-91 parameters) did not complete a lap in either run.
+
+## Snake
+
+<ShowcaseVideo
+	name="snake_dlgn.mp4"
+	caption="Logic circuit (14 gates) playing Snake."
+/>
+
+The observation is already 11 bits of 0/1, so it goes straight into the circuit.
+The logic circuit reached the 10-food target in both runs with 12-14 gates; the NN did so in 1 of 2.
+The single best food collector, however, was the NN's lucky run (23.37 versus the logic circuit's best of 17.14), so on strength the circuit loses.
+
+There is also a timelapse of the evolution.
+
+<ShowcaseVideo
+	name="snake_dlgn_timelapse.mp4"
+	caption="Snake evolution timelapse (every 3 generations)."
+/>
+
+## CartPole and LunarLander
+
+### CartPole: both solve it right away
+
+<ShowcaseVideo
+	name="cartpole_dlgn.mp4"
+	caption="Logic circuit (8 gates) balancing CartPole."
+/>
+
+The classic task of keeping a pole on a cart from falling. The logic circuit with 8 gates and the NN with 4 parameters both solved it right away.
+
+### LunarLander: the NN wins
+
+<ShowcaseVideo
+	name="lunarlander_nn.mp4"
+	caption="NN (12-33 parameters) landing."
+/>
+
+<ShowcaseVideo
+	name="lunarlander_dlgn.mp4"
+	caption="Logic circuit (19-20 gates) attempting to land."
+/>
+
+Land a lunar module by firing thrusters to control attitude and speed.
+**The NN landed successfully in both runs with 12-33 parameters.** The logic circuit grew to 19-20 gates
+but failed verification under different initial conditions. Fine-grained thrust control suits real-valued weights better.
+
+## Robot arms
+
+### Carrying an object with a two-joint arm
+
+<ShowcaseVideo
+	name="arm2d_dlgn.mp4"
+	caption="Logic-circuit (29 gates) arm: approach, grasp, carry, release, in order."
+/>
+
+The task requires going through stages in order: approach the object, grasp it, carry it to the target, and release it.
+Neither method reached the target score, but the 29-gate circuit carried the object all the way in 33 of 2000 attempts (1.65%).
+Random actions manage 0 of 2000, so it is not luck, but all we can say is that it "sometimes manages to carry".
+
+### Reacher (move the fingertip to a target)
+
+<ShowcaseVideo
+	name="reacher_dlgn.mp4"
+	caption="Logic-circuit (36 gates) Reacher."
+/>
+
+MuJoCo's Reacher. Each of the two joints is driven with one of "positive, zero, negative".
+The logic circuit (36 gates) and the NN (32 parameters) both improved on the first generation, but the gains were small: a partial success.
+
+{/* i18n:source=showcase/games.mdx hash=0e5da195a17c */}

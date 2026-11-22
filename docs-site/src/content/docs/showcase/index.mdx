@@ -1,0 +1,115 @@
+---
+title: 'ショーケース: 進化する論理回路'
+description: '神経進化(NEAT)で2入力の論理ゲート回路を進化させ、マリオ・虫・蛇型ロボット・二足歩行・Flappy Birdなどを動かした実験の動画集。'
+---
+
+import ShowcaseVideo from '../../../components/ShowcaseVideo.astro';
+import ShowcaseGrid from '../../../components/ShowcaseGrid.astro';
+
+**数十個の論理ゲートがマリオをクリアし、虫が歩き、蛇が泳ぐ。**
+
+ここに並ぶのは、ニューラルネットの重みを学習したものではない。
+**2入力の論理ゲート(AND・OR・XORなど)をつないだ回路そのもの**を、
+神経進化(NEAT)で世代を重ねて育てたものだ。
+回路は小さいまま、ゲームを攻略し、体を動かす方法を自分で見つける。
+
+## 何が起きているか
+
+- 画面やセンサーの値を**ビット列**に変換し、論理ゲートの回路に流す
+- 回路の出力ビットが「右へ走る」「ジャンプ」「この関節を曲げる」といった操作を選ぶ
+- NEATが回路の**形そのもの**(どのゲートを置き、どう配線するか)を世代ごとに変えて、うまく動く個体を残す
+
+学習のあとに残るのは、重みの表ではなく**読めるサイズの論理回路**だ。
+いくつかの環境では回路図と論理式までたどれる。仕組みは[仕組み](/showcase/how-it-works/)にまとめた。
+
+## 環境ごとの結果
+
+動画は再生ボタンで再生する(音声なし・ループ)。ゲート数は進化が見つけた回路の大きさ。
+
+<ShowcaseGrid>
+	<ShowcaseVideo
+		name="mario_dlgn_clear.mp4"
+		title="スーパーマリオ 1-1"
+		caption="地形と敵の配置だけを見て、ステージをクリアする。"
+		meta="32ゲート(縮小後12ゲート)"
+		href="/showcase/mario/"
+	/>
+	<ShowcaseVideo
+		name="bugwalker_dlgn.mp4"
+		title="虫の歩行"
+		caption="2本脚の虫が、4世代・22秒の進化で歩き始める。"
+		meta="32ゲート"
+		href="/showcase/creatures/"
+	/>
+	<ShowcaseVideo
+		name="swimmer_dlgn.mp4"
+		title="蛇型ロボットの遊泳"
+		caption="体をうねらせる波で水中を進む。"
+		meta="37ゲート"
+		href="/showcase/creatures/"
+	/>
+	<ShowcaseVideo
+		name="halfcheetah_dlgn_gallop.mp4"
+		title="HalfCheetahのギャロップ"
+		caption="64通りの動きのうち2つだけを切り替えて走る。"
+		meta="切替を決める論理項は3つ"
+		href="/showcase/creatures/"
+	/>
+	<ShowcaseVideo
+		name="bipedal_dlgn.mp4"
+		title="二足歩行(BipedalWalker)"
+		caption="連続トルクをオン/オフに落としても、前に歩ける。"
+		meta="2入力LUT 48個"
+		href="/showcase/creatures/"
+	/>
+	<ShowcaseVideo
+		name="flappy_dlgn.mp4"
+		title="Flappy Bird"
+		caption="パイプのすき間に入るかを判断し続ける。"
+		meta="11ゲート"
+		href="/showcase/games/"
+	/>
+	<ShowcaseVideo
+		name="car2d_dlgn.mp4"
+		title="2Dレースカー"
+		caption="7本の距離センサーを見てコースを1周する。"
+		meta="22〜23ゲート"
+		href="/showcase/games/"
+	/>
+	<ShowcaseVideo
+		name="snake_dlgn.mp4"
+		title="スネークゲーム"
+		caption="11ビットの周囲情報だけで餌を集める。"
+		meta="12〜14ゲート"
+		href="/showcase/games/"
+	/>
+	<ShowcaseVideo
+		name="cartpole_dlgn.mp4"
+		title="倒立振子(CartPole)"
+		caption="台車を動かして棒を立て続ける。"
+		meta="8ゲート"
+		href="/showcase/games/"
+	/>
+</ShowcaseGrid>
+
+## 正直な成績表
+
+論理回路がいつも勝つわけではない。同じ観測・同じ評価で、実数の重みを持つ従来のNEAT(NN)と並べた結果は環境ごとに分かれた。
+
+| 環境 | 論理回路(DLGN) | NN | 勝敗 |
+|---|---|---|---|
+| Flappy Bird | 11ゲートで2本とも攻略 | 900世代でも未達 | **論理回路の勝ち** |
+| 2Dレースカー | 22〜23ゲートで2本とも攻略 | 2本とも未達 | **論理回路の勝ち** |
+| スーパーマリオ 1-1 | 2本中1本がクリア(32ゲート) | 2本中1本がクリア(51パラメータ) | 引き分け |
+| 虫の歩行 | 32ゲートで歩行(前進距離20.6) | 16パラメータで歩行(21.1) | ほぼ互角 |
+| CartPole | 8ゲートで即解決 | 4パラメータで即解決 | 引き分け |
+| LunarLander | 検証を通過できず | 12〜33パラメータで着陸 | **NNの勝ち** |
+
+ゲート数とパラメータ数は単位の違う量なので、割り算で比べられない。詳しい比較と負けた環境は[生き物とロボット](/showcase/creatures/)・[ゲームと制御](/showcase/games/)に書いた。
+
+## 次に読む
+
+- [スーパーマリオ](/showcase/mario/): 32ゲートのクリア回路と、それが「丸暗記」だった話
+- [生き物とロボット](/showcase/creatures/): 虫・蛇・チーター・二足歩行・四足・ヒューマノイド
+- [ゲームと制御](/showcase/games/): レースカー・Flappy Bird・スネーク・CartPole・LunarLander・ロボットアーム
+- [仕組み](/showcase/how-it-works/): NEATと論理ゲート回路をどう組み合わせたか

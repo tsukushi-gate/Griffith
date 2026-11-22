@@ -1,0 +1,76 @@
+---
+// ショーケースの動画1本を埋め込む共通部品。
+// 動画の実体はリポジトリに置かず、GitHub Release の添付ファイルから配信する
+// (mp4 と同名の .jpg がポスター画像)。`name` は拡張子つきの mp4 ファイル名。
+// `href` を渡すとカード表示(一覧ページ用)になり、見出しがそのページへのリンクになる。
+interface Props {
+	name: string;
+	title?: string;
+	caption?: string;
+	meta?: string;
+	href?: string;
+}
+
+const RELEASE_BASE_URL = 'https://github.com/tsukushi-gate/Griffith/releases/download/showcase-videos-v1';
+
+const { name, title, caption, meta, href } = Astro.props;
+const videoUrl = `${RELEASE_BASE_URL}/${name}`;
+const posterUrl = `${RELEASE_BASE_URL}/${name.replace(/\.mp4$/, '.jpg')}`;
+// サイト内リンクにはサブパス配信の base を前置する(base なしなら no-op)
+const sitePrefix = import.meta.env.BASE_URL.replace(/\/$/, '');
+const linkUrl = href && href.startsWith('/') ? sitePrefix + href : href;
+---
+
+<figure class:list={['showcase-video', { 'showcase-video--card': Boolean(href) }]} data-md-no-zoom>
+	<video controls muted loop playsinline preload="none" poster={posterUrl} src={videoUrl}></video>
+	{
+		(title || caption || meta) && (
+			<figcaption>
+				{title && (linkUrl ? <a class="showcase-video__title" href={linkUrl}>{title}</a> : <span class="showcase-video__title">{title}</span>)}
+				{caption && <span class="showcase-video__caption">{caption}</span>}
+				{meta && <span class="showcase-video__meta">{meta}</span>}
+			</figcaption>
+		)
+	}
+</figure>
+
+<style>
+	.showcase-video {
+		margin: 1.25rem 0;
+	}
+	.showcase-video video {
+		display: block;
+		width: 100%;
+		max-height: 32rem;
+		background: #000;
+		border-radius: 0.5rem;
+	}
+	.showcase-video figcaption {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		margin-top: 0.5rem;
+		font-size: var(--sl-text-sm);
+	}
+	.showcase-video__title {
+		font-weight: 600;
+		color: var(--sl-color-white);
+	}
+	.showcase-video__caption {
+		color: var(--sl-color-gray-2);
+	}
+	.showcase-video__meta {
+		color: var(--sl-color-gray-3);
+		font-variant-numeric: tabular-nums;
+	}
+	.showcase-video--card {
+		margin: 0;
+		padding: 0.75rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.75rem;
+	}
+	.showcase-video--card video {
+		aspect-ratio: 4 / 3;
+		object-fit: contain;
+	}
+</style>

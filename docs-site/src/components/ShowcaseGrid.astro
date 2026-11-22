@@ -1,0 +1,16 @@
+---
+// ShowcaseVideo のカードを並べる格子。狭い画面では1列に落ちる。
+---
+
+<div class="showcase-grid not-content">
+	<slot />
+</div>
+
+<style>
+	.showcase-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+		gap: 1rem;
+		margin: 1.25rem 0;
+	}
+</style>

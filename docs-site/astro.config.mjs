@@ -199,6 +199,18 @@ export default defineConfig({
 					],
 				},
 				{
+					// 神経進化(NEAT)で論理ゲート回路を進化させたデモ動画集。動画は GitHub Release から配信する
+					label: 'ショーケース',
+					translations: { en: 'Showcase' },
+					items: [
+						{ label: '一覧', translations: { en: 'Overview' }, slug: 'showcase' },
+						{ label: 'スーパーマリオ 1-1', translations: { en: 'Super Mario 1-1' }, slug: 'showcase/mario' },
+						{ label: '生き物とロボット', translations: { en: 'Creatures & Robots' }, slug: 'showcase/creatures' },
+						{ label: 'ゲームと制御', translations: { en: 'Games & Control' }, slug: 'showcase/games' },
+						{ label: '仕組み', translations: { en: 'How It Works' }, slug: 'showcase/how-it-works' },
+					],
+				},
+				{
 					label: 'ガイド',
 					translations: { en: 'Guides' },
 					items: [
