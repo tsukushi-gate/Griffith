@@ -1025,11 +1025,11 @@ wheels = [
 
 [[package]]
 name = "click"
-version = "8.5.0"
+version = "8.5.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/c7/0e/7fa0ef50764b67090eca4114772a2abf8b6148198475e54c660b97caeee6/click-8.5.0.tar.gz", hash = "sha256:ba0d2089de75ea0310e2dde03160e6ca10009947fb95a182f9b54021bb272e34", size = 382235, upload-time = "2026-08-26T13:33:14.56Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/45/37/edbf1b0707709013c0cf2e8317e03d97ed29bf4cac709fe328904ae92a38/click-8.5.1.tar.gz", hash = "sha256:9bbfada76703fd1d784b83eea012e3e8c6a001a876543ef104fa56aaaeb072b4", size = 399151, upload-time = "2026-11-06T17:37:01.021Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/58/50/6c0d534c5f134586a8e1ba4e330569e32f057e33372ae556463212fb4cd3/click-8.5.0-py3-none-any.whl", hash = "sha256:255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360", size = 125251, upload-time = "2026-08-26T13:33:12.928Z" },
+    { url = "https://files.pythonhosted.org/packages/31/7d/164b7ffc8624fe9efb4221bf9af485d5c1e41b9ae118045d2b6dc5457d8b/click-8.5.1-py3-none-any.whl", hash = "sha256:8bb5376d2006950386f8c6427613334a2acadc5f559cb80e638d00b4df957e37", size = 126163, upload-time = "2026-11-06T17:36:59.287Z" },
 ]
 
 [[package]]
@@ -6062,7 +6062,7 @@ wheels = [
 
 [[package]]
 name = "runpod"
-version = "2.2.1"
+version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp", extra = ["speedups"] },
@@ -6089,9 +6089,9 @@ dependencies = [
     { name = "urllib3" },
     { name = "watchdog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ae/16/3622c2f6d04e98bf6990ec3f79ccc29070ad31de042e9acc9dbad0eaa2fb/runpod-2.2.1.tar.gz", hash = "sha256:140b473d040ee8f3286a25e9955efd3a1563c6829af73a2fe658fc4a093540c6", size = 962342, upload-time = "2026-11-10T22:13:32.572Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/44/c391665e861763975fcc7824fe7994523ded228b46ed28dc11847ba575b1/runpod-2.3.0.tar.gz", hash = "sha256:548aa9b60a92fe51b8c90d2c1b2b744180771dfe78aac8e6dc687c49612a51cf", size = 996656, upload-time = "2026-11-17T21:14:25.735Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/38/41/33086696db4d0322e4f95c0b802fbb923233a732dbc26a8a909915ea4caa/runpod-2.2.1-py3-none-any.whl", hash = "sha256:4c4e38ed2c4977b7f7d39c1e0bdc021bdbb12fcf9e9f6ddcb2342122f49ef6d2", size = 532656, upload-time = "2026-11-10T22:13:30.738Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/e1/81ca71dfc0358b2da93269f5e8e1c27a6f6d92048a59a88cab11e6c32cd2/runpod-2.3.0-py3-none-any.whl", hash = "sha256:dc129f4c31e6276ed4af6889e46cd5e3b969882233be2ebdf747037c7a371fa4", size = 540573, upload-time = "2026-11-17T21:14:23.695Z" },
 ]
 
 [[package]]
