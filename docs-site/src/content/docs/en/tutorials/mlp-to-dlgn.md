@@ -457,4 +457,4 @@ print('''
 - [From NN to DLGN](/en/explanation/nn-to-dlgn/) — the thinking behind the replacement
 - [Reading Training Curves](/en/guides/training-curves/) — telling soft and hard apart
 
-<!-- i18n:source=tutorials/mlp-to-dlgn.md hash=1529aa7404c4 -->
+<!-- i18n:source=tutorials/mlp-to-dlgn.md hash=8cf3e818ca10 -->

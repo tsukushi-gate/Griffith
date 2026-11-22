@@ -120,4 +120,4 @@ run_training). Passing `dataset` swaps in a different evaluation dataset.
 
 Dict of metrics (hard_acc / step / dataset, etc.)
 
-<!-- i18n:source=reference/api/training-config.md hash=51c4140169ef -->
+<!-- i18n:source=reference/api/training-config.md hash=f30e7394b3e5 -->

@@ -578,4 +578,4 @@ plt.show()
 - [Logic Gate U-Net](/en/tutorials/logic-unet/) — after classification, move on to answering per pixel (dense prediction)
 - [DWN](/en/tutorials/dwn/) — solve the same MNIST with a zero discretization gap
 
-<!-- i18n:source=tutorials/mnist.md hash=e4ad811324cc -->
+<!-- i18n:source=tutorials/mnist.md hash=5cb363e30906 -->

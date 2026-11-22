@@ -22,6 +22,10 @@ authors:
   - family-names: "Akiho"
     given-names: "Masato"
     website: "https://github.com/Tebaeleven"
+  - family-names: "Nomaguchi"
+    given-names: "Mizuki"
+  - family-names: "Hadano"
+    given-names: "Musashi"
   # TODO(human): ORCID を取得したら `orcid: "https://orcid.org/0000-0000-0000-0000"` を追加してください。
 references:
   - type: conference-paper

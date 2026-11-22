@@ -10,7 +10,8 @@ DAGグラフはIRGraphModule(topo順実行+values辞書)を構築する。
     - lut_layerは train_info.initialized(既定True)が真かつtruth_tablesが
       あれば restore_lut_layer で重み・接続を復元し、偽(draft)なら
       ランダム初期化のまま返す
-    - train_info.kind='dwn' のlut_layerはDWNLayerとして復元する(非可逆: 真理値表の±1符号化。eval等価のみ保証)
+    - train_info.kind='dwn' のlut_layerはDWNLayerとして復元する
+      (非可逆: 真理値表の±1符号化。eval等価のみ保証)
     - 直列グラフ(全ノード単一入力・fanoutなし・concat/addなし)は従来どおり
       nn.Sequentialを返す(既存テスト・エディタが依存するfast-path)
     - concat/add/constantはモジュールを持たずIRGraphModule.forward内で

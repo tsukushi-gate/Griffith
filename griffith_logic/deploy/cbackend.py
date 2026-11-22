@@ -1486,7 +1486,8 @@ int mdl_infer_batch_packed(uint32_t *work, size_t bytes,
             # このマクロを見て宣言/定義ごと自分を無効化する — 対応する
             # weights/step関数がこの生成物に無いのでリンクできないため。
             self.public_decls.append('#define MDL_RDDLGN_WEIGHTS_DROPPED 1')
-        # state_initの出力バッファ→初期化ビット列(# _emit_recurrent_public_apiのmdl_reset_state_<id>が使う)。
+        # state_initの出力バッファ→初期化ビット列
+        # (_emit_recurrent_public_apiのmdl_reset_state_<id>が使う)。
         # 常に集めておく(exposeが空なら誰も読まないので無害)。
         self._state_bits_by_buf = {
             op.output: op.attrs['bits'] for op in plan.ops

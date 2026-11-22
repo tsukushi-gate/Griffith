@@ -587,4 +587,4 @@ plt.show()
 - [Logic Gate GPT](/en/tutorials/logic-gpt/) — a language model made entirely of logic gates
 - [2. Building a Hybrid NN](/en/tutorials/hybrid/) — designs that stop partway up the ladder
 
-<!-- i18n:source=tutorials/logic-ladder.md hash=eeb575f90935 -->
+<!-- i18n:source=tutorials/logic-ladder.md hash=585db0d507cd -->

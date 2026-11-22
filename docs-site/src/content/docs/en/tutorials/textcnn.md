@@ -655,4 +655,4 @@ print(f'選択的なフィルタ {N_FILTERS - n_dead}/{N_FILTERS} 個で hard ac
 - [A logic-gate GPT](/en/tutorials/logic-gpt/) — generation instead of classification
 - [Causal convolution with logic gates](/en/tutorials/logic-wavenet/) — the same 1D convolution applied to sequence prediction
 
-<!-- i18n:source=tutorials/textcnn.md hash=04eb92b8a446 -->
+<!-- i18n:source=tutorials/textcnn.md hash=b89649d72754 -->

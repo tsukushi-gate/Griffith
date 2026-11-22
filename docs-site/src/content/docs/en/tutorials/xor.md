@@ -421,4 +421,4 @@ plt.show()
 - [The Mathematics of LutLayer](/en/explanation/lut-layer/) — the continuous relaxation formulas themselves
 - [Logic Gate TextCNN](/en/tutorials/textcnn/) — solve the same XOR structure, this time over word sequences
 
-<!-- i18n:source=tutorials/xor.md hash=4597091ae079 -->
+<!-- i18n:source=tutorials/xor.md hash=3df88ea031d8 -->

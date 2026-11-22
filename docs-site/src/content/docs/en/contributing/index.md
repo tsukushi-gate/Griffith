@@ -224,4 +224,4 @@ For how to choose between cloud GPUs and how to submit jobs, see
 - [Writing docs](/en/contributing/docs/) — adding pages, formatting, build checks
 - [Docs management policy](/en/contributing/docs-management/) — why the structure is what it is
 
-<!-- i18n:source=contributing/index.md hash=3c55bdb3e4b0 -->
+<!-- i18n:source=contributing/index.md hash=b5d1e1877bf0 -->

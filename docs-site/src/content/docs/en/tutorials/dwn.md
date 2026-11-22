@@ -833,4 +833,4 @@ plt.show()
 - [BinaryBrain-compatible API](/en/tutorials/binarybrain/) — conversely, a case where the gap opens wide
 - [1. Train on MNIST](/en/tutorials/mnist/) — a comparison against a plain LutLayer
 
-<!-- i18n:source=tutorials/dwn.md hash=60616a74b35b -->
+<!-- i18n:source=tutorials/dwn.md hash=3124b0421b33 -->

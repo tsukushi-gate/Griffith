@@ -593,4 +593,4 @@ print(f'0.05未満 or 0.95超のエントリ割合={edge:.3f}(1.0に近いほど
 - [Choosing a parameterization](/en/guides/parameterization/) — how independent / raw relate to BinaryBrain
 - [Burning to an FPGA](/en/guides/fpga/) — what to verify before burning
 
-<!-- i18n:source=tutorials/binarybrain.md hash=c1313641edb9 -->
+<!-- i18n:source=tutorials/binarybrain.md hash=8d167ad7a588 -->

@@ -250,7 +250,7 @@ L3(論文再現)→ L4(収束)→ L5/HDL(等価性)の層構造で、変更の�
 ```bibtex
 @software{griffith_logic,
   title  = {Griffith: Differentiable Logic Gate Networks for PyTorch},
-  author = {{Masato Akiho}},
+  author = {Masato Akiho and Mizuki Nomaguchi and Musashi Hadano},
   year   = {2026},
   date   = {},
   note   = {Version 0.1.0},

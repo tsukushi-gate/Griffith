@@ -370,4 +370,4 @@ nn.Linear → LutLayer / softmax出力 → GroupSum と置き換えて論理ゲ�
 - [Intro 1. NN & PyTorch Basics](/en/tutorials/nn-basics/)
 - [1. Train on MNIST](/en/tutorials/mnist/) — the main track, solving the same MNIST with logic gates from the start
 
-<!-- i18n:source=tutorials/pytorch-mlp.md hash=fa147f209e45 -->
+<!-- i18n:source=tutorials/pytorch-mlp.md hash=119bc0a9ed2a -->

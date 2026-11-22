@@ -501,4 +501,4 @@ print(f'3層 (RF={rf_big}): hard acc = {final_big:.4f}')
 - [RNN: Logicizing LSTM / GRU](/en/tutorials/logic-lstm/) — compare with the recurrent type
 - [5. Exporting a CNN to HDL](/en/tutorials/cnn-hdl-export/) — see how convolution unrolls into a circuit
 
-<!-- i18n:source=tutorials/logic-wavenet.md hash=2f810ecd8c98 -->
+<!-- i18n:source=tutorials/logic-wavenet.md hash=18336b54884f -->

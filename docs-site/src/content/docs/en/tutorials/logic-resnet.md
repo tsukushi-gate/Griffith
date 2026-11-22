@@ -817,4 +817,4 @@ plt.show()
 - [Logic gate U-Net](/en/tutorials/logic-unet/) — using skip connections for dense prediction
 - [The math of LutLayer](/en/explanation/lut-layer/)
 
-<!-- i18n:source=tutorials/logic-resnet.md hash=7f4d1261b107 -->
+<!-- i18n:source=tutorials/logic-resnet.md hash=a83f186a5c8f -->

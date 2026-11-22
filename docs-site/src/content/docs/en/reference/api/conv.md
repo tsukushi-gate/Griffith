@@ -190,4 +190,4 @@ Behaves the same as BinaryBrain with fill=True (the default).
 
 - `scale_factor` — upscaling factor (default 2)
 
-<!-- i18n:source=reference/api/conv.md hash=5081222af22a -->
+<!-- i18n:source=reference/api/conv.md hash=72398f8edd20 -->

@@ -582,4 +582,4 @@ plt.show()
 - [Architecture overview](/en/explanation/architecture/)
 - [The Ladder of Logification](/en/tutorials/logic-ladder/) — measure "how far to go logic" one rung at a time
 
-<!-- i18n:source=tutorials/hybrid.md hash=68823c5720e7 -->
+<!-- i18n:source=tutorials/hybrid.md hash=c055aa87f100 -->

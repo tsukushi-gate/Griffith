@@ -820,4 +820,4 @@ plt.show()
 - [Logic gate seq2seq (RDDLGN)](/en/tutorials/rddlgn-seq2seq/) — compare against sequence transduction without attention
 - [How to read training curves](/en/guides/training-curves/) — telling soft and hard apart
 
-<!-- i18n:source=tutorials/logic-gpt.md hash=61d62fd4fc5c -->
+<!-- i18n:source=tutorials/logic-gpt.md hash=ea38326fd940 -->

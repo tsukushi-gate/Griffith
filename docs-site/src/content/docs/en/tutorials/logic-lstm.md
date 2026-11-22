@@ -576,4 +576,4 @@ forget gate の平均開度(時刻順) = [0.492, 0.5, 0.379, 0.371, 0.363, 0.387
 - [Reservoir computing (an RNN that is never trained)](/en/tutorials/logic-reservoir/) — the choice of not training the recurrent circuit
 - [A seq2seq Model Built from RNNs Alone (RDDLGN)](/en/tutorials/rddlgn-seq2seq/)
 
-<!-- i18n:source=tutorials/logic-lstm.md hash=37d1cc05d245 -->
+<!-- i18n:source=tutorials/logic-lstm.md hash=c94f74828724 -->

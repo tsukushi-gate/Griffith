@@ -839,4 +839,4 @@ floor(g·in/out + 1/2) of `get_stretched_rot_connections` (that one rounds half-
 
 (out_dim,) int64 tensor
 
-<!-- i18n:source=reference/api/core.md hash=897e5c26d4f6 -->
+<!-- i18n:source=reference/api/core.md hash=45fdc64795a2 -->

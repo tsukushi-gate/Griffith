@@ -824,4 +824,4 @@ plt.show()
 - [Turning a diffusion model into a Boolean circuit](/en/tutorials/logic-diffusion/)
 - [A logic-gate U-Net](/en/tutorials/logic-unet/) — digging into the decoder-side structure
 
-<!-- i18n:source=tutorials/logic-vae.md hash=d77fdd09b5bf -->
+<!-- i18n:source=tutorials/logic-vae.md hash=e28995343495 -->

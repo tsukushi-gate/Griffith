@@ -283,4 +283,4 @@ Computes the spectral norm of the LUT table matrix, specnorm(L) = ‖L·C‖₂.
 
 A scalar tensor (differentiable, so it can be added to the loss as a regularization term)
 
-<!-- i18n:source=reference/api/dwn.md hash=0cf050c9bbc0 -->
+<!-- i18n:source=reference/api/dwn.md hash=9cd264ad24ca -->

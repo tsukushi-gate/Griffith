@@ -736,4 +736,4 @@ print(f'この木が{enc_conv.out_channels}チャネルぶん並び、'
 - [Stabilizing LogicGAN](/en/tutorials/logic-gan/) — how adversarial training breaks
 - [Reading training curves](/en/guides/training-curves/) — how to choose a baseline
 
-<!-- i18n:source=tutorials/logic-diffusion.md hash=ad3bd6435e29 -->
+<!-- i18n:source=tutorials/logic-diffusion.md hash=30bcb8db1d4c -->

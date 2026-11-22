@@ -256,7 +256,7 @@ If you use Griffith in your research, please cite it (see [`CITATION.cff`](CITAT
 ```bibtex
 @software{griffith_logic,
   title  = {Griffith: Differentiable Logic Gate Networks for PyTorch},
-  author = {{Masato Akiho}},
+  author = {Masato Akiho and Mizuki Nomaguchi and Musashi Hadano},
   year   = {2026},
   date   = {},
   note   = {Version 0.1.0},

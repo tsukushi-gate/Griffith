@@ -632,7 +632,7 @@ export class ConvRuntime {
     return this.wasmPreproc ? 'cpu-wasm' : 'cpu-js';
   }
 
-  /** 1フレームぶんの入力を作る。融合前処理(GPU または 
+  /** 1フレームぶんの入力を作る。融合前処理(GPU または
       CPU融合)が使えるならRGBAをそのまま、使えないなら渡された encoder で
       CPU符号化したビット列を包む。
       **前処理経路の分岐をここ1箇所に閉じ込める**(デモ/ベンチ/比較ページが

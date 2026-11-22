@@ -188,4 +188,4 @@ A reverse index of the public APIs each tutorial uses.
 | [Training FPGA-Ready LUT Networks with the BinaryBrain-compatible API](/en/tutorials/binarybrain/) | `BinaryToReal` / `DifferentiableLutBlock` / `RealToBinary` |
 | [Activity Recognition (UCI-HAR, Phone Accelerometer)](/en/tutorials/har/) | `GroupSum` / `LutLayer` / `fit_thermometer_thresholds` / `load_uci_har` / `thermometer_encode` |
 
-<!-- i18n:source=reference/api/index.md hash=b74fef3c682e -->
+<!-- i18n:source=reference/api/index.md hash=808f4aac807c -->

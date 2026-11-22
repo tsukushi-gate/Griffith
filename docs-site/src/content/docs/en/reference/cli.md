@@ -366,4 +366,4 @@ authentication, image setup and artifact retrieval, see the
 - [Deploy Kit Quickstart](/en/guides/deploy-quickstart/) — the end-to-end procedure for `griffith deploy`
 - [Python API](/en/reference/api/) — the public API the CLI uses internally
 
-<!-- i18n:source=reference/cli.md hash=491713d358a8 -->
+<!-- i18n:source=reference/cli.md hash=c6303248678a -->

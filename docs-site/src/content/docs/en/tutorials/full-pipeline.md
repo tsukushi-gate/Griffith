@@ -384,4 +384,4 @@ For the hardware-side steps — pin assignment, clocking, bitstream generation �
 - [Working with the IR](/en/guides/ir/) — read and rewrite the generated IR
 - [Cloud GPU](/en/guides/cloud-gpu/) — training larger models
 
-<!-- i18n:source=tutorials/full-pipeline.md hash=0606f950df25 -->
+<!-- i18n:source=tutorials/full-pipeline.md hash=24e3636f20e4 -->

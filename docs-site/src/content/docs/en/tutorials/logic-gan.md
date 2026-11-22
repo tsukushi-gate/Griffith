@@ -789,4 +789,4 @@ print('出力段64ゲートの内訳(上位4種): '
 - [Turning a diffusion model into a Boolean circuit](/en/tutorials/logic-diffusion/)
 - [Running training](/en/guides/training/) — how to diagnose training that has broken
 
-<!-- i18n:source=tutorials/logic-gan.md hash=0bc3272bc4de -->
+<!-- i18n:source=tutorials/logic-gan.md hash=e345ef35f13a -->

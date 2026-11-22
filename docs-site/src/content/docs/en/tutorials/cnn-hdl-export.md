@@ -796,4 +796,4 @@ Verilog照合: ALLPASS
 - [HDL equivalence verification](/en/guides/hdl/)
 - [Multiplier-free object detection](/en/tutorials/detection/) — take the same LutConv2d to a detection task
 
-<!-- i18n:source=tutorials/cnn-hdl-export.md hash=c5a5389902ad -->
+<!-- i18n:source=tutorials/cnn-hdl-export.md hash=dcee34e093b1 -->

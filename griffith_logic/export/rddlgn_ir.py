@@ -152,7 +152,8 @@ def export_rddlgn_encoder_ir(
         seq_len: 系列長(RDDLGNEncoderは構造上seq_len非依存だが、IRの
             recurrentノードはsteps回数を固定値として焼き込む必要がある)
         id_prefix: ノードidの接頭辞(classifier全体へ埋め込むとき用)
-        optimize_degenerate: Trueなら退化ゲート除去パス(export/rddlgn_optimize.py)を通す。既定Falseで既存出力を
+        optimize_degenerate: Trueなら退化ゲート除去パス
+            (export/rddlgn_optimize.py)を通す。既定Falseで既存出力を
             バイト一致で保つ(opt-in)
 
     Returns:

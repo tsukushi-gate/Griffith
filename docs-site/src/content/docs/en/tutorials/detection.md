@@ -567,4 +567,4 @@ print(f'表示した8枚の予測ボックス {n_pred} 個のうち、GTとIoU>=
 - [5. Export a CNN to HDL](/en/tutorials/cnn-hdl-export/) — taking the detection circuit straight to HDL
 - [Cloud GPUs](/en/guides/cloud-gpu/) — running the 10-class production recipe
 
-<!-- i18n:source=tutorials/detection.md hash=d3a13e4349df -->
+<!-- i18n:source=tutorials/detection.md hash=e02a23decfd2 -->

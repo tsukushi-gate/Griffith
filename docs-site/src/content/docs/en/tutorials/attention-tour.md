@@ -829,4 +829,4 @@ plt.show()
 - [A logic-gate GPT](/en/tutorials/logic-gpt/) — putting the variants into a language model
 - [LogicMixer (MLP-Mixer)](/en/tutorials/logic-mixer/) — mixing without attention
 
-<!-- i18n:source=tutorials/attention-tour.md hash=186430c6dbbc -->
+<!-- i18n:source=tutorials/attention-tour.md hash=3b01a33a008a -->

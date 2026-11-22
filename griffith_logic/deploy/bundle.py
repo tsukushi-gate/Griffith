@@ -452,7 +452,8 @@ def save_bundle(bundle: dict, path, *, gzip_too: bool = False,
 def load_bundle(path, *, validate: bool = True, strict: bool = False) -> dict:
     """バンドルを読み込む(既定でバージョン・構造を検証する)。
 
-    拡張子で形式を判定する: `.mdlb`/`.mdlb.gz` はバイナリ形式(`deploy/mdlb.py::read_mdlb`)、それ以外(`.json`/`.json.gz`等)は
+    拡張子で形式を判定する: `.mdlb`/`.mdlb.gz` はバイナリ形式
+    (`deploy/mdlb.py::read_mdlb`)、それ以外(`.json`/`.json.gz`等)は
     従来通りJSON。呼び出し側(`md deploy info`/`codegen-*`/`verify-*`は
     いずれも本関数経由でバンドルを読むので、この1箇所を直すだけで
     全コマンドが `.mdlb` 入力に対応する。

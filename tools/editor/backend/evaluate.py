@@ -6,7 +6,7 @@ REST:
               page, page_size}
         → サンプル毎の pred/label/correct/soft_confidence/soft_margin/
           hard_soft_mismatch。ページング+セッションスコープの指紋キャッシュ。
-    GET /api/evaluate/export.csv?...  
+    GET /api/evaluate/export.csv?...
         → 評価キャッシュからCSVを生成する。
 
 main.py への組み込み(循環importを避けるためSTATE参照はconfigureで注入):

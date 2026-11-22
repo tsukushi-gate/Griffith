@@ -551,4 +551,4 @@ print(f'最も苦手な行動: {UCI_HAR_LABELS[worst]}(正解率 {per_class[wors
 - [Run on ESP32](/en/guides/deploy-esp32/) — run activity recognition on a microcontroller (ESP32)
 - [Run on iPhone](/en/guides/deploy-ios/) — bundle activity recognition into an iPhone app
 
-<!-- i18n:source=tutorials/har.md hash=67d56b78b33d -->
+<!-- i18n:source=tutorials/har.md hash=156b2191023b -->

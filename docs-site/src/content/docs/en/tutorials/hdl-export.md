@@ -355,4 +355,4 @@ plt.show()
 - [5. Export a CNN to HDL](/en/tutorials/cnn-hdl-export/) — a model that includes convolutions
 - [HDL equivalence verification](/en/guides/hdl/) — installing iverilog / ghdl and the three-way check
 
-<!-- i18n:source=tutorials/hdl-export.md hash=1319497e0be9 -->
+<!-- i18n:source=tutorials/hdl-export.md hash=d95a8337817a -->

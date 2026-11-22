@@ -636,4 +636,4 @@ print(f'バンドル: 1ゲートあたり {min(per_gate):.1f}〜{max(per_gate):.
 - [7. End-to-End Walkthrough: From Training to FPGA](/en/tutorials/full-pipeline/) — from training to Verilog / FPGA
 - [Appendix: A Minimal Look Inside, with XOR](/en/tutorials/xor/) — make the circuit we carry even smaller and see all of its insides
 
-<!-- i18n:source=tutorials/deploy-mnist.md hash=ad7f79749393 -->
+<!-- i18n:source=tutorials/deploy-mnist.md hash=f28e392e607f -->

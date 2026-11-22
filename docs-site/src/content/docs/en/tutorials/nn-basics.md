@@ -524,4 +524,4 @@ print('この「実数の重み」が、次のページ以降で論理ゲート�
 - [What is a neural network, really?](/en/explanation/ai-basics/) — a read for those who want the math
 - [From NN to DLGN](/en/explanation/nn-to-dlgn/) — a map of what stays the same and what changes
 
-<!-- i18n:source=tutorials/nn-basics.md hash=5a4783bc0f57 -->
+<!-- i18n:source=tutorials/nn-basics.md hash=a4d5ccb5626a -->

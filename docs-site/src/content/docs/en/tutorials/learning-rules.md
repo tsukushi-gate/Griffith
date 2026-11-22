@@ -495,4 +495,4 @@ plt.show()
 - [Running training](/en/guides/training/)
 - [Choosing not to train the circuit](/en/tutorials/logic-reservoir/) — the extreme case of training only the readout
 
-<!-- i18n:source=tutorials/learning-rules.md hash=ab11499e359e -->
+<!-- i18n:source=tutorials/learning-rules.md hash=f9251d975ba8 -->

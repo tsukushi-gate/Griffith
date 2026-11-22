@@ -101,7 +101,8 @@ class ConvLayout:
 class _ConvGeom:
     """conv2dの幾何(バッチ非依存)+タップ平面プールのアドレス解決。
 
-    `build_conv_layout`(全oc結合)と `build_conv_layout_split`(ocごとの命令列分割)が共有する部分をここへ1回だけ書く。
+    `build_conv_layout`(全oc結合)と `build_conv_layout_split`
+    (ocごとの命令列分割)が共有する部分をここへ1回だけ書く。
     """
 
     h: int

@@ -593,4 +593,4 @@ delay   : d=0:1.000 / d=1:1.000 / d=2:1.000 / d=3:1.000 / d=4:1.000 / d=5:1.000
 - [RNN: Logicizing LSTM / GRU](/en/tutorials/logic-lstm/) — compare with a trained recurrent circuit
 - [Burning onto an FPGA](/en/guides/fpga/) — the prerequisites for implementing a frozen circuit as is
 
-<!-- i18n:source=tutorials/logic-reservoir.md hash=4f2bd573b655 -->
+<!-- i18n:source=tutorials/logic-reservoir.md hash=19512c4200db -->

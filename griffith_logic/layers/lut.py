@@ -198,8 +198,8 @@ class LutLayer(nn.Module):
                 'randn'    — N(0,1)（従来の既定）
                 'ri'       — 全ロジット0 + op3（A pass-through）に init_scale
                              （従来の residual_init=True。既定 5.0）
-                'ri_randn' — N(0,1) に op3 だけ +init_scale（社内先行実験 model_iwp.py:77-80 の残差初期化。非op3の
-                             対称性が 'ri' と違う）
+                'ri_randn' — N(0,1) に op3 だけ +init_scale（残差初期化の変種。
+                             非op3の対称性が 'ri' と違う）
                 'rri'      — N(0,1) に「ゲートごとに乱択した、gate_maskで許可
                              されている非自明1種（定数{0,15}・pass-through
                              {3,5,10,12}を除く）」へ +init_scale

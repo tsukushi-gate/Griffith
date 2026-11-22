@@ -754,4 +754,4 @@ plt.show()
 - [Residual connections in logic NNs](/en/tutorials/logic-resnet/) — the character of the soft-XOR residual
 - [DWN](/en/tutorials/dwn/) — digging into input binarization (thermometer encoding)
 
-<!-- i18n:source=tutorials/logic-mixer.md hash=6e47f455927e -->
+<!-- i18n:source=tutorials/logic-mixer.md hash=4471b0617591 -->

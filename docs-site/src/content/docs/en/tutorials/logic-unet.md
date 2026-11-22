@@ -887,4 +887,4 @@ plt.show()
 - [Residual Connections in Logic NNs](/en/tutorials/logic-resnet/) — the exact properties of skip connections
 - [5. Exporting a CNN to HDL](/en/tutorials/cnn-hdl-export/)
 
-<!-- i18n:source=tutorials/logic-unet.md hash=ec8fe3187775 -->
+<!-- i18n:source=tutorials/logic-unet.md hash=238e5c4d5f69 -->

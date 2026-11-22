@@ -647,4 +647,4 @@ plt.show()
 - [Logic Gate GPT](/en/tutorials/logic-gpt/) — comparing with a sequence model that has attention
 - [Choosing a Parameterization](/en/guides/parameterization/) — why init_mode / parameterization matters for the hard path
 
-<!-- i18n:source=tutorials/rddlgn-seq2seq.md hash=4d7519f7bd82 -->
+<!-- i18n:source=tutorials/rddlgn-seq2seq.md hash=a6fa4b18b7b2 -->
