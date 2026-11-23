@@ -59,7 +59,7 @@ jobs:
           cache: npm
           cache-dependency-path: docs-site/package-lock.json
       # gen:api が `uv run --no-project --with griffe` を使うためuvが要る(ci.yml と同じ流儀)
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
@@ -98,7 +98,7 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: docs-site/package-lock.json
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
@@ -119,7 +119,7 @@ jobs:
       GRIFFITH_TUTORIAL_CELL_TIMEOUT: '1800'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
@@ -160,7 +160,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
       # 日本語のAPIリファレンスは生成物(docs-site/.gitignore で除外)なので、
       # 照合前に生成しないと en/reference/api/* が全部ORPHAN扱いになる。
       - name: APIリファレンス(日本語)を生成
@@ -175,7 +175,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
       - name: チュートリアル図の解像度・空図・参照切れ
         run: uv run --no-project --with pillow python scripts/check_docs_assets.py
 
@@ -193,7 +193,7 @@ jobs:
           node-version: '22'
           cache: npm
           cache-dependency-path: docs-site/package-lock.json
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
       - run: npm ci
         working-directory: docs-site
       - name: 本文のMermaid図がパースできること
@@ -206,7 +206,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d  # v10.4.0
       # ruff同様、ローカルとCIで版を固定する(新版の判定変更による環境差を避ける)
       - run: uv run --no-project --with "interrogate==1.7.0" interrogate griffith_logic
 
