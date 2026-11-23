@@ -2,7 +2,7 @@
 
 NEAT で進化させた論理ゲート回路(DLGN)のデモ動画を、docs の Showcase ページ用に選んで圧縮する。
 動画そのものはリポジトリに入れず、GitHub Release `showcase-videos-v1`(prerelease)の asset に置く。
-対応表(元ファイル・長さ・サイズ・URL)は [`docs/reference/showcase-videos.md`](https://docs.griffith.magicdelta.jp/reference/showcase-videos/)。
+対応表(元ファイル・長さ・サイズ・URL)は private リポジトリの docs/reference/showcase-videos.md にある(公開ツリーには含まれない)。
 
 ## 作り方
 

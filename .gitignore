@@ -13,6 +13,7 @@ data-*/
 
 # テスト・キャッシュ
 .pytest_cache/
+.ruff_cache/
 .coverage
 .coverage.*
 .hypothesis/

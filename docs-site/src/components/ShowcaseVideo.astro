@@ -16,9 +16,8 @@ const RELEASE_BASE_URL = 'https://github.com/tsukushi-gate/Griffith/releases/dow
 const { name, title, caption, meta, href } = Astro.props;
 const videoUrl = `${RELEASE_BASE_URL}/${name}`;
 const posterUrl = `${RELEASE_BASE_URL}/${name.replace(/\.mp4$/, '.jpg')}`;
-// サイト内リンクにはサブパス配信の base を前置する(base なしなら no-op)
-const sitePrefix = import.meta.env.BASE_URL.replace(/\/$/, '');
-const linkUrl = href && href.startsWith('/') ? sitePrefix + href : href;
+// サイト内リンクの base は MDX 側で remarkBasePath が前置済み。ここで足すと二重になる
+const linkUrl = href;
 ---
 
 <figure class:list={['showcase-video', { 'showcase-video--card': Boolean(href) }]} data-md-no-zoom>
