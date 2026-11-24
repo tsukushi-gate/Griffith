@@ -188,6 +188,8 @@ url = "https://download.pytorch.org/whl/cu128"
 explicit = true
 
 [tool.uv]
+# SEC-1: Dependabot 警告の修正版を下限に固定(soupsieve 2.x の分岐を消す)
+constraint-dependencies = ["soupsieve>=3.0.2"]
 conflicts = [
     [{ extra = "cpu" }, { extra = "cu128" }],
 ]
