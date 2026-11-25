@@ -29,6 +29,47 @@ uv run python experiments/recipe_dlgn_repro.py --help
 uv run python experiments/train.py --dataset mnist -e 20
 ```
 
+### 4×4オセロで自己対戦学習と全探索評価を試す
+
+手番側と相手側の石をそれぞれ16ビットで表し、Griffith の `LutLayer`（256ゲート）から方策と価値を予測します。
+AlphaZero 形式の自己対戦では MCTS の訪問割合と終局の勝敗を教師にします。学習・対戦・評価はすべて CPU 上のソフトゲートで実行します。
+
+#### 未学習モデルからの改善を測る
+
+まず同じシードの初期モデルと40局学習したモデルを、直接対戦と全探索の両方で比較します。リポジトリのルートで実行してください。
+
+```sh
+uv sync --locked --extra cpu --extra dev
+seed=0
+model="checkpoints/othello/seed_${seed}"
+uv run --no-sync python -m experiments.train_othello --seed "$seed" --output "${model}_40.pt"
+uv run --no-sync python -m experiments.evaluate_othello --seed "$seed" --checkpoint "${model}_40.pt"
+uv run --no-sync python -m experiments.evaluate_othello_exact --untrained-seed "$seed"
+uv run --no-sync python -m experiments.evaluate_othello_exact --checkpoint "${model}_40.pt"
+```
+
+- **対戦成績**　両者とも一手32回の探索で、訪問回数が最多の手を選びます。`four_plies` は4手後の異なる120局面から先後交代で240局、`standard` は通常の初期盤面から先後交代で2局です。`W/D/L` は学習済みモデルの勝ち・引き分け・負けの順です。
+- **全探索との一致率**　初期盤面から到達する58,533局面を手番側の視点で数え、着手によって勝ち・引き分け・負けが変わる7,912局面を採点します。「正解」は、双方がその後最善を尽くすとき、元の勝敗を維持するすべての手です。`policy_outcome_preserved_fraction` は方策が最も高く評価した合法手、`outcome_preserved_fraction` は32回の探索後の着手の正解率です。完全プレイの正解率はどちらも100%です。
+
+長く学習したときの推移も、同じ初期モデルを基準に測れます。下記では同じ学習の400局時点と4,000局時点を保存します。6シードで比較する場合は両方の例をシード0〜5で繰り返します。
+
+```sh
+uv run --no-sync python -m experiments.train_othello --seed "$seed" --iterations 500 \
+  --games 8 --updates 32 --simulations 32 --snapshot-iteration 50 --output "$model.pt"
+for weights in "${model}_iter_50.pt" "$model.pt"; do
+  uv run --no-sync python -m experiments.evaluate_othello --seed "$seed" --checkpoint "$weights"
+  uv run --no-sync python -m experiments.evaluate_othello_exact --checkpoint "$weights"
+done
+```
+
+#### 学習曲線
+
+![自己対戦の学習局数に対する、未学習版との対戦得点率・全探索との一致率・学習損失の推移](othello/learning_curve.png)
+
+各点はシード0〜5の平均、帯は最小値から最大値までです。上段は各シード240局の対戦得点率（引き分けは半点）、中段は7,912局面で最善の勝敗を維持できた割合、下段は各測定時点の直近32回の更新で平均した学習損失です。未学習時には中段のみを測定しています。
+
+[シード別の実測値](othello/learning_curve.json)から図を再生成するには `uv run --locked --extra cpu --extra figures python experiments/othello/plot_learning_curve.py` を実行します。途中のモデルを再測定する場合は、上記の学習コマンドの `--iterations` に学習局数を8で割った値を指定し、シードごとに同じ初期状態から学習します。途中保存用の `--snapshot-iteration` は省略できます。
+
 ## ディレクトリ地図 / Map
 
 | 接頭辞・場所 | 中身 |
